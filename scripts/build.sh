@@ -9,6 +9,7 @@ fi
 
 
 clean() {
+  echo 'Cleaning...'
   rm -f .babelrc
   rm -rf lib/*
   node scripts/version.js > lib/version.json
