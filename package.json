@@ -1,5 +1,5 @@
 {
-  "name": "bottleneck",
+  "name": "@tyba-open/bottleneck",
   "version": "2.19.6",
   "description": "Distributed task scheduler and rate limiter",
   "main": "lib/index.js",
@@ -12,6 +12,7 @@
     "type": "git",
     "url": "https://gitlab.com/tyba-open/bottleneck"
   },
+  "publishConfig": {"@tyba-open:registry": "https://gitlab.com/api/v4/projects/58749952/packages/npm/"},
   "keywords": [
     "async rate limiter",
     "rate limiter",
