@@ -12,7 +12,9 @@
     "type": "git",
     "url": "https://gitlab.com/tyba-open/bottleneck"
   },
-  "publishConfig": {"@tyba-open:registry": "https://gitlab.com/api/v4/projects/58749952/packages/npm/"},
+  "publishConfig": {
+    "@tyba-co:registry": "https://npm.pkg.github.com"
+  },
   "keywords": [
     "async rate limiter",
     "rate limiter",
