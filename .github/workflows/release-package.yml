@@ -29,7 +29,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
 
-      - name: Install dependencies
+      - name: Install dependencies (if cache miss)
+        if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm install
 
   build-and-test:
@@ -52,7 +53,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
 
-      - name: Install dependencies
+      - name: Install dependencies (if cache miss)
+        if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm install
 
       - run: npm run build
@@ -72,5 +74,18 @@ jobs:
         with:
           node-version: 10.24.1
           registry-url: https://npm.pkg.github.com/
-      - run: npm ci
+          
+      - name: Restore npm cache
+        id: npm-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies (if cache miss)
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm install
+        
       - run: npm publish
