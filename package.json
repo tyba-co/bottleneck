@@ -6,6 +6,7 @@
   "typings": "bottleneck.d.ts",
   "scripts": {
     "test": "mocha test",
+    "build": "./scripts/build.sh",
     "test-all": "./scripts/test_all.sh"
   },
   "repository": {
