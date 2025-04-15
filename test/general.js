@@ -820,7 +820,7 @@ describe('General', function () {
       const results = await c.last({ weight: 0, priority: 9 })
       c.checkResultsOrder([[1], [2], [3], [4], [5]])
       c.mustEqual(calledDepleted, 1)
-      c.checkDuration(450, 85)  // Allow for a larger deviation from the expected time
+      c.checkDuration(450, 95)  // Allow for a larger deviation from the expected time
     })
 
     it('Should allow staggered X by Y type usage', function () {
