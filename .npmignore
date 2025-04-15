@@ -5,6 +5,6 @@ src/
 test/
 .vscode/
 .github/
-.scripts/
+scripts/
 .gitignore
 .env
