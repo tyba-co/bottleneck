@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20
     env:
       NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     steps:
@@ -21,7 +21,7 @@ jobs:
 
   publish-gpr:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20
     permissions:
       packages: write
       contents: read
