@@ -1489,7 +1489,7 @@
 	    key: "doExpire",
 	    value: function doExpire(clearGlobalState, run, free) {
 	      var error, eventInfo;
-	      if (this._states.jobStatus(this.options.id === "RUNNING")) {
+	      if (this._states.jobStatus(this.options.id) === "RUNNING") {
 	        this._states.next(this.options.id);
 	      }
 	      this._assertStatus("EXECUTING");

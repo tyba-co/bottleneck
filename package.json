@@ -1,5 +1,5 @@
 {
-  "name": "@tyba-open/bottleneck",
+  "name": "@tyba-co/bottleneck",
   "version": "2.19.6",
   "description": "Distributed task scheduler and rate limiter",
   "main": "lib/index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/tyba-open/bottleneck"
+    "url": "https://github.com/tyba-co/bottleneck"
   },
   "publishConfig": {
     "@tyba-co:registry": "https://npm.pkg.github.com"
@@ -34,7 +34,7 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://gitlab.com/tyba-open/bottleneck"
+    "url": "https://github.com/tyba-co/bottleneck"
   },
   "devDependencies": {
     "@babel/core": "^7.5.0",
