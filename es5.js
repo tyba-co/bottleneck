@@ -782,6 +782,9 @@
 	    });
 	  };
 	}
+	function _callSuper(t, o, e) {
+	  return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e));
+	}
 	function _classCallCheck(a, n) {
 	  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
 	}
@@ -875,6 +878,307 @@
 	  if (e && ("object" == typeof e || "function" == typeof e)) return e;
 	  if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
 	  return _assertThisInitialized(t);
+	}
+	function _regeneratorRuntime() {
+	  _regeneratorRuntime = function () {
+	    return e;
+	  };
+	  var t,
+	    e = {},
+	    r = Object.prototype,
+	    n = r.hasOwnProperty,
+	    o = Object.defineProperty || function (t, e, r) {
+	      t[e] = r.value;
+	    },
+	    i = "function" == typeof Symbol ? Symbol : {},
+	    a = i.iterator || "@@iterator",
+	    c = i.asyncIterator || "@@asyncIterator",
+	    u = i.toStringTag || "@@toStringTag";
+	  function define(t, e, r) {
+	    return Object.defineProperty(t, e, {
+	      value: r,
+	      enumerable: !0,
+	      configurable: !0,
+	      writable: !0
+	    }), t[e];
+	  }
+	  try {
+	    define({}, "");
+	  } catch (t) {
+	    define = function (t, e, r) {
+	      return t[e] = r;
+	    };
+	  }
+	  function wrap(t, e, r, n) {
+	    var i = e && e.prototype instanceof Generator ? e : Generator,
+	      a = Object.create(i.prototype),
+	      c = new Context(n || []);
+	    return o(a, "_invoke", {
+	      value: makeInvokeMethod(t, r, c)
+	    }), a;
+	  }
+	  function tryCatch(t, e, r) {
+	    try {
+	      return {
+	        type: "normal",
+	        arg: t.call(e, r)
+	      };
+	    } catch (t) {
+	      return {
+	        type: "throw",
+	        arg: t
+	      };
+	    }
+	  }
+	  e.wrap = wrap;
+	  var h = "suspendedStart",
+	    l = "suspendedYield",
+	    f = "executing",
+	    s = "completed",
+	    y = {};
+	  function Generator() {}
+	  function GeneratorFunction() {}
+	  function GeneratorFunctionPrototype() {}
+	  var p = {};
+	  define(p, a, function () {
+	    return this;
+	  });
+	  var d = Object.getPrototypeOf,
+	    v = d && d(d(values([])));
+	  v && v !== r && n.call(v, a) && (p = v);
+	  var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p);
+	  function defineIteratorMethods(t) {
+	    ["next", "throw", "return"].forEach(function (e) {
+	      define(t, e, function (t) {
+	        return this._invoke(e, t);
+	      });
+	    });
+	  }
+	  function AsyncIterator(t, e) {
+	    function invoke(r, o, i, a) {
+	      var c = tryCatch(t[r], t, o);
+	      if ("throw" !== c.type) {
+	        var u = c.arg,
+	          h = u.value;
+	        return h && "object" == typeof h && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) {
+	          invoke("next", t, i, a);
+	        }, function (t) {
+	          invoke("throw", t, i, a);
+	        }) : e.resolve(h).then(function (t) {
+	          u.value = t, i(u);
+	        }, function (t) {
+	          return invoke("throw", t, i, a);
+	        });
+	      }
+	      a(c.arg);
+	    }
+	    var r;
+	    o(this, "_invoke", {
+	      value: function (t, n) {
+	        function callInvokeWithMethodAndArg() {
+	          return new e(function (e, r) {
+	            invoke(t, n, e, r);
+	          });
+	        }
+	        return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg();
+	      }
+	    });
+	  }
+	  function makeInvokeMethod(e, r, n) {
+	    var o = h;
+	    return function (i, a) {
+	      if (o === f) throw Error("Generator is already running");
+	      if (o === s) {
+	        if ("throw" === i) throw a;
+	        return {
+	          value: t,
+	          done: !0
+	        };
+	      }
+	      for (n.method = i, n.arg = a;;) {
+	        var c = n.delegate;
+	        if (c) {
+	          var u = maybeInvokeDelegate(c, n);
+	          if (u) {
+	            if (u === y) continue;
+	            return u;
+	          }
+	        }
+	        if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) {
+	          if (o === h) throw o = s, n.arg;
+	          n.dispatchException(n.arg);
+	        } else "return" === n.method && n.abrupt("return", n.arg);
+	        o = f;
+	        var p = tryCatch(e, r, n);
+	        if ("normal" === p.type) {
+	          if (o = n.done ? s : l, p.arg === y) continue;
+	          return {
+	            value: p.arg,
+	            done: n.done
+	          };
+	        }
+	        "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg);
+	      }
+	    };
+	  }
+	  function maybeInvokeDelegate(e, r) {
+	    var n = r.method,
+	      o = e.iterator[n];
+	    if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y;
+	    var i = tryCatch(o, e.iterator, r.arg);
+	    if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y;
+	    var a = i.arg;
+	    return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y);
+	  }
+	  function pushTryEntry(t) {
+	    var e = {
+	      tryLoc: t[0]
+	    };
+	    1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e);
+	  }
+	  function resetTryEntry(t) {
+	    var e = t.completion || {};
+	    e.type = "normal", delete e.arg, t.completion = e;
+	  }
+	  function Context(t) {
+	    this.tryEntries = [{
+	      tryLoc: "root"
+	    }], t.forEach(pushTryEntry, this), this.reset(!0);
+	  }
+	  function values(e) {
+	    if (e || "" === e) {
+	      var r = e[a];
+	      if (r) return r.call(e);
+	      if ("function" == typeof e.next) return e;
+	      if (!isNaN(e.length)) {
+	        var o = -1,
+	          i = function next() {
+	            for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next;
+	            return next.value = t, next.done = !0, next;
+	          };
+	        return i.next = i;
+	      }
+	    }
+	    throw new TypeError(typeof e + " is not iterable");
+	  }
+	  return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", {
+	    value: GeneratorFunctionPrototype,
+	    configurable: !0
+	  }), o(GeneratorFunctionPrototype, "constructor", {
+	    value: GeneratorFunction,
+	    configurable: !0
+	  }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) {
+	    var e = "function" == typeof t && t.constructor;
+	    return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name));
+	  }, e.mark = function (t) {
+	    return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t;
+	  }, e.awrap = function (t) {
+	    return {
+	      __await: t
+	    };
+	  }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () {
+	    return this;
+	  }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) {
+	    void 0 === i && (i = Promise);
+	    var a = new AsyncIterator(wrap(t, r, n, o), i);
+	    return e.isGeneratorFunction(r) ? a : a.next().then(function (t) {
+	      return t.done ? t.value : a.next();
+	    });
+	  }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () {
+	    return this;
+	  }), define(g, "toString", function () {
+	    return "[object Generator]";
+	  }), e.keys = function (t) {
+	    var e = Object(t),
+	      r = [];
+	    for (var n in e) r.push(n);
+	    return r.reverse(), function next() {
+	      for (; r.length;) {
+	        var t = r.pop();
+	        if (t in e) return next.value = t, next.done = !1, next;
+	      }
+	      return next.done = !0, next;
+	    };
+	  }, e.values = values, Context.prototype = {
+	    constructor: Context,
+	    reset: function (e) {
+	      if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t);
+	    },
+	    stop: function () {
+	      this.done = !0;
+	      var t = this.tryEntries[0].completion;
+	      if ("throw" === t.type) throw t.arg;
+	      return this.rval;
+	    },
+	    dispatchException: function (e) {
+	      if (this.done) throw e;
+	      var r = this;
+	      function handle(n, o) {
+	        return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o;
+	      }
+	      for (var o = this.tryEntries.length - 1; o >= 0; --o) {
+	        var i = this.tryEntries[o],
+	          a = i.completion;
+	        if ("root" === i.tryLoc) return handle("end");
+	        if (i.tryLoc <= this.prev) {
+	          var c = n.call(i, "catchLoc"),
+	            u = n.call(i, "finallyLoc");
+	          if (c && u) {
+	            if (this.prev < i.catchLoc) return handle(i.catchLoc, !0);
+	            if (this.prev < i.finallyLoc) return handle(i.finallyLoc);
+	          } else if (c) {
+	            if (this.prev < i.catchLoc) return handle(i.catchLoc, !0);
+	          } else {
+	            if (!u) throw Error("try statement without catch or finally");
+	            if (this.prev < i.finallyLoc) return handle(i.finallyLoc);
+	          }
+	        }
+	      }
+	    },
+	    abrupt: function (t, e) {
+	      for (var r = this.tryEntries.length - 1; r >= 0; --r) {
+	        var o = this.tryEntries[r];
+	        if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) {
+	          var i = o;
+	          break;
+	        }
+	      }
+	      i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null);
+	      var a = i ? i.completion : {};
+	      return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a);
+	    },
+	    complete: function (t, e) {
+	      if ("throw" === t.type) throw t.arg;
+	      return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y;
+	    },
+	    finish: function (t) {
+	      for (var e = this.tryEntries.length - 1; e >= 0; --e) {
+	        var r = this.tryEntries[e];
+	        if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y;
+	      }
+	    },
+	    catch: function (t) {
+	      for (var e = this.tryEntries.length - 1; e >= 0; --e) {
+	        var r = this.tryEntries[e];
+	        if (r.tryLoc === t) {
+	          var n = r.completion;
+	          if ("throw" === n.type) {
+	            var o = n.arg;
+	            resetTryEntry(r);
+	          }
+	          return o;
+	        }
+	      }
+	      throw Error("illegal catch attempt");
+	    },
+	    delegateYield: function (e, r, n) {
+	      return this.delegate = {
+	        iterator: values(e),
+	        resultName: r,
+	        nextLoc: n
+	      }, "next" === this.method && (this.arg = t), y;
+	    }
+	  }, e;
 	}
 	function _setPrototypeOf(t, e) {
 	  return _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) {
@@ -978,7 +1282,7 @@
 	    this._last = null;
 	    this.length = 0;
 	  }
-	  _createClass(DLList, [{
+	  return _createClass(DLList, [{
 	    key: "push",
 	    value: function push(value) {
 	      var node;
@@ -1063,7 +1367,6 @@
 	      return results;
 	    }
 	  }]);
-	  return DLList;
 	}();
 	var DLList_1 = DLList;
 
@@ -1092,7 +1395,7 @@
 	      }
 	    };
 	  }
-	  _createClass(Events, [{
+	  return _createClass(Events, [{
 	    key: "_addListener",
 	    value: function _addListener(name, status, cb) {
 	      var base;
@@ -1117,7 +1420,7 @@
 	  }, {
 	    key: "trigger",
 	    value: function () {
-	      var _trigger = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2(name) {
+	      var _trigger = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(name) {
 	        var _this2 = this;
 	        var _len,
 	          args,
@@ -1125,97 +1428,92 @@
 	          e,
 	          promises,
 	          _args2 = arguments;
-	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	          while (1) {
-	            switch (_context2.prev = _context2.next) {
-	              case 0:
-	                for (_len = _args2.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-	                  args[_key - 1] = _args2[_key];
-	                }
-	                _context2.prev = 1;
-	                if (name !== "debug") {
-	                  this.trigger("debug", "Event triggered: ".concat(name), args);
-	                }
-	                if (!(this._events[name] == null)) {
-	                  _context2.next = 5;
-	                  break;
-	                }
-	                return _context2.abrupt("return");
-	              case 5:
-	                this._events[name] = this._events[name].filter(function (listener) {
-	                  return listener.status !== "none";
-	                });
-	                promises = this._events[name].map(/*#__PURE__*/function () {
-	                  var _ref = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee(listener) {
-	                    var e, returned;
-	                    return regeneratorRuntime.wrap(function _callee$(_context) {
-	                      while (1) {
-	                        switch (_context.prev = _context.next) {
-	                          case 0:
-	                            if (!(listener.status === "none")) {
-	                              _context.next = 2;
-	                              break;
-	                            }
-	                            return _context.abrupt("return");
-	                          case 2:
-	                            if (listener.status === "once") {
-	                              listener.status = "none";
-	                            }
-	                            _context.prev = 3;
-	                            returned = typeof listener.cb === "function" ? listener.cb.apply(listener, args) : void 0;
-	                            if (!(typeof (returned != null ? returned.then : void 0) === "function")) {
-	                              _context.next = 11;
-	                              break;
-	                            }
-	                            _context.next = 8;
-	                            return returned;
-	                          case 8:
-	                            return _context.abrupt("return", _context.sent);
-	                          case 11:
-	                            return _context.abrupt("return", returned);
-	                          case 12:
-	                            _context.next = 19;
-	                            break;
-	                          case 14:
-	                            _context.prev = 14;
-	                            _context.t0 = _context["catch"](3);
-	                            e = _context.t0;
-	                            {
-	                              _this2.trigger("error", e);
-	                            }
-	                            return _context.abrupt("return", null);
-	                          case 19:
-	                          case "end":
-	                            return _context.stop();
+	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	          while (1) switch (_context2.prev = _context2.next) {
+	            case 0:
+	              for (_len = _args2.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+	                args[_key - 1] = _args2[_key];
+	              }
+	              _context2.prev = 1;
+	              if (name !== "debug") {
+	                this.trigger("debug", "Event triggered: ".concat(name), args);
+	              }
+	              if (!(this._events[name] == null)) {
+	                _context2.next = 5;
+	                break;
+	              }
+	              return _context2.abrupt("return");
+	            case 5:
+	              this._events[name] = this._events[name].filter(function (listener) {
+	                return listener.status !== "none";
+	              });
+	              promises = this._events[name].map(/*#__PURE__*/function () {
+	                var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(listener) {
+	                  var e, returned;
+	                  return _regeneratorRuntime().wrap(function _callee$(_context) {
+	                    while (1) switch (_context.prev = _context.next) {
+	                      case 0:
+	                        if (!(listener.status === "none")) {
+	                          _context.next = 2;
+	                          break;
 	                        }
-	                      }
-	                    }, _callee, null, [[3, 14]]);
-	                  }));
-	                  return function (_x2) {
-	                    return _ref.apply(this, arguments);
-	                  };
-	                }());
-	                _context2.next = 9;
-	                return Promise.all(promises);
-	              case 9:
-	                _context2.t0 = function (x) {
-	                  return x != null;
+	                        return _context.abrupt("return");
+	                      case 2:
+	                        if (listener.status === "once") {
+	                          listener.status = "none";
+	                        }
+	                        _context.prev = 3;
+	                        returned = typeof listener.cb === "function" ? listener.cb.apply(listener, args) : void 0;
+	                        if (!(typeof (returned != null ? returned.then : void 0) === "function")) {
+	                          _context.next = 11;
+	                          break;
+	                        }
+	                        _context.next = 8;
+	                        return returned;
+	                      case 8:
+	                        return _context.abrupt("return", _context.sent);
+	                      case 11:
+	                        return _context.abrupt("return", returned);
+	                      case 12:
+	                        _context.next = 19;
+	                        break;
+	                      case 14:
+	                        _context.prev = 14;
+	                        _context.t0 = _context["catch"](3);
+	                        e = _context.t0;
+	                        {
+	                          _this2.trigger("error", e);
+	                        }
+	                        return _context.abrupt("return", null);
+	                      case 19:
+	                      case "end":
+	                        return _context.stop();
+	                    }
+	                  }, _callee, null, [[3, 14]]);
+	                }));
+	                return function (_x2) {
+	                  return _ref.apply(this, arguments);
 	                };
-	                return _context2.abrupt("return", _context2.sent.find(_context2.t0));
-	              case 13:
-	                _context2.prev = 13;
-	                _context2.t1 = _context2["catch"](1);
-	                e = _context2.t1;
-	                {
-	                  this.trigger("error", e);
-	                }
-	                return _context2.abrupt("return", null);
-	              case 18:
-	              case "end":
-	                return _context2.stop();
-	            }
+	              }());
+	              _context2.next = 9;
+	              return Promise.all(promises);
+	            case 9:
+	              return _context2.abrupt("return", _context2.sent.find(function (x) {
+	                return x != null;
+	              }));
+	            case 12:
+	              _context2.prev = 12;
+	              _context2.t0 = _context2["catch"](1);
+	              e = _context2.t0;
+	              {
+	                this.trigger("error", e);
+	              }
+	              return _context2.abrupt("return", null);
+	            case 17:
+	            case "end":
+	              return _context2.stop();
 	          }
-	        }, _callee2, this, [[1, 13]]);
+	        }, _callee2, this, [[1, 12]]);
 	      }));
 	      function trigger(_x) {
 	        return _trigger.apply(this, arguments);
@@ -1223,7 +1521,6 @@
 	      return trigger;
 	    }()
 	  }]);
-	  return Events;
 	}();
 	var Events_1 = Events;
 
@@ -1250,7 +1547,7 @@
 	      return results;
 	    }.call(this);
 	  }
-	  _createClass(Queues, [{
+	  return _createClass(Queues, [{
 	    key: "incr",
 	    value: function incr() {
 	      if (this._length++ === 0) {
@@ -1304,19 +1601,18 @@
 	      return this.getFirst(this._lists.slice(priority).reverse()).shift();
 	    }
 	  }]);
-	  return Queues;
 	}();
 	var Queues_1 = Queues;
 
 	var BottleneckError;
 	BottleneckError = /*#__PURE__*/function (_Error) {
-	  _inherits(BottleneckError, _Error);
 	  function BottleneckError() {
 	    _classCallCheck(this, BottleneckError);
-	    return _possibleConstructorReturn(this, _getPrototypeOf(BottleneckError).apply(this, arguments));
+	    return _callSuper(this, BottleneckError, arguments);
 	  }
-	  return BottleneckError;
-	}(_wrapNativeSuper(Error));
+	  _inherits(BottleneckError, _Error);
+	  return _createClass(BottleneckError);
+	}(/*#__PURE__*/_wrapNativeSuper(Error));
 	var BottleneckError_1 = BottleneckError;
 
 	var BottleneckError$1, DEFAULT_PRIORITY, Job, NUM_PRIORITIES, parser$1;
@@ -1345,7 +1641,7 @@
 	    });
 	    this.retryCount = 0;
 	  }
-	  _createClass(Job, [{
+	  return _createClass(Job, [{
 	    key: "_sanitizePriority",
 	    value: function _sanitizePriority(priority) {
 	      var sProperty;
@@ -1432,51 +1728,49 @@
 	  }, {
 	    key: "doExecute",
 	    value: function () {
-	      var _doExecute = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee(chained, clearGlobalState, run, free) {
+	      var _doExecute = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(chained, clearGlobalState, run, free) {
 	        var error, eventInfo, passed;
-	        return regeneratorRuntime.wrap(function _callee$(_context) {
-	          while (1) {
-	            switch (_context.prev = _context.next) {
-	              case 0:
-	                if (this.retryCount === 0) {
-	                  this._assertStatus("RUNNING");
-	                  this._states.next(this.options.id);
-	                } else {
-	                  this._assertStatus("EXECUTING");
-	                }
-	                eventInfo = {
-	                  args: this.args,
-	                  options: this.options,
-	                  retryCount: this.retryCount
-	                };
-	                this.Events.trigger("executing", eventInfo);
-	                _context.prev = 3;
-	                _context.next = 6;
-	                return chained != null ? chained.schedule.apply(chained, [this.options, this.task].concat(_toConsumableArray(this.args))) : this.task.apply(this, _toConsumableArray(this.args));
-	              case 6:
-	                passed = _context.sent;
-	                if (!clearGlobalState()) {
-	                  _context.next = 13;
-	                  break;
-	                }
-	                this.doDone(eventInfo);
-	                _context.next = 11;
-	                return free(this.options, eventInfo);
-	              case 11:
-	                this._assertStatus("DONE");
-	                return _context.abrupt("return", this._resolve(passed));
-	              case 13:
-	                _context.next = 19;
+	        return _regeneratorRuntime().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              if (this.retryCount === 0) {
+	                this._assertStatus("RUNNING");
+	                this._states.next(this.options.id);
+	              } else {
+	                this._assertStatus("EXECUTING");
+	              }
+	              eventInfo = {
+	                args: this.args,
+	                options: this.options,
+	                retryCount: this.retryCount
+	              };
+	              this.Events.trigger("executing", eventInfo);
+	              _context.prev = 3;
+	              _context.next = 6;
+	              return chained != null ? chained.schedule.apply(chained, [this.options, this.task].concat(_toConsumableArray(this.args))) : this.task.apply(this, _toConsumableArray(this.args));
+	            case 6:
+	              passed = _context.sent;
+	              if (!clearGlobalState()) {
+	                _context.next = 13;
 	                break;
-	              case 15:
-	                _context.prev = 15;
-	                _context.t0 = _context["catch"](3);
-	                error = _context.t0;
-	                return _context.abrupt("return", this._onFailure(error, eventInfo, clearGlobalState, run, free));
-	              case 19:
-	              case "end":
-	                return _context.stop();
-	            }
+	              }
+	              this.doDone(eventInfo);
+	              _context.next = 11;
+	              return free(this.options, eventInfo);
+	            case 11:
+	              this._assertStatus("DONE");
+	              return _context.abrupt("return", this._resolve(passed));
+	            case 13:
+	              _context.next = 19;
+	              break;
+	            case 15:
+	              _context.prev = 15;
+	              _context.t0 = _context["catch"](3);
+	              error = _context.t0;
+	              return _context.abrupt("return", this._onFailure(error, eventInfo, clearGlobalState, run, free));
+	            case 19:
+	            case "end":
+	              return _context.stop();
 	          }
 	        }, _callee, this, [[3, 15]]);
 	      }));
@@ -1504,39 +1798,37 @@
 	  }, {
 	    key: "_onFailure",
 	    value: function () {
-	      var _onFailure2 = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2(error, eventInfo, clearGlobalState, run, free) {
+	      var _onFailure2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(error, eventInfo, clearGlobalState, run, free) {
 	        var retry, retryAfter;
-	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	          while (1) {
-	            switch (_context2.prev = _context2.next) {
-	              case 0:
-	                if (!clearGlobalState()) {
-	                  _context2.next = 16;
-	                  break;
-	                }
-	                _context2.next = 3;
-	                return this.Events.trigger("failed", error, eventInfo);
-	              case 3:
-	                retry = _context2.sent;
-	                if (!(retry != null)) {
-	                  _context2.next = 11;
-	                  break;
-	                }
-	                retryAfter = ~~retry;
-	                this.Events.trigger("retry", "Retrying ".concat(this.options.id, " after ").concat(retryAfter, " ms"), eventInfo);
-	                this.retryCount++;
-	                return _context2.abrupt("return", run(retryAfter));
-	              case 11:
-	                this.doDone(eventInfo);
-	                _context2.next = 14;
-	                return free(this.options, eventInfo);
-	              case 14:
-	                this._assertStatus("DONE");
-	                return _context2.abrupt("return", this._reject(error));
-	              case 16:
-	              case "end":
-	                return _context2.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	          while (1) switch (_context2.prev = _context2.next) {
+	            case 0:
+	              if (!clearGlobalState()) {
+	                _context2.next = 16;
+	                break;
+	              }
+	              _context2.next = 3;
+	              return this.Events.trigger("failed", error, eventInfo);
+	            case 3:
+	              retry = _context2.sent;
+	              if (!(retry != null)) {
+	                _context2.next = 11;
+	                break;
+	              }
+	              retryAfter = ~~retry;
+	              this.Events.trigger("retry", "Retrying ".concat(this.options.id, " after ").concat(retryAfter, " ms"), eventInfo);
+	              this.retryCount++;
+	              return _context2.abrupt("return", run(retryAfter));
+	            case 11:
+	              this.doDone(eventInfo);
+	              _context2.next = 14;
+	              return free(this.options, eventInfo);
+	            case 14:
+	              this._assertStatus("DONE");
+	              return _context2.abrupt("return", this._reject(error));
+	            case 16:
+	            case "end":
+	              return _context2.stop();
 	          }
 	        }, _callee2, this);
 	      }));
@@ -1553,7 +1845,6 @@
 	      return this.Events.trigger("done", eventInfo);
 	    }
 	  }]);
-	  return Job;
 	}();
 	var Job_1 = Job;
 
@@ -1575,7 +1866,7 @@
 	    this.clients = {};
 	    this._startHeartbeat();
 	  }
-	  _createClass(LocalDatastore, [{
+	  return _createClass(LocalDatastore, [{
 	    key: "_startHeartbeat",
 	    value: function _startHeartbeat() {
 	      var _this = this;
@@ -1609,19 +1900,17 @@
 	  }, {
 	    key: "__publish__",
 	    value: function () {
-	      var _publish__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee(message) {
-	        return regeneratorRuntime.wrap(function _callee$(_context) {
-	          while (1) {
-	            switch (_context.prev = _context.next) {
-	              case 0:
-	                _context.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                return _context.abrupt("return", this.instance.Events.trigger("message", message.toString()));
-	              case 3:
-	              case "end":
-	                return _context.stop();
-	            }
+	      var _publish__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(message) {
+	        return _regeneratorRuntime().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              _context.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              return _context.abrupt("return", this.instance.Events.trigger("message", message.toString()));
+	            case 3:
+	            case "end":
+	              return _context.stop();
 	          }
 	        }, _callee, this);
 	      }));
@@ -1633,20 +1922,18 @@
 	  }, {
 	    key: "__disconnect__",
 	    value: function () {
-	      var _disconnect__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2(flush) {
-	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	          while (1) {
-	            switch (_context2.prev = _context2.next) {
-	              case 0:
-	                _context2.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                clearInterval(this.heartbeat);
-	                return _context2.abrupt("return", this.Promise.resolve());
-	              case 4:
-	              case "end":
-	                return _context2.stop();
-	            }
+	      var _disconnect__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(flush) {
+	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	          while (1) switch (_context2.prev = _context2.next) {
+	            case 0:
+	              _context2.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              clearInterval(this.heartbeat);
+	              return _context2.abrupt("return", this.Promise.resolve());
+	            case 4:
+	            case "end":
+	              return _context2.stop();
 	          }
 	        }, _callee2, this);
 	      }));
@@ -1672,22 +1959,20 @@
 	  }, {
 	    key: "__updateSettings__",
 	    value: function () {
-	      var _updateSettings__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee3(options) {
-	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-	          while (1) {
-	            switch (_context3.prev = _context3.next) {
-	              case 0:
-	                _context3.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                parser$2.overwrite(options, options, this.storeOptions);
-	                this._startHeartbeat();
-	                this.instance._drainAll(this.computeCapacity());
-	                return _context3.abrupt("return", true);
-	              case 6:
-	              case "end":
-	                return _context3.stop();
-	            }
+	      var _updateSettings__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3(options) {
+	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+	          while (1) switch (_context3.prev = _context3.next) {
+	            case 0:
+	              _context3.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              parser$2.overwrite(options, options, this.storeOptions);
+	              this._startHeartbeat();
+	              this.instance._drainAll(this.computeCapacity());
+	              return _context3.abrupt("return", true);
+	            case 6:
+	            case "end":
+	              return _context3.stop();
 	          }
 	        }, _callee3, this);
 	      }));
@@ -1699,19 +1984,17 @@
 	  }, {
 	    key: "__running__",
 	    value: function () {
-	      var _running__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-	          while (1) {
-	            switch (_context4.prev = _context4.next) {
-	              case 0:
-	                _context4.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                return _context4.abrupt("return", this._running);
-	              case 3:
-	              case "end":
-	                return _context4.stop();
-	            }
+	      var _running__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+	        return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+	          while (1) switch (_context4.prev = _context4.next) {
+	            case 0:
+	              _context4.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              return _context4.abrupt("return", this._running);
+	            case 3:
+	            case "end":
+	              return _context4.stop();
 	          }
 	        }, _callee4, this);
 	      }));
@@ -1723,19 +2006,17 @@
 	  }, {
 	    key: "__queued__",
 	    value: function () {
-	      var _queued__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-	          while (1) {
-	            switch (_context5.prev = _context5.next) {
-	              case 0:
-	                _context5.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                return _context5.abrupt("return", this.instance.queued());
-	              case 3:
-	              case "end":
-	                return _context5.stop();
-	            }
+	      var _queued__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee5() {
+	        return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+	          while (1) switch (_context5.prev = _context5.next) {
+	            case 0:
+	              _context5.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              return _context5.abrupt("return", this.instance.queued());
+	            case 3:
+	            case "end":
+	              return _context5.stop();
 	          }
 	        }, _callee5, this);
 	      }));
@@ -1747,19 +2028,17 @@
 	  }, {
 	    key: "__done__",
 	    value: function () {
-	      var _done__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
-	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
-	          while (1) {
-	            switch (_context6.prev = _context6.next) {
-	              case 0:
-	                _context6.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                return _context6.abrupt("return", this._done);
-	              case 3:
-	              case "end":
-	                return _context6.stop();
-	            }
+	      var _done__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
+	        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+	          while (1) switch (_context6.prev = _context6.next) {
+	            case 0:
+	              _context6.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              return _context6.abrupt("return", this._done);
+	            case 3:
+	            case "end":
+	              return _context6.stop();
 	          }
 	        }, _callee6, this);
 	      }));
@@ -1771,19 +2050,17 @@
 	  }, {
 	    key: "__groupCheck__",
 	    value: function () {
-	      var _groupCheck__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee7(time) {
-	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
-	          while (1) {
-	            switch (_context7.prev = _context7.next) {
-	              case 0:
-	                _context7.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                return _context7.abrupt("return", this._nextRequest + this.timeout < time);
-	              case 3:
-	              case "end":
-	                return _context7.stop();
-	            }
+	      var _groupCheck__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee7(time) {
+	        return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+	          while (1) switch (_context7.prev = _context7.next) {
+	            case 0:
+	              _context7.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              return _context7.abrupt("return", this._nextRequest + this.timeout < time);
+	            case 3:
+	            case "end":
+	              return _context7.stop();
 	          }
 	        }, _callee7, this);
 	      }));
@@ -1819,22 +2096,20 @@
 	  }, {
 	    key: "__incrementReservoir__",
 	    value: function () {
-	      var _incrementReservoir__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee8(incr) {
+	      var _incrementReservoir__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee8(incr) {
 	        var reservoir;
-	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
-	          while (1) {
-	            switch (_context8.prev = _context8.next) {
-	              case 0:
-	                _context8.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                reservoir = this.storeOptions.reservoir += incr;
-	                this.instance._drainAll(this.computeCapacity());
-	                return _context8.abrupt("return", reservoir);
-	              case 5:
-	              case "end":
-	                return _context8.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee8$(_context8) {
+	          while (1) switch (_context8.prev = _context8.next) {
+	            case 0:
+	              _context8.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              reservoir = this.storeOptions.reservoir += incr;
+	              this.instance._drainAll(this.computeCapacity());
+	              return _context8.abrupt("return", reservoir);
+	            case 5:
+	            case "end":
+	              return _context8.stop();
 	          }
 	        }, _callee8, this);
 	      }));
@@ -1846,19 +2121,17 @@
 	  }, {
 	    key: "__currentReservoir__",
 	    value: function () {
-	      var _currentReservoir__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
-	          while (1) {
-	            switch (_context9.prev = _context9.next) {
-	              case 0:
-	                _context9.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                return _context9.abrupt("return", this.storeOptions.reservoir);
-	              case 3:
-	              case "end":
-	                return _context9.stop();
-	            }
+	      var _currentReservoir__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee9() {
+	        return _regeneratorRuntime().wrap(function _callee9$(_context9) {
+	          while (1) switch (_context9.prev = _context9.next) {
+	            case 0:
+	              _context9.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              return _context9.abrupt("return", this.storeOptions.reservoir);
+	            case 3:
+	            case "end":
+	              return _context9.stop();
 	          }
 	        }, _callee9, this);
 	      }));
@@ -1880,21 +2153,19 @@
 	  }, {
 	    key: "__check__",
 	    value: function () {
-	      var _check__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee10(weight) {
+	      var _check__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee10(weight) {
 	        var now;
-	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
-	          while (1) {
-	            switch (_context10.prev = _context10.next) {
-	              case 0:
-	                _context10.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                now = Date.now();
-	                return _context10.abrupt("return", this.check(weight, now));
-	              case 4:
-	              case "end":
-	                return _context10.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee10$(_context10) {
+	          while (1) switch (_context10.prev = _context10.next) {
+	            case 0:
+	              _context10.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              now = Date.now();
+	              return _context10.abrupt("return", this.check(weight, now));
+	            case 4:
+	            case "end":
+	              return _context10.stop();
 	          }
 	        }, _callee10, this);
 	      }));
@@ -1906,39 +2177,37 @@
 	  }, {
 	    key: "__register__",
 	    value: function () {
-	      var _register__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee11(index, weight, expiration) {
+	      var _register__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee11(index, weight, expiration) {
 	        var now, wait;
-	        return regeneratorRuntime.wrap(function _callee11$(_context11) {
-	          while (1) {
-	            switch (_context11.prev = _context11.next) {
-	              case 0:
-	                _context11.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                now = Date.now();
-	                if (!this.conditionsCheck(weight)) {
-	                  _context11.next = 11;
-	                  break;
-	                }
-	                this._running += weight;
-	                if (this.storeOptions.reservoir != null) {
-	                  this.storeOptions.reservoir -= weight;
-	                }
-	                wait = Math.max(this._nextRequest - now, 0);
-	                this._nextRequest = now + wait + this.storeOptions.minTime;
-	                return _context11.abrupt("return", {
-	                  success: true,
-	                  wait: wait,
-	                  reservoir: this.storeOptions.reservoir
-	                });
-	              case 11:
-	                return _context11.abrupt("return", {
-	                  success: false
-	                });
-	              case 12:
-	              case "end":
-	                return _context11.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee11$(_context11) {
+	          while (1) switch (_context11.prev = _context11.next) {
+	            case 0:
+	              _context11.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              now = Date.now();
+	              if (!this.conditionsCheck(weight)) {
+	                _context11.next = 11;
+	                break;
+	              }
+	              this._running += weight;
+	              if (this.storeOptions.reservoir != null) {
+	                this.storeOptions.reservoir -= weight;
+	              }
+	              wait = Math.max(this._nextRequest - now, 0);
+	              this._nextRequest = now + wait + this.storeOptions.minTime;
+	              return _context11.abrupt("return", {
+	                success: true,
+	                wait: wait,
+	                reservoir: this.storeOptions.reservoir
+	              });
+	            case 11:
+	              return _context11.abrupt("return", {
+	                success: false
+	              });
+	            case 12:
+	            case "end":
+	              return _context11.stop();
 	          }
 	        }, _callee11, this);
 	      }));
@@ -1955,38 +2224,36 @@
 	  }, {
 	    key: "__submit__",
 	    value: function () {
-	      var _submit__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee12(queueLength, weight) {
+	      var _submit__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee12(queueLength, weight) {
 	        var blocked, now, reachedHWM;
-	        return regeneratorRuntime.wrap(function _callee12$(_context12) {
-	          while (1) {
-	            switch (_context12.prev = _context12.next) {
-	              case 0:
-	                _context12.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                if (!(this.storeOptions.maxConcurrent != null && weight > this.storeOptions.maxConcurrent)) {
-	                  _context12.next = 4;
-	                  break;
-	                }
-	                throw new BottleneckError$2("Impossible to add a job having a weight of ".concat(weight, " to a limiter having a maxConcurrent setting of ").concat(this.storeOptions.maxConcurrent));
-	              case 4:
-	                now = Date.now();
-	                reachedHWM = this.storeOptions.highWater != null && queueLength === this.storeOptions.highWater && !this.check(weight, now);
-	                blocked = this.strategyIsBlock() && (reachedHWM || this.isBlocked(now));
-	                if (blocked) {
-	                  this._unblockTime = now + this.computePenalty();
-	                  this._nextRequest = this._unblockTime + this.storeOptions.minTime;
-	                  this.instance._dropAllQueued();
-	                }
-	                return _context12.abrupt("return", {
-	                  reachedHWM: reachedHWM,
-	                  blocked: blocked,
-	                  strategy: this.storeOptions.strategy
-	                });
-	              case 9:
-	              case "end":
-	                return _context12.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee12$(_context12) {
+	          while (1) switch (_context12.prev = _context12.next) {
+	            case 0:
+	              _context12.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              if (!(this.storeOptions.maxConcurrent != null && weight > this.storeOptions.maxConcurrent)) {
+	                _context12.next = 4;
+	                break;
+	              }
+	              throw new BottleneckError$2("Impossible to add a job having a weight of ".concat(weight, " to a limiter having a maxConcurrent setting of ").concat(this.storeOptions.maxConcurrent));
+	            case 4:
+	              now = Date.now();
+	              reachedHWM = this.storeOptions.highWater != null && queueLength === this.storeOptions.highWater && !this.check(weight, now);
+	              blocked = this.strategyIsBlock() && (reachedHWM || this.isBlocked(now));
+	              if (blocked) {
+	                this._unblockTime = now + this.computePenalty();
+	                this._nextRequest = this._unblockTime + this.storeOptions.minTime;
+	                this.instance._dropAllQueued();
+	              }
+	              return _context12.abrupt("return", {
+	                reachedHWM: reachedHWM,
+	                blocked: blocked,
+	                strategy: this.storeOptions.strategy
+	              });
+	            case 9:
+	            case "end":
+	              return _context12.stop();
 	          }
 	        }, _callee12, this);
 	      }));
@@ -1998,24 +2265,22 @@
 	  }, {
 	    key: "__free__",
 	    value: function () {
-	      var _free__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee13(index, weight) {
-	        return regeneratorRuntime.wrap(function _callee13$(_context13) {
-	          while (1) {
-	            switch (_context13.prev = _context13.next) {
-	              case 0:
-	                _context13.next = 2;
-	                return this.yieldLoop();
-	              case 2:
-	                this._running -= weight;
-	                this._done += weight;
-	                this.instance._drainAll(this.computeCapacity());
-	                return _context13.abrupt("return", {
-	                  running: this._running
-	                });
-	              case 6:
-	              case "end":
-	                return _context13.stop();
-	            }
+	      var _free__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee13(index, weight) {
+	        return _regeneratorRuntime().wrap(function _callee13$(_context13) {
+	          while (1) switch (_context13.prev = _context13.next) {
+	            case 0:
+	              _context13.next = 2;
+	              return this.yieldLoop();
+	            case 2:
+	              this._running -= weight;
+	              this._done += weight;
+	              this.instance._drainAll(this.computeCapacity());
+	              return _context13.abrupt("return", {
+	                running: this._running
+	              });
+	            case 6:
+	            case "end":
+	              return _context13.stop();
 	          }
 	        }, _callee13, this);
 	      }));
@@ -2025,7 +2290,6 @@
 	      return __free__;
 	    }()
 	  }]);
-	  return LocalDatastore;
 	}();
 	var LocalDatastore_1 = LocalDatastore;
 
@@ -2256,7 +2520,7 @@
 	        };
 	      });
 	    }
-	    _createClass(RedisConnection, [{
+	    return _createClass(RedisConnection, [{
 	      key: "_setup",
 	      value: function _setup(client, sub) {
 	        var _this2 = this;
@@ -2305,28 +2569,26 @@
 	    }, {
 	      key: "__runCommand__",
 	      value: function () {
-	        var _runCommand__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee(cmd) {
+	        var _runCommand__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(cmd) {
 	          var _this5 = this;
-	          return regeneratorRuntime.wrap(function _callee$(_context) {
-	            while (1) {
-	              switch (_context.prev = _context.next) {
-	                case 0:
-	                  _context.next = 2;
-	                  return this.ready;
-	                case 2:
-	                  return _context.abrupt("return", new this.Promise(function (resolve, reject) {
-	                    return _this5.client.multi([cmd]).exec_atomic(function (err, replies) {
-	                      if (err != null) {
-	                        return reject(err);
-	                      } else {
-	                        return resolve(replies[0]);
-	                      }
-	                    });
-	                  }));
-	                case 3:
-	                case "end":
-	                  return _context.stop();
-	              }
+	          return _regeneratorRuntime().wrap(function _callee$(_context) {
+	            while (1) switch (_context.prev = _context.next) {
+	              case 0:
+	                _context.next = 2;
+	                return this.ready;
+	              case 2:
+	                return _context.abrupt("return", new this.Promise(function (resolve, reject) {
+	                  return _this5.client.multi([cmd]).exec_atomic(function (err, replies) {
+	                    if (err != null) {
+	                      return reject(err);
+	                    } else {
+	                      return resolve(replies[0]);
+	                    }
+	                  });
+	                }));
+	              case 3:
+	              case "end":
+	                return _context.stop();
 	            }
 	          }, _callee, this);
 	        }));
@@ -2359,32 +2621,30 @@
 	      value: function __removeLimiter__(instance) {
 	        var _this7 = this;
 	        return this.Promise.all([instance.channel(), instance.channel_client()].map(/*#__PURE__*/function () {
-	          var _ref = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2(channel) {
-	            return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	              while (1) {
-	                switch (_context2.prev = _context2.next) {
-	                  case 0:
-	                    if (_this7.terminated) {
-	                      _context2.next = 3;
-	                      break;
-	                    }
+	          var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(channel) {
+	            return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	              while (1) switch (_context2.prev = _context2.next) {
+	                case 0:
+	                  if (_this7.terminated) {
 	                    _context2.next = 3;
-	                    return new _this7.Promise(function (resolve, reject) {
-	                      return _this7.subscriber.unsubscribe(channel, function (err, chan) {
-	                        if (err != null) {
-	                          return reject(err);
-	                        }
-	                        if (chan === channel) {
-	                          return resolve();
-	                        }
-	                      });
+	                    break;
+	                  }
+	                  _context2.next = 3;
+	                  return new _this7.Promise(function (resolve, reject) {
+	                    return _this7.subscriber.unsubscribe(channel, function (err, chan) {
+	                      if (err != null) {
+	                        return reject(err);
+	                      }
+	                      if (chan === channel) {
+	                        return resolve();
+	                      }
 	                    });
-	                  case 3:
-	                    return _context2.abrupt("return", delete _this7.limiters[channel]);
-	                  case 4:
-	                  case "end":
-	                    return _context2.stop();
-	                }
+	                  });
+	                case 3:
+	                  return _context2.abrupt("return", delete _this7.limiters[channel]);
+	                case 4:
+	                case "end":
+	                  return _context2.stop();
 	              }
 	            }, _callee2);
 	          }));
@@ -2422,7 +2682,6 @@
 	        return this.Promise.resolve();
 	      }
 	    }]);
-	    return RedisConnection;
 	  }();
 	  RedisConnection.prototype.datastore = "redis";
 	  RedisConnection.prototype.defaults = {
@@ -2474,7 +2733,7 @@
 	        };
 	      });
 	    }
-	    _createClass(IORedisConnection, [{
+	    return _createClass(IORedisConnection, [{
 	      key: "_setup",
 	      value: function _setup(client, sub) {
 	        var _this2 = this;
@@ -2509,28 +2768,26 @@
 	    }, {
 	      key: "__runCommand__",
 	      value: function () {
-	        var _runCommand__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee(cmd) {
+	        var _runCommand__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(cmd) {
 	          var _, deleted, _yield$this$client$pi, _yield$this$client$pi2, _yield$this$client$pi3;
-	          return regeneratorRuntime.wrap(function _callee$(_context) {
-	            while (1) {
-	              switch (_context.prev = _context.next) {
-	                case 0:
-	                  _context.next = 2;
-	                  return this.ready;
-	                case 2:
-	                  _context.next = 4;
-	                  return this.client.pipeline([cmd]).exec();
-	                case 4:
-	                  _yield$this$client$pi = _context.sent;
-	                  _yield$this$client$pi2 = _slicedToArray(_yield$this$client$pi, 1);
-	                  _yield$this$client$pi3 = _slicedToArray(_yield$this$client$pi2[0], 2);
-	                  _ = _yield$this$client$pi3[0];
-	                  deleted = _yield$this$client$pi3[1];
-	                  return _context.abrupt("return", deleted);
-	                case 10:
-	                case "end":
-	                  return _context.stop();
-	              }
+	          return _regeneratorRuntime().wrap(function _callee$(_context) {
+	            while (1) switch (_context.prev = _context.next) {
+	              case 0:
+	                _context.next = 2;
+	                return this.ready;
+	              case 2:
+	                _context.next = 4;
+	                return this.client.pipeline([cmd]).exec();
+	              case 4:
+	                _yield$this$client$pi = _context.sent;
+	                _yield$this$client$pi2 = _slicedToArray(_yield$this$client$pi, 1);
+	                _yield$this$client$pi3 = _slicedToArray(_yield$this$client$pi2[0], 2);
+	                _ = _yield$this$client$pi3[0];
+	                deleted = _yield$this$client$pi3[1];
+	                return _context.abrupt("return", deleted);
+	              case 10:
+	              case "end":
+	                return _context.stop();
 	            }
 	          }, _callee, this);
 	        }));
@@ -2557,23 +2814,21 @@
 	      value: function __removeLimiter__(instance) {
 	        var _this5 = this;
 	        return [instance.channel(), instance.channel_client()].forEach(/*#__PURE__*/function () {
-	          var _ref = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2(channel) {
-	            return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	              while (1) {
-	                switch (_context2.prev = _context2.next) {
-	                  case 0:
-	                    if (_this5.terminated) {
-	                      _context2.next = 3;
-	                      break;
-	                    }
+	          var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(channel) {
+	            return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	              while (1) switch (_context2.prev = _context2.next) {
+	                case 0:
+	                  if (_this5.terminated) {
 	                    _context2.next = 3;
-	                    return _this5.subscriber.unsubscribe(channel);
-	                  case 3:
-	                    return _context2.abrupt("return", delete _this5.limiters[channel]);
-	                  case 4:
-	                  case "end":
-	                    return _context2.stop();
-	                }
+	                    break;
+	                  }
+	                  _context2.next = 3;
+	                  return _this5.subscriber.unsubscribe(channel);
+	                case 3:
+	                  return _context2.abrupt("return", delete _this5.limiters[channel]);
+	                case 4:
+	                case "end":
+	                  return _context2.stop();
 	              }
 	            }, _callee2);
 	          }));
@@ -2615,7 +2870,6 @@
 	        }
 	      }
 	    }]);
-	    return IORedisConnection;
 	  }();
 	  IORedisConnection.prototype.datastore = "ioredis";
 	  IORedisConnection.prototype.defaults = {
@@ -2682,25 +2936,23 @@
 	      return _this.clients;
 	    });
 	  }
-	  _createClass(RedisDatastore, [{
+	  return _createClass(RedisDatastore, [{
 	    key: "__publish__",
 	    value: function () {
-	      var _publish__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee(message) {
+	      var _publish__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(message) {
 	        var client, _yield$this$ready;
-	        return regeneratorRuntime.wrap(function _callee$(_context) {
-	          while (1) {
-	            switch (_context.prev = _context.next) {
-	              case 0:
-	                _context.next = 2;
-	                return this.ready;
-	              case 2:
-	                _yield$this$ready = _context.sent;
-	                client = _yield$this$ready.client;
-	                return _context.abrupt("return", client.publish(this.instance.channel(), "message:".concat(message.toString())));
-	              case 5:
-	              case "end":
-	                return _context.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              _context.next = 2;
+	              return this.ready;
+	            case 2:
+	              _yield$this$ready = _context.sent;
+	              client = _yield$this$ready.client;
+	              return _context.abrupt("return", client.publish(this.instance.channel(), "message:".concat(message.toString())));
+	            case 5:
+	            case "end":
+	              return _context.stop();
 	          }
 	        }, _callee, this);
 	      }));
@@ -2712,116 +2964,112 @@
 	  }, {
 	    key: "onMessage",
 	    value: function () {
-	      var _onMessage = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee3(channel, message) {
+	      var _onMessage = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3(channel, message) {
 	        var _this2 = this;
 	        var capacity, counter, data, drained, e, newCapacity, pos, priorityClient, rawCapacity, type, _ref, _data$split, _data$split2;
-	        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-	          while (1) {
-	            switch (_context3.prev = _context3.next) {
-	              case 0:
-	                _context3.prev = 0;
-	                pos = message.indexOf(":");
-	                _ref = [message.slice(0, pos), message.slice(pos + 1)];
-	                type = _ref[0];
-	                data = _ref[1];
-	                if (!(type === "capacity")) {
-	                  _context3.next = 11;
-	                  break;
-	                }
-	                _context3.next = 8;
-	                return this.instance._drainAll(data.length > 0 ? ~~data : void 0);
-	              case 8:
-	                return _context3.abrupt("return", _context3.sent);
-	              case 11:
-	                if (!(type === "capacity-priority")) {
-	                  _context3.next = 37;
-	                  break;
-	                }
-	                _data$split = data.split(":");
-	                _data$split2 = _slicedToArray(_data$split, 3);
-	                rawCapacity = _data$split2[0];
-	                priorityClient = _data$split2[1];
-	                counter = _data$split2[2];
-	                capacity = rawCapacity.length > 0 ? ~~rawCapacity : void 0;
-	                if (!(priorityClient === this.clientId)) {
-	                  _context3.next = 28;
-	                  break;
-	                }
-	                _context3.next = 21;
-	                return this.instance._drainAll(capacity);
-	              case 21:
-	                drained = _context3.sent;
-	                newCapacity = capacity != null ? capacity - (drained || 0) : "";
-	                _context3.next = 25;
-	                return this.clients.client.publish(this.instance.channel(), "capacity-priority:".concat(newCapacity, "::").concat(counter));
-	              case 25:
-	                return _context3.abrupt("return", _context3.sent);
-	              case 28:
-	                if (!(priorityClient === "")) {
-	                  _context3.next = 34;
-	                  break;
-	                }
-	                clearTimeout(this.capacityPriorityCounters[counter]);
-	                delete this.capacityPriorityCounters[counter];
-	                return _context3.abrupt("return", this.instance._drainAll(capacity));
-	              case 34:
-	                return _context3.abrupt("return", this.capacityPriorityCounters[counter] = setTimeout(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-	                  var e;
-	                  return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	                    while (1) {
-	                      switch (_context2.prev = _context2.next) {
-	                        case 0:
-	                          _context2.prev = 0;
-	                          delete _this2.capacityPriorityCounters[counter];
-	                          _context2.next = 4;
-	                          return _this2.runScript("blacklist_client", [priorityClient]);
-	                        case 4:
-	                          _context2.next = 6;
-	                          return _this2.instance._drainAll(capacity);
-	                        case 6:
-	                          return _context2.abrupt("return", _context2.sent);
-	                        case 9:
-	                          _context2.prev = 9;
-	                          _context2.t0 = _context2["catch"](0);
-	                          e = _context2.t0;
-	                          return _context2.abrupt("return", _this2.instance.Events.trigger("error", e));
-	                        case 13:
-	                        case "end":
-	                          return _context2.stop();
-	                      }
-	                    }
-	                  }, _callee2, null, [[0, 9]]);
-	                })), 1000));
-	              case 35:
+	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+	          while (1) switch (_context3.prev = _context3.next) {
+	            case 0:
+	              _context3.prev = 0;
+	              pos = message.indexOf(":");
+	              _ref = [message.slice(0, pos), message.slice(pos + 1)];
+	              type = _ref[0];
+	              data = _ref[1];
+	              if (!(type === "capacity")) {
+	                _context3.next = 11;
+	                break;
+	              }
+	              _context3.next = 8;
+	              return this.instance._drainAll(data.length > 0 ? ~~data : void 0);
+	            case 8:
+	              return _context3.abrupt("return", _context3.sent);
+	            case 11:
+	              if (!(type === "capacity-priority")) {
+	                _context3.next = 37;
+	                break;
+	              }
+	              _data$split = data.split(":");
+	              _data$split2 = _slicedToArray(_data$split, 3);
+	              rawCapacity = _data$split2[0];
+	              priorityClient = _data$split2[1];
+	              counter = _data$split2[2];
+	              capacity = rawCapacity.length > 0 ? ~~rawCapacity : void 0;
+	              if (!(priorityClient === this.clientId)) {
+	                _context3.next = 28;
+	                break;
+	              }
+	              _context3.next = 21;
+	              return this.instance._drainAll(capacity);
+	            case 21:
+	              drained = _context3.sent;
+	              newCapacity = capacity != null ? capacity - (drained || 0) : "";
+	              _context3.next = 25;
+	              return this.clients.client.publish(this.instance.channel(), "capacity-priority:".concat(newCapacity, "::").concat(counter));
+	            case 25:
+	              return _context3.abrupt("return", _context3.sent);
+	            case 28:
+	              if (!(priorityClient === "")) {
+	                _context3.next = 34;
+	                break;
+	              }
+	              clearTimeout(this.capacityPriorityCounters[counter]);
+	              delete this.capacityPriorityCounters[counter];
+	              return _context3.abrupt("return", this.instance._drainAll(capacity));
+	            case 34:
+	              return _context3.abrupt("return", this.capacityPriorityCounters[counter] = setTimeout(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+	                var e;
+	                return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	                  while (1) switch (_context2.prev = _context2.next) {
+	                    case 0:
+	                      _context2.prev = 0;
+	                      delete _this2.capacityPriorityCounters[counter];
+	                      _context2.next = 4;
+	                      return _this2.runScript("blacklist_client", [priorityClient]);
+	                    case 4:
+	                      _context2.next = 6;
+	                      return _this2.instance._drainAll(capacity);
+	                    case 6:
+	                      return _context2.abrupt("return", _context2.sent);
+	                    case 9:
+	                      _context2.prev = 9;
+	                      _context2.t0 = _context2["catch"](0);
+	                      e = _context2.t0;
+	                      return _context2.abrupt("return", _this2.instance.Events.trigger("error", e));
+	                    case 13:
+	                    case "end":
+	                      return _context2.stop();
+	                  }
+	                }, _callee2, null, [[0, 9]]);
+	              })), 1000));
+	            case 35:
+	              _context3.next = 45;
+	              break;
+	            case 37:
+	              if (!(type === "message")) {
+	                _context3.next = 41;
+	                break;
+	              }
+	              return _context3.abrupt("return", this.instance.Events.trigger("message", data));
+	            case 41:
+	              if (!(type === "blocked")) {
 	                _context3.next = 45;
 	                break;
-	              case 37:
-	                if (!(type === "message")) {
-	                  _context3.next = 41;
-	                  break;
-	                }
-	                return _context3.abrupt("return", this.instance.Events.trigger("message", data));
-	              case 41:
-	                if (!(type === "blocked")) {
-	                  _context3.next = 45;
-	                  break;
-	                }
-	                _context3.next = 44;
-	                return this.instance._dropAllQueued();
-	              case 44:
-	                return _context3.abrupt("return", _context3.sent);
-	              case 45:
-	                _context3.next = 51;
-	                break;
-	              case 47:
-	                _context3.prev = 47;
-	                _context3.t0 = _context3["catch"](0);
-	                e = _context3.t0;
-	                return _context3.abrupt("return", this.instance.Events.trigger("error", e));
-	              case 51:
-	              case "end":
-	                return _context3.stop();
-	            }
+	              }
+	              _context3.next = 44;
+	              return this.instance._dropAllQueued();
+	            case 44:
+	              return _context3.abrupt("return", _context3.sent);
+	            case 45:
+	              _context3.next = 51;
+	              break;
+	            case 47:
+	              _context3.prev = 47;
+	              _context3.t0 = _context3["catch"](0);
+	              e = _context3.t0;
+	              return _context3.abrupt("return", this.instance.Events.trigger("error", e));
+	            case 51:
+	            case "end":
+	              return _context3.stop();
 	          }
 	        }, _callee3, this, [[0, 47]]);
 	      }));
@@ -2843,51 +3091,49 @@
 	  }, {
 	    key: "runScript",
 	    value: function () {
-	      var _runScript = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee4(name, args) {
+	      var _runScript = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee4(name, args) {
 	        var _this3 = this;
-	        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-	          while (1) {
-	            switch (_context4.prev = _context4.next) {
-	              case 0:
-	                if (name === "init" || name === "register_client") {
-	                  _context4.next = 3;
-	                  break;
-	                }
+	        return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+	          while (1) switch (_context4.prev = _context4.next) {
+	            case 0:
+	              if (name === "init" || name === "register_client") {
 	                _context4.next = 3;
-	                return this.ready;
-	              case 3:
-	                return _context4.abrupt("return", new this.Promise(function (resolve, reject) {
-	                  var all_args, arr;
-	                  all_args = [Date.now(), _this3.clientId].concat(args);
-	                  _this3.instance.Events.trigger("debug", "Calling Redis script: ".concat(name, ".lua"), all_args);
-	                  arr = _this3.connection.__scriptArgs__(name, _this3.originalId, all_args, function (err, replies) {
-	                    if (err != null) {
-	                      return reject(err);
-	                    }
-	                    return resolve(replies);
-	                  });
-	                  return _this3.connection.__scriptFn__(name).apply(void 0, _toConsumableArray(arr));
-	                })["catch"](function (e) {
-	                  if (e.message.match(/^(.*\s)?SETTINGS_KEY_NOT_FOUND$/) !== null) {
-	                    if (name === "heartbeat") {
-	                      return _this3.Promise.resolve();
-	                    } else {
-	                      return _this3.runScript("init", _this3.prepareInitSettings(false)).then(function () {
-	                        return _this3.runScript(name, args);
-	                      });
-	                    }
-	                  } else if (e.message.match(/^(.*\s)?UNKNOWN_CLIENT$/) !== null) {
-	                    return _this3.runScript("register_client", [_this3.instance.queued()]).then(function () {
+	                break;
+	              }
+	              _context4.next = 3;
+	              return this.ready;
+	            case 3:
+	              return _context4.abrupt("return", new this.Promise(function (resolve, reject) {
+	                var all_args, arr;
+	                all_args = [Date.now(), _this3.clientId].concat(args);
+	                _this3.instance.Events.trigger("debug", "Calling Redis script: ".concat(name, ".lua"), all_args);
+	                arr = _this3.connection.__scriptArgs__(name, _this3.originalId, all_args, function (err, replies) {
+	                  if (err != null) {
+	                    return reject(err);
+	                  }
+	                  return resolve(replies);
+	                });
+	                return _this3.connection.__scriptFn__(name).apply(void 0, _toConsumableArray(arr));
+	              })["catch"](function (e) {
+	                if (e.message.match(/^(.*\s)?SETTINGS_KEY_NOT_FOUND$/) !== null) {
+	                  if (name === "heartbeat") {
+	                    return _this3.Promise.resolve();
+	                  } else {
+	                    return _this3.runScript("init", _this3.prepareInitSettings(false)).then(function () {
 	                      return _this3.runScript(name, args);
 	                    });
-	                  } else {
-	                    return _this3.Promise.reject(e);
 	                  }
-	                }));
-	              case 4:
-	              case "end":
-	                return _context4.stop();
-	            }
+	                } else if (e.message.match(/^(.*\s)?UNKNOWN_CLIENT$/) !== null) {
+	                  return _this3.runScript("register_client", [_this3.instance.queued()]).then(function () {
+	                    return _this3.runScript(name, args);
+	                  });
+	                } else {
+	                  return _this3.Promise.reject(e);
+	                }
+	              }));
+	            case 4:
+	            case "end":
+	              return _context4.stop();
 	          }
 	        }, _callee4, this);
 	      }));
@@ -2939,19 +3185,17 @@
 	  }, {
 	    key: "__updateSettings__",
 	    value: function () {
-	      var _updateSettings__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee5(options) {
-	        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-	          while (1) {
-	            switch (_context5.prev = _context5.next) {
-	              case 0:
-	                _context5.next = 2;
-	                return this.runScript("update_settings", this.prepareObject(options));
-	              case 2:
-	                return _context5.abrupt("return", parser$5.overwrite(options, options, this.storeOptions));
-	              case 3:
-	              case "end":
-	                return _context5.stop();
-	            }
+	      var _updateSettings__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee5(options) {
+	        return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+	          while (1) switch (_context5.prev = _context5.next) {
+	            case 0:
+	              _context5.next = 2;
+	              return this.runScript("update_settings", this.prepareObject(options));
+	            case 2:
+	              return _context5.abrupt("return", parser$5.overwrite(options, options, this.storeOptions));
+	            case 3:
+	            case "end":
+	              return _context5.stop();
 	          }
 	        }, _callee5, this);
 	      }));
@@ -2978,21 +3222,19 @@
 	  }, {
 	    key: "__groupCheck__",
 	    value: function () {
-	      var _groupCheck__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
-	        return regeneratorRuntime.wrap(function _callee6$(_context6) {
-	          while (1) {
-	            switch (_context6.prev = _context6.next) {
-	              case 0:
-	                _context6.t0 = this;
-	                _context6.next = 3;
-	                return this.runScript("group_check", []);
-	              case 3:
-	                _context6.t1 = _context6.sent;
-	                return _context6.abrupt("return", _context6.t0.convertBool.call(_context6.t0, _context6.t1));
-	              case 5:
-	              case "end":
-	                return _context6.stop();
-	            }
+	      var _groupCheck__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
+	        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+	          while (1) switch (_context6.prev = _context6.next) {
+	            case 0:
+	              _context6.t0 = this;
+	              _context6.next = 3;
+	              return this.runScript("group_check", []);
+	            case 3:
+	              _context6.t1 = _context6.sent;
+	              return _context6.abrupt("return", _context6.t0.convertBool.call(_context6.t0, _context6.t1));
+	            case 5:
+	            case "end":
+	              return _context6.stop();
 	          }
 	        }, _callee6, this);
 	      }));
@@ -3014,21 +3256,19 @@
 	  }, {
 	    key: "__check__",
 	    value: function () {
-	      var _check__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee7(weight) {
-	        return regeneratorRuntime.wrap(function _callee7$(_context7) {
-	          while (1) {
-	            switch (_context7.prev = _context7.next) {
-	              case 0:
-	                _context7.t0 = this;
-	                _context7.next = 3;
-	                return this.runScript("check", this.prepareArray([weight]));
-	              case 3:
-	                _context7.t1 = _context7.sent;
-	                return _context7.abrupt("return", _context7.t0.convertBool.call(_context7.t0, _context7.t1));
-	              case 5:
-	              case "end":
-	                return _context7.stop();
-	            }
+	      var _check__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee7(weight) {
+	        return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+	          while (1) switch (_context7.prev = _context7.next) {
+	            case 0:
+	              _context7.t0 = this;
+	              _context7.next = 3;
+	              return this.runScript("check", this.prepareArray([weight]));
+	            case 3:
+	              _context7.t1 = _context7.sent;
+	              return _context7.abrupt("return", _context7.t0.convertBool.call(_context7.t0, _context7.t1));
+	            case 5:
+	            case "end":
+	              return _context7.stop();
 	          }
 	        }, _callee7, this);
 	      }));
@@ -3040,29 +3280,27 @@
 	  }, {
 	    key: "__register__",
 	    value: function () {
-	      var _register__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee8(index, weight, expiration) {
+	      var _register__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee8(index, weight, expiration) {
 	        var reservoir, success, wait, _yield$this$runScript, _yield$this$runScript2;
-	        return regeneratorRuntime.wrap(function _callee8$(_context8) {
-	          while (1) {
-	            switch (_context8.prev = _context8.next) {
-	              case 0:
-	                _context8.next = 2;
-	                return this.runScript("register", this.prepareArray([index, weight, expiration]));
-	              case 2:
-	                _yield$this$runScript = _context8.sent;
-	                _yield$this$runScript2 = _slicedToArray(_yield$this$runScript, 3);
-	                success = _yield$this$runScript2[0];
-	                wait = _yield$this$runScript2[1];
-	                reservoir = _yield$this$runScript2[2];
-	                return _context8.abrupt("return", {
-	                  success: this.convertBool(success),
-	                  wait: wait,
-	                  reservoir: reservoir
-	                });
-	              case 8:
-	              case "end":
-	                return _context8.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee8$(_context8) {
+	          while (1) switch (_context8.prev = _context8.next) {
+	            case 0:
+	              _context8.next = 2;
+	              return this.runScript("register", this.prepareArray([index, weight, expiration]));
+	            case 2:
+	              _yield$this$runScript = _context8.sent;
+	              _yield$this$runScript2 = _slicedToArray(_yield$this$runScript, 3);
+	              success = _yield$this$runScript2[0];
+	              wait = _yield$this$runScript2[1];
+	              reservoir = _yield$this$runScript2[2];
+	              return _context8.abrupt("return", {
+	                success: this.convertBool(success),
+	                wait: wait,
+	                reservoir: reservoir
+	              });
+	            case 8:
+	            case "end":
+	              return _context8.stop();
 	          }
 	        }, _callee8, this);
 	      }));
@@ -3074,46 +3312,44 @@
 	  }, {
 	    key: "__submit__",
 	    value: function () {
-	      var _submit__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee9(queueLength, weight) {
+	      var _submit__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee9(queueLength, weight) {
 	        var blocked, e, maxConcurrent, overweight, reachedHWM, strategy, _yield$this$runScript3, _yield$this$runScript4, _e$message$split, _e$message$split2;
-	        return regeneratorRuntime.wrap(function _callee9$(_context9) {
-	          while (1) {
-	            switch (_context9.prev = _context9.next) {
-	              case 0:
-	                _context9.prev = 0;
-	                _context9.next = 3;
-	                return this.runScript("submit", this.prepareArray([queueLength, weight]));
-	              case 3:
-	                _yield$this$runScript3 = _context9.sent;
-	                _yield$this$runScript4 = _slicedToArray(_yield$this$runScript3, 3);
-	                reachedHWM = _yield$this$runScript4[0];
-	                blocked = _yield$this$runScript4[1];
-	                strategy = _yield$this$runScript4[2];
-	                return _context9.abrupt("return", {
-	                  reachedHWM: this.convertBool(reachedHWM),
-	                  blocked: this.convertBool(blocked),
-	                  strategy: strategy
-	                });
-	              case 11:
-	                _context9.prev = 11;
-	                _context9.t0 = _context9["catch"](0);
-	                e = _context9.t0;
-	                if (!(e.message.indexOf("OVERWEIGHT") === 0)) {
-	                  _context9.next = 23;
-	                  break;
-	                }
-	                _e$message$split = e.message.split(":");
-	                _e$message$split2 = _slicedToArray(_e$message$split, 3);
-	                overweight = _e$message$split2[0];
-	                weight = _e$message$split2[1];
-	                maxConcurrent = _e$message$split2[2];
-	                throw new BottleneckError$3("Impossible to add a job having a weight of ".concat(weight, " to a limiter having a maxConcurrent setting of ").concat(maxConcurrent));
-	              case 23:
-	                throw e;
-	              case 24:
-	              case "end":
-	                return _context9.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee9$(_context9) {
+	          while (1) switch (_context9.prev = _context9.next) {
+	            case 0:
+	              _context9.prev = 0;
+	              _context9.next = 3;
+	              return this.runScript("submit", this.prepareArray([queueLength, weight]));
+	            case 3:
+	              _yield$this$runScript3 = _context9.sent;
+	              _yield$this$runScript4 = _slicedToArray(_yield$this$runScript3, 3);
+	              reachedHWM = _yield$this$runScript4[0];
+	              blocked = _yield$this$runScript4[1];
+	              strategy = _yield$this$runScript4[2];
+	              return _context9.abrupt("return", {
+	                reachedHWM: this.convertBool(reachedHWM),
+	                blocked: this.convertBool(blocked),
+	                strategy: strategy
+	              });
+	            case 11:
+	              _context9.prev = 11;
+	              _context9.t0 = _context9["catch"](0);
+	              e = _context9.t0;
+	              if (!(e.message.indexOf("OVERWEIGHT") === 0)) {
+	                _context9.next = 23;
+	                break;
+	              }
+	              _e$message$split = e.message.split(":");
+	              _e$message$split2 = _slicedToArray(_e$message$split, 3);
+	              overweight = _e$message$split2[0];
+	              weight = _e$message$split2[1];
+	              maxConcurrent = _e$message$split2[2];
+	              throw new BottleneckError$3("Impossible to add a job having a weight of ".concat(weight, " to a limiter having a maxConcurrent setting of ").concat(maxConcurrent));
+	            case 23:
+	              throw e;
+	            case 24:
+	            case "end":
+	              return _context9.stop();
 	          }
 	        }, _callee9, this, [[0, 11]]);
 	      }));
@@ -3125,23 +3361,21 @@
 	  }, {
 	    key: "__free__",
 	    value: function () {
-	      var _free__ = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee10(index, weight) {
+	      var _free__ = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee10(index, weight) {
 	        var running;
-	        return regeneratorRuntime.wrap(function _callee10$(_context10) {
-	          while (1) {
-	            switch (_context10.prev = _context10.next) {
-	              case 0:
-	                _context10.next = 2;
-	                return this.runScript("free", this.prepareArray([index]));
-	              case 2:
-	                running = _context10.sent;
-	                return _context10.abrupt("return", {
-	                  running: running
-	                });
-	              case 4:
-	              case "end":
-	                return _context10.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee10$(_context10) {
+	          while (1) switch (_context10.prev = _context10.next) {
+	            case 0:
+	              _context10.next = 2;
+	              return this.runScript("free", this.prepareArray([index]));
+	            case 2:
+	              running = _context10.sent;
+	              return _context10.abrupt("return", {
+	                running: running
+	              });
+	            case 4:
+	            case "end":
+	              return _context10.stop();
 	          }
 	        }, _callee10, this);
 	      }));
@@ -3151,7 +3385,6 @@
 	      return __free__;
 	    }()
 	  }]);
-	  return RedisDatastore;
 	}();
 	var RedisDatastore_1 = RedisDatastore;
 
@@ -3166,7 +3399,7 @@
 	      return 0;
 	    });
 	  }
-	  _createClass(States, [{
+	  return _createClass(States, [{
 	    key: "next",
 	    value: function next(id) {
 	      var current, next;
@@ -3238,7 +3471,6 @@
 	      }, {});
 	    }
 	  }]);
-	  return States;
 	}();
 	var States_1 = States;
 
@@ -3253,7 +3485,7 @@
 	    this._running = 0;
 	    this._queue = new DLList$2();
 	  }
-	  _createClass(Sync, [{
+	  return _createClass(Sync, [{
 	    key: "isEmpty",
 	    value: function isEmpty() {
 	      return this._queue.length === 0;
@@ -3261,59 +3493,55 @@
 	  }, {
 	    key: "_tryToRun",
 	    value: function () {
-	      var _tryToRun2 = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+	      var _tryToRun2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
 	        var args, cb, error, reject, resolve, returned, task, _this$_queue$shift;
-	        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	          while (1) {
-	            switch (_context2.prev = _context2.next) {
-	              case 0:
-	                if (!(this._running < 1 && this._queue.length > 0)) {
-	                  _context2.next = 13;
-	                  break;
-	                }
-	                this._running++;
-	                _this$_queue$shift = this._queue.shift();
-	                task = _this$_queue$shift.task;
-	                args = _this$_queue$shift.args;
-	                resolve = _this$_queue$shift.resolve;
-	                reject = _this$_queue$shift.reject;
-	                _context2.next = 9;
-	                return _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-	                  return regeneratorRuntime.wrap(function _callee$(_context) {
-	                    while (1) {
-	                      switch (_context.prev = _context.next) {
-	                        case 0:
-	                          _context.prev = 0;
-	                          _context.next = 3;
-	                          return task.apply(void 0, _toConsumableArray(args));
-	                        case 3:
-	                          returned = _context.sent;
-	                          return _context.abrupt("return", function () {
-	                            return resolve(returned);
-	                          });
-	                        case 7:
-	                          _context.prev = 7;
-	                          _context.t0 = _context["catch"](0);
-	                          error = _context.t0;
-	                          return _context.abrupt("return", function () {
-	                            return reject(error);
-	                          });
-	                        case 11:
-	                        case "end":
-	                          return _context.stop();
-	                      }
-	                    }
-	                  }, _callee, null, [[0, 7]]);
-	                }))();
-	              case 9:
-	                cb = _context2.sent;
-	                this._running--;
-	                this._tryToRun();
-	                return _context2.abrupt("return", cb());
-	              case 13:
-	              case "end":
-	                return _context2.stop();
-	            }
+	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	          while (1) switch (_context2.prev = _context2.next) {
+	            case 0:
+	              if (!(this._running < 1 && this._queue.length > 0)) {
+	                _context2.next = 13;
+	                break;
+	              }
+	              this._running++;
+	              _this$_queue$shift = this._queue.shift();
+	              task = _this$_queue$shift.task;
+	              args = _this$_queue$shift.args;
+	              resolve = _this$_queue$shift.resolve;
+	              reject = _this$_queue$shift.reject;
+	              _context2.next = 9;
+	              return _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+	                return _regeneratorRuntime().wrap(function _callee$(_context) {
+	                  while (1) switch (_context.prev = _context.next) {
+	                    case 0:
+	                      _context.prev = 0;
+	                      _context.next = 3;
+	                      return task.apply(void 0, _toConsumableArray(args));
+	                    case 3:
+	                      returned = _context.sent;
+	                      return _context.abrupt("return", function () {
+	                        return resolve(returned);
+	                      });
+	                    case 7:
+	                      _context.prev = 7;
+	                      _context.t0 = _context["catch"](0);
+	                      error = _context.t0;
+	                      return _context.abrupt("return", function () {
+	                        return reject(error);
+	                      });
+	                    case 11:
+	                    case "end":
+	                      return _context.stop();
+	                  }
+	                }, _callee, null, [[0, 7]]);
+	              }))();
+	            case 9:
+	              cb = _context2.sent;
+	              this._running--;
+	              this._tryToRun();
+	              return _context2.abrupt("return", cb());
+	            case 13:
+	            case "end":
+	              return _context2.stop();
 	          }
 	        }, _callee2, this);
 	      }));
@@ -3344,7 +3572,6 @@
 	      return promise;
 	    }
 	  }]);
-	  return Sync;
 	}();
 	var Sync_1 = Sync;
 
@@ -3389,7 +3616,7 @@
 	        }
 	      }
 	    }
-	    _createClass(Group, [{
+	    return _createClass(Group, [{
 	      key: "key",
 	      value: function key() {
 	        var _this = this;
@@ -3409,39 +3636,37 @@
 	    }, {
 	      key: "deleteKey",
 	      value: function () {
-	        var _deleteKey = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+	        var _deleteKey = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
 	          var key,
 	            deleted,
 	            instance,
 	            _args = arguments;
-	          return regeneratorRuntime.wrap(function _callee$(_context) {
-	            while (1) {
-	              switch (_context.prev = _context.next) {
-	                case 0:
-	                  key = _args.length > 0 && _args[0] !== undefined ? _args[0] : "";
-	                  instance = this.instances[key];
-	                  if (!this.connection) {
-	                    _context.next = 6;
-	                    break;
-	                  }
-	                  _context.next = 5;
-	                  return this.connection.__runCommand__(['del'].concat(_toConsumableArray(Scripts$3.allKeys("".concat(this.id, "-").concat(key)))));
-	                case 5:
-	                  deleted = _context.sent;
-	                case 6:
-	                  if (!(instance != null)) {
-	                    _context.next = 10;
-	                    break;
-	                  }
-	                  delete this.instances[key];
+	          return _regeneratorRuntime().wrap(function _callee$(_context) {
+	            while (1) switch (_context.prev = _context.next) {
+	              case 0:
+	                key = _args.length > 0 && _args[0] !== undefined ? _args[0] : "";
+	                instance = this.instances[key];
+	                if (!this.connection) {
+	                  _context.next = 6;
+	                  break;
+	                }
+	                _context.next = 5;
+	                return this.connection.__runCommand__(['del'].concat(_toConsumableArray(Scripts$3.allKeys("".concat(this.id, "-").concat(key)))));
+	              case 5:
+	                deleted = _context.sent;
+	              case 6:
+	                if (!(instance != null)) {
 	                  _context.next = 10;
-	                  return instance.disconnect();
-	                case 10:
-	                  return _context.abrupt("return", instance != null || deleted > 0);
-	                case 11:
-	                case "end":
-	                  return _context.stop();
-	              }
+	                  break;
+	                }
+	                delete this.instances[key];
+	                _context.next = 10;
+	                return instance.disconnect();
+	              case 10:
+	                return _context.abrupt("return", instance != null || deleted > 0);
+	              case 11:
+	              case "end":
+	                return _context.stop();
 	            }
 	          }, _callee, this);
 	        }));
@@ -3473,47 +3698,45 @@
 	    }, {
 	      key: "clusterKeys",
 	      value: function () {
-	        var _clusterKeys = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+	        var _clusterKeys = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
 	          var cursor, end, found, i, k, keys, len, next, start, _yield$this$connectio, _yield$this$connectio2;
-	          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	            while (1) {
-	              switch (_context2.prev = _context2.next) {
-	                case 0:
-	                  if (!(this.connection == null)) {
-	                    _context2.next = 2;
-	                    break;
-	                  }
-	                  return _context2.abrupt("return", this.Promise.resolve(this.keys()));
-	                case 2:
-	                  keys = [];
-	                  cursor = null;
-	                  start = "b_".concat(this.id, "-").length;
-	                  end = "_settings".length;
-	                case 6:
-	                  if (!(cursor !== 0)) {
-	                    _context2.next = 17;
-	                    break;
-	                  }
-	                  _context2.next = 9;
-	                  return this.connection.__runCommand__(["scan", cursor != null ? cursor : 0, "match", "b_".concat(this.id, "-*_settings"), "count", 10000]);
-	                case 9:
-	                  _yield$this$connectio = _context2.sent;
-	                  _yield$this$connectio2 = _slicedToArray(_yield$this$connectio, 2);
-	                  next = _yield$this$connectio2[0];
-	                  found = _yield$this$connectio2[1];
-	                  cursor = ~~next;
-	                  for (i = 0, len = found.length; i < len; i++) {
-	                    k = found[i];
-	                    keys.push(k.slice(start, -end));
-	                  }
-	                  _context2.next = 6;
+	          return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	            while (1) switch (_context2.prev = _context2.next) {
+	              case 0:
+	                if (!(this.connection == null)) {
+	                  _context2.next = 2;
 	                  break;
-	                case 17:
-	                  return _context2.abrupt("return", keys);
-	                case 18:
-	                case "end":
-	                  return _context2.stop();
-	              }
+	                }
+	                return _context2.abrupt("return", this.Promise.resolve(this.keys()));
+	              case 2:
+	                keys = [];
+	                cursor = null;
+	                start = "b_".concat(this.id, "-").length;
+	                end = "_settings".length;
+	              case 6:
+	                if (!(cursor !== 0)) {
+	                  _context2.next = 17;
+	                  break;
+	                }
+	                _context2.next = 9;
+	                return this.connection.__runCommand__(["scan", cursor != null ? cursor : 0, "match", "b_".concat(this.id, "-*_settings"), "count", 10000]);
+	              case 9:
+	                _yield$this$connectio = _context2.sent;
+	                _yield$this$connectio2 = _slicedToArray(_yield$this$connectio, 2);
+	                next = _yield$this$connectio2[0];
+	                found = _yield$this$connectio2[1];
+	                cursor = ~~next;
+	                for (i = 0, len = found.length; i < len; i++) {
+	                  k = found[i];
+	                  keys.push(k.slice(start, -end));
+	                }
+	                _context2.next = 6;
+	                break;
+	              case 17:
+	                return _context2.abrupt("return", keys);
+	              case 18:
+	              case "end":
+	                return _context2.stop();
 	            }
 	          }, _callee2, this);
 	        }));
@@ -3528,53 +3751,51 @@
 	        var _this2 = this;
 	        var base;
 	        clearInterval(this.interval);
-	        return typeof (base = this.interval = setInterval(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+	        return typeof (base = this.interval = setInterval(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
 	          var e, k, ref, results, time, v;
-	          return regeneratorRuntime.wrap(function _callee3$(_context3) {
-	            while (1) {
-	              switch (_context3.prev = _context3.next) {
-	                case 0:
-	                  time = Date.now();
-	                  ref = _this2.instances;
-	                  results = [];
-	                  _context3.t0 = regeneratorRuntime.keys(ref);
-	                case 4:
-	                  if ((_context3.t1 = _context3.t0()).done) {
-	                    _context3.next = 23;
-	                    break;
-	                  }
-	                  k = _context3.t1.value;
-	                  v = ref[k];
-	                  _context3.prev = 7;
-	                  _context3.next = 10;
-	                  return v._store.__groupCheck__(time);
-	                case 10:
-	                  if (!_context3.sent) {
-	                    _context3.next = 14;
-	                    break;
-	                  }
-	                  results.push(_this2.deleteKey(k));
-	                  _context3.next = 15;
+	          return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+	            while (1) switch (_context3.prev = _context3.next) {
+	              case 0:
+	                time = Date.now();
+	                ref = _this2.instances;
+	                results = [];
+	                _context3.t0 = _regeneratorRuntime().keys(ref);
+	              case 4:
+	                if ((_context3.t1 = _context3.t0()).done) {
+	                  _context3.next = 23;
 	                  break;
-	                case 14:
-	                  results.push(void 0);
-	                case 15:
-	                  _context3.next = 21;
+	                }
+	                k = _context3.t1.value;
+	                v = ref[k];
+	                _context3.prev = 7;
+	                _context3.next = 10;
+	                return v._store.__groupCheck__(time);
+	              case 10:
+	                if (!_context3.sent) {
+	                  _context3.next = 14;
 	                  break;
-	                case 17:
-	                  _context3.prev = 17;
-	                  _context3.t2 = _context3["catch"](7);
-	                  e = _context3.t2;
-	                  results.push(v.Events.trigger("error", e));
-	                case 21:
-	                  _context3.next = 4;
-	                  break;
-	                case 23:
-	                  return _context3.abrupt("return", results);
-	                case 24:
-	                case "end":
-	                  return _context3.stop();
-	              }
+	                }
+	                results.push(_this2.deleteKey(k));
+	                _context3.next = 15;
+	                break;
+	              case 14:
+	                results.push(void 0);
+	              case 15:
+	                _context3.next = 21;
+	                break;
+	              case 17:
+	                _context3.prev = 17;
+	                _context3.t2 = _context3["catch"](7);
+	                e = _context3.t2;
+	                results.push(v.Events.trigger("error", e));
+	              case 21:
+	                _context3.next = 4;
+	                break;
+	              case 23:
+	                return _context3.abrupt("return", results);
+	              case 24:
+	              case "end":
+	                return _context3.stop();
 	            }
 	          }, _callee3, null, [[7, 17]]);
 	        })), this.timeout / 2)).unref === "function" ? base.unref() : void 0;
@@ -3599,7 +3820,6 @@
 	        }
 	      }
 	    }]);
-	    return Group;
 	  }();
 	  Group.prototype.defaults = {
 	    timeout: 1000 * 60 * 5,
@@ -3626,7 +3846,7 @@
 	      this._resetPromise();
 	      this._lastFlush = Date.now();
 	    }
-	    _createClass(Batcher, [{
+	    return _createClass(Batcher, [{
 	      key: "_resetPromise",
 	      value: function _resetPromise() {
 	        var _this = this;
@@ -3661,7 +3881,6 @@
 	        return ret;
 	      }
 	    }]);
-	    return Batcher;
 	  }();
 	  Batcher.prototype.defaults = {
 	    maxTime: null,
@@ -3737,7 +3956,7 @@
 	        return (ref = _this._store.heartbeat) != null ? typeof ref.unref === "function" ? ref.unref() : void 0 : void 0;
 	      });
 	    }
-	    _createClass(Bottleneck, [{
+	    return _createClass(Bottleneck, [{
 	      key: "_validateOptions",
 	      value: function _validateOptions(options, invalid) {
 	        if (!(options != null && _typeof(options) === "object" && invalid.length === 0)) {
@@ -3846,36 +4065,34 @@
 	    }, {
 	      key: "_free",
 	      value: function () {
-	        var _free2 = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee(index, job, options, eventInfo) {
+	        var _free2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(index, job, options, eventInfo) {
 	          var e, running, _yield$this$_store$__;
-	          return regeneratorRuntime.wrap(function _callee$(_context) {
-	            while (1) {
-	              switch (_context.prev = _context.next) {
-	                case 0:
-	                  _context.prev = 0;
-	                  _context.next = 3;
-	                  return this._store.__free__(index, options.weight);
-	                case 3:
-	                  _yield$this$_store$__ = _context.sent;
-	                  running = _yield$this$_store$__.running;
-	                  this.Events.trigger("debug", "Freed ".concat(options.id), eventInfo);
-	                  if (!(running === 0 && this.empty())) {
-	                    _context.next = 8;
-	                    break;
-	                  }
-	                  return _context.abrupt("return", this.Events.trigger("idle"));
-	                case 8:
-	                  _context.next = 14;
+	          return _regeneratorRuntime().wrap(function _callee$(_context) {
+	            while (1) switch (_context.prev = _context.next) {
+	              case 0:
+	                _context.prev = 0;
+	                _context.next = 3;
+	                return this._store.__free__(index, options.weight);
+	              case 3:
+	                _yield$this$_store$__ = _context.sent;
+	                running = _yield$this$_store$__.running;
+	                this.Events.trigger("debug", "Freed ".concat(options.id), eventInfo);
+	                if (!(running === 0 && this.empty())) {
+	                  _context.next = 8;
 	                  break;
-	                case 10:
-	                  _context.prev = 10;
-	                  _context.t0 = _context["catch"](0);
-	                  e = _context.t0;
-	                  return _context.abrupt("return", this.Events.trigger("error", e));
-	                case 14:
-	                case "end":
-	                  return _context.stop();
-	              }
+	                }
+	                return _context.abrupt("return", this.Events.trigger("idle"));
+	              case 8:
+	                _context.next = 14;
+	                break;
+	              case 10:
+	                _context.prev = 10;
+	                _context.t0 = _context["catch"](0);
+	                e = _context.t0;
+	                return _context.abrupt("return", this.Events.trigger("error", e));
+	              case 14:
+	              case "end":
+	                return _context.stop();
 	            }
 	          }, _callee, this, [[0, 10]]);
 	        }));
@@ -4044,72 +4261,70 @@
 	    }, {
 	      key: "_addToQueue",
 	      value: function () {
-	        var _addToQueue2 = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee2(job) {
+	        var _addToQueue2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(job) {
 	          var args, blocked, error, options, reachedHWM, shifted, strategy, _yield$this$_store$__2;
-	          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-	            while (1) {
-	              switch (_context2.prev = _context2.next) {
-	                case 0:
-	                  args = job.args;
-	                  options = job.options;
-	                  _context2.prev = 2;
-	                  _context2.next = 5;
-	                  return this._store.__submit__(this.queued(), options.weight);
-	                case 5:
-	                  _yield$this$_store$__2 = _context2.sent;
-	                  reachedHWM = _yield$this$_store$__2.reachedHWM;
-	                  blocked = _yield$this$_store$__2.blocked;
-	                  strategy = _yield$this$_store$__2.strategy;
-	                  _context2.next = 17;
+	          return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	            while (1) switch (_context2.prev = _context2.next) {
+	              case 0:
+	                args = job.args;
+	                options = job.options;
+	                _context2.prev = 2;
+	                _context2.next = 5;
+	                return this._store.__submit__(this.queued(), options.weight);
+	              case 5:
+	                _yield$this$_store$__2 = _context2.sent;
+	                reachedHWM = _yield$this$_store$__2.reachedHWM;
+	                blocked = _yield$this$_store$__2.blocked;
+	                strategy = _yield$this$_store$__2.strategy;
+	                _context2.next = 17;
+	                break;
+	              case 11:
+	                _context2.prev = 11;
+	                _context2.t0 = _context2["catch"](2);
+	                error = _context2.t0;
+	                this.Events.trigger("debug", "Could not queue ".concat(options.id), {
+	                  args: args,
+	                  options: options,
+	                  error: error
+	                });
+	                job.doDrop({
+	                  error: error
+	                });
+	                return _context2.abrupt("return", false);
+	              case 17:
+	                if (!blocked) {
+	                  _context2.next = 22;
 	                  break;
-	                case 11:
-	                  _context2.prev = 11;
-	                  _context2.t0 = _context2["catch"](2);
-	                  error = _context2.t0;
-	                  this.Events.trigger("debug", "Could not queue ".concat(options.id), {
-	                    args: args,
-	                    options: options,
-	                    error: error
-	                  });
-	                  job.doDrop({
-	                    error: error
-	                  });
-	                  return _context2.abrupt("return", false);
-	                case 17:
-	                  if (!blocked) {
-	                    _context2.next = 22;
-	                    break;
-	                  }
+	                }
+	                job.doDrop();
+	                return _context2.abrupt("return", true);
+	              case 22:
+	                if (!reachedHWM) {
+	                  _context2.next = 28;
+	                  break;
+	                }
+	                shifted = strategy === Bottleneck.prototype.strategy.LEAK ? this._queues.shiftLastFrom(options.priority) : strategy === Bottleneck.prototype.strategy.OVERFLOW_PRIORITY ? this._queues.shiftLastFrom(options.priority + 1) : strategy === Bottleneck.prototype.strategy.OVERFLOW ? job : void 0;
+	                if (shifted != null) {
+	                  shifted.doDrop();
+	                }
+	                if (!(shifted == null || strategy === Bottleneck.prototype.strategy.OVERFLOW)) {
+	                  _context2.next = 28;
+	                  break;
+	                }
+	                if (shifted == null) {
 	                  job.doDrop();
-	                  return _context2.abrupt("return", true);
-	                case 22:
-	                  if (!reachedHWM) {
-	                    _context2.next = 28;
-	                    break;
-	                  }
-	                  shifted = strategy === Bottleneck.prototype.strategy.LEAK ? this._queues.shiftLastFrom(options.priority) : strategy === Bottleneck.prototype.strategy.OVERFLOW_PRIORITY ? this._queues.shiftLastFrom(options.priority + 1) : strategy === Bottleneck.prototype.strategy.OVERFLOW ? job : void 0;
-	                  if (shifted != null) {
-	                    shifted.doDrop();
-	                  }
-	                  if (!(shifted == null || strategy === Bottleneck.prototype.strategy.OVERFLOW)) {
-	                    _context2.next = 28;
-	                    break;
-	                  }
-	                  if (shifted == null) {
-	                    job.doDrop();
-	                  }
-	                  return _context2.abrupt("return", reachedHWM);
-	                case 28:
-	                  job.doQueue(reachedHWM, blocked);
-	                  this._queues.push(job);
-	                  _context2.next = 32;
-	                  return this._drainAll();
-	                case 32:
-	                  return _context2.abrupt("return", reachedHWM);
-	                case 33:
-	                case "end":
-	                  return _context2.stop();
-	              }
+	                }
+	                return _context2.abrupt("return", reachedHWM);
+	              case 28:
+	                job.doQueue(reachedHWM, blocked);
+	                this._queues.push(job);
+	                _context2.next = 32;
+	                return this._drainAll();
+	              case 32:
+	                return _context2.abrupt("return", reachedHWM);
+	              case 33:
+	              case "end":
+	                return _context2.stop();
 	            }
 	          }, _callee2, this, [[2, 11]]);
 	        }));
@@ -4139,11 +4354,11 @@
 	        var cb, fn, job, options, ref, ref1, task;
 	        if (typeof args[0] === "function") {
 	          var _ref2, _ref3, _splice$call, _splice$call2;
-	          ref = args, _ref2 = ref, _ref3 = _toArray(_ref2), fn = _ref3[0], args = _ref3.slice(1), _splice$call = splice.call(args, -1), _splice$call2 = _slicedToArray(_splice$call, 1), cb = _splice$call2[0], _splice$call;
+	          ref = args, _ref2 = ref, _ref3 = _toArray(_ref2), fn = _ref3[0], args = _ref3.slice(1), _splice$call = splice.call(args, -1), _splice$call2 = _slicedToArray(_splice$call, 1), cb = _splice$call2[0];
 	          options = parser$8.load({}, this.jobDefaults);
 	        } else {
 	          var _ref4, _ref5, _splice$call3, _splice$call4;
-	          ref1 = args, _ref4 = ref1, _ref5 = _toArray(_ref4), options = _ref5[0], fn = _ref5[1], args = _ref5.slice(2), _splice$call3 = splice.call(args, -1), _splice$call4 = _slicedToArray(_splice$call3, 1), cb = _splice$call4[0], _splice$call3;
+	          ref1 = args, _ref4 = ref1, _ref5 = _toArray(_ref4), options = _ref5[0], fn = _ref5[1], args = _ref5.slice(2), _splice$call3 = splice.call(args, -1), _splice$call4 = _slicedToArray(_splice$call3, 1), cb = _splice$call4[0];
 	          options = parser$8.load(options, this.jobDefaults);
 	        }
 	        task = function task() {
@@ -4217,23 +4432,21 @@
 	    }, {
 	      key: "updateSettings",
 	      value: function () {
-	        var _updateSettings = _asyncToGenerator(/*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+	        var _updateSettings = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
 	          var options,
 	            _args7 = arguments;
-	          return regeneratorRuntime.wrap(function _callee3$(_context3) {
-	            while (1) {
-	              switch (_context3.prev = _context3.next) {
-	                case 0:
-	                  options = _args7.length > 0 && _args7[0] !== undefined ? _args7[0] : {};
-	                  _context3.next = 3;
-	                  return this._store.__updateSettings__(parser$8.overwrite(options, this.storeDefaults));
-	                case 3:
-	                  parser$8.overwrite(options, this.instanceDefaults, this);
-	                  return _context3.abrupt("return", this);
-	                case 5:
-	                case "end":
-	                  return _context3.stop();
-	              }
+	          return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+	            while (1) switch (_context3.prev = _context3.next) {
+	              case 0:
+	                options = _args7.length > 0 && _args7[0] !== undefined ? _args7[0] : {};
+	                _context3.next = 3;
+	                return this._store.__updateSettings__(parser$8.overwrite(options, this.storeDefaults));
+	              case 3:
+	                parser$8.overwrite(options, this.instanceDefaults, this);
+	                return _context3.abrupt("return", this);
+	              case 5:
+	              case "end":
+	                return _context3.stop();
 	            }
 	          }, _callee3, this);
 	        }));
@@ -4254,7 +4467,6 @@
 	        return this._store.__incrementReservoir__(incr);
 	      }
 	    }]);
-	    return Bottleneck;
 	  }();
 	  Bottleneck["default"] = Bottleneck;
 	  Bottleneck.Events = Events$6;
