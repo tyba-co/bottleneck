@@ -4,3 +4,7 @@ test.ts
 src/
 test/
 .vscode/
+.github/
+.scripts/
+.gitignore
+.env
