@@ -6,7 +6,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+
+  install:
+    runs-on: ubuntu-20.04
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 10.24.1
+
+      - name: Restore npm cache
+        id: npm-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm install
+
+  build-and-test:
+    needs: install
     runs-on: ubuntu-20.04
     env:
       NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
@@ -15,13 +42,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 10.24.1
-     
-      - run: npm ci
+      
+      - name: Restore npm cache
+        id: npm-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm install
+
       - run: npm run build
       - run: npm run test
 
   publish-gpr:
-    needs: build
+    needs: build-and-test
     runs-on: ubuntu-20.04
     permissions:
       packages: write
