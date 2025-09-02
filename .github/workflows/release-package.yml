@@ -88,4 +88,4 @@ jobs:
         if: steps.cache-node.outputs.cache-hit != 'true'
         run: npm install
         
-      - run: npm publish
+      - run: npm publish --access public
