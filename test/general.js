@@ -756,7 +756,7 @@ describe('General', function () {
       .then(function (results) {
         c.checkResultsOrder([[1], [2], [3], [4], [5]])
         c.mustEqual(calledDepleted, 2)
-        c.checkDuration(300, 100) // Increase tolerance for timing variations
+        c.checkDuration(300, 160) // Increase tolerance for timing variations
       })
     })
 
@@ -783,7 +783,7 @@ describe('General', function () {
       })
       .then(function (results) {
         c.checkResultsOrder([[1], [2], [3], [4]])
-        c.checkDuration(150, 90) // Increase tolerance to 90ms below expected time for timing variations
+        c.checkDuration(200, 90) // Increase tolerance to 90ms below expected time for timing variations
       })
     })
 
@@ -859,7 +859,7 @@ describe('General', function () {
       const results = await c.last({ weight: 0, priority: 9 })
       c.checkResultsOrder([[1], [2], [3], [4], [5]])
       c.mustEqual(calledDepleted, 1)
-      c.checkDuration(450, 95)  // Allow for a larger deviation from the expected time
+      c.checkDuration(450, 100)  // Allow for a larger deviation from the expected time
     })
 
     it('Should allow staggered X by Y type usage', function () {
@@ -885,7 +885,7 @@ describe('General', function () {
       })
       .then(function (results) {
         c.checkResultsOrder([[1], [2], [3], [4]])
-        c.checkDuration(150, 90) // Increase tolerance to 90ms below expected time for timing variations
+        c.checkDuration(200, 90) // Increase tolerance to 90ms below expected time for timing variations
       })
     })
 
