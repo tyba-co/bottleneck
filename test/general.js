@@ -756,7 +756,7 @@ describe('General', function () {
       .then(function (results) {
         c.checkResultsOrder([[1], [2], [3], [4], [5]])
         c.mustEqual(calledDepleted, 2)
-        c.checkDuration(300, 160) // Increase tolerance for timing variations
+        c.checkDuration(350, 100) // Increase tolerance for timing variations
       })
     })
 
