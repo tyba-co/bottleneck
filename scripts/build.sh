@@ -12,6 +12,7 @@ clean() {
   echo 'Cleaning...'
   rm -f .babelrc
   rm -rf lib/*
+  mkdir -p lib
   node scripts/version.js > lib/version.json
   node scripts/assemble_lua.js > lib/lua.json
 }
