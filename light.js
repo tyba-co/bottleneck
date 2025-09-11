@@ -3,1522 +3,1670 @@
   * https://github.com/SGrondin/bottleneck
   */
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-	typeof define === 'function' && define.amd ? define(factory) :
-	(global.Bottleneck = factory());
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    (global.Bottleneck = factory());
 }(this, (function () { 'use strict';
 
-	var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-
-	function getCjsExportFromNamespace (n) {
-		return n && n['default'] || n;
-	}
-
-	var load = function(received, defaults, onto = {}) {
-	  var k, ref, v;
-	  for (k in defaults) {
-	    v = defaults[k];
-	    onto[k] = (ref = received[k]) != null ? ref : v;
-	  }
-	  return onto;
-	};
-
-	var overwrite = function(received, defaults, onto = {}) {
-	  var k, v;
-	  for (k in received) {
-	    v = received[k];
-	    if (defaults[k] !== void 0) {
-	      onto[k] = v;
-	    }
-	  }
-	  return onto;
-	};
-
-	var parser = {
-		load: load,
-		overwrite: overwrite
-	};
-
-	var DLList;
-
-	DLList = class DLList {
-	  constructor(incr, decr) {
-	    this.incr = incr;
-	    this.decr = decr;
-	    this._first = null;
-	    this._last = null;
-	    this.length = 0;
-	  }
-
-	  push(value) {
-	    var node;
-	    this.length++;
-	    if (typeof this.incr === "function") {
-	      this.incr();
-	    }
-	    node = {
-	      value,
-	      prev: this._last,
-	      next: null
-	    };
-	    if (this._last != null) {
-	      this._last.next = node;
-	      this._last = node;
-	    } else {
-	      this._first = this._last = node;
-	    }
-	    return void 0;
-	  }
-
-	  shift() {
-	    var value;
-	    if (this._first == null) {
-	      return;
-	    } else {
-	      this.length--;
-	      if (typeof this.decr === "function") {
-	        this.decr();
-	      }
-	    }
-	    value = this._first.value;
-	    if ((this._first = this._first.next) != null) {
-	      this._first.prev = null;
-	    } else {
-	      this._last = null;
-	    }
-	    return value;
-	  }
-
-	  first() {
-	    if (this._first != null) {
-	      return this._first.value;
-	    }
-	  }
-
-	  getArray() {
-	    var node, ref, results;
-	    node = this._first;
-	    results = [];
-	    while (node != null) {
-	      results.push((ref = node, node = node.next, ref.value));
-	    }
-	    return results;
-	  }
-
-	  forEachShift(cb) {
-	    var node;
-	    node = this.shift();
-	    while (node != null) {
-	      (cb(node), node = this.shift());
-	    }
-	    return void 0;
-	  }
-
-	  debug() {
-	    var node, ref, ref1, ref2, results;
-	    node = this._first;
-	    results = [];
-	    while (node != null) {
-	      results.push((ref = node, node = node.next, {
-	        value: ref.value,
-	        prev: (ref1 = ref.prev) != null ? ref1.value : void 0,
-	        next: (ref2 = ref.next) != null ? ref2.value : void 0
-	      }));
-	    }
-	    return results;
-	  }
-
-	};
-
-	var DLList_1 = DLList;
-
-	var Events;
-
-	Events = class Events {
-	  constructor(instance) {
-	    this.instance = instance;
-	    this._events = {};
-	    if ((this.instance.on != null) || (this.instance.once != null) || (this.instance.removeAllListeners != null)) {
-	      throw new Error("An Emitter already exists for this object");
-	    }
-	    this.instance.on = (name, cb) => {
-	      return this._addListener(name, "many", cb);
-	    };
-	    this.instance.once = (name, cb) => {
-	      return this._addListener(name, "once", cb);
-	    };
-	    this.instance.removeAllListeners = (name = null) => {
-	      if (name != null) {
-	        return delete this._events[name];
-	      } else {
-	        return this._events = {};
-	      }
-	    };
-	  }
-
-	  _addListener(name, status, cb) {
-	    var base;
-	    if ((base = this._events)[name] == null) {
-	      base[name] = [];
-	    }
-	    this._events[name].push({cb, status});
-	    return this.instance;
-	  }
-
-	  listenerCount(name) {
-	    if (this._events[name] != null) {
-	      return this._events[name].length;
-	    } else {
-	      return 0;
-	    }
-	  }
-
-	  async trigger(name, ...args) {
-	    var e, promises;
-	    try {
-	      if (name !== "debug") {
-	        this.trigger("debug", `Event triggered: ${name}`, args);
-	      }
-	      if (this._events[name] == null) {
-	        return;
-	      }
-	      this._events[name] = this._events[name].filter(function(listener) {
-	        return listener.status !== "none";
-	      });
-	      promises = this._events[name].map(async(listener) => {
-	        var e, returned;
-	        if (listener.status === "none") {
-	          return;
-	        }
-	        if (listener.status === "once") {
-	          listener.status = "none";
-	        }
-	        try {
-	          returned = typeof listener.cb === "function" ? listener.cb(...args) : void 0;
-	          if (typeof (returned != null ? returned.then : void 0) === "function") {
-	            return (await returned);
-	          } else {
-	            return returned;
-	          }
-	        } catch (error) {
-	          e = error;
-	          {
-	            this.trigger("error", e);
-	          }
-	          return null;
-	        }
-	      });
-	      return ((await Promise.all(promises))).find(function(x) {
-	        return x != null;
-	      });
-	    } catch (error) {
-	      e = error;
-	      {
-	        this.trigger("error", e);
-	      }
-	      return null;
-	    }
-	  }
-
-	};
-
-	var Events_1 = Events;
-
-	var DLList$1, Events$1, Queues;
-
-	DLList$1 = DLList_1;
-
-	Events$1 = Events_1;
-
-	Queues = class Queues {
-	  constructor(num_priorities) {
-	    var i;
-	    this.Events = new Events$1(this);
-	    this._length = 0;
-	    this._lists = (function() {
-	      var j, ref, results;
-	      results = [];
-	      for (i = j = 1, ref = num_priorities; (1 <= ref ? j <= ref : j >= ref); i = 1 <= ref ? ++j : --j) {
-	        results.push(new DLList$1((() => {
-	          return this.incr();
-	        }), (() => {
-	          return this.decr();
-	        })));
-	      }
-	      return results;
-	    }).call(this);
-	  }
-
-	  incr() {
-	    if (this._length++ === 0) {
-	      return this.Events.trigger("leftzero");
-	    }
-	  }
-
-	  decr() {
-	    if (--this._length === 0) {
-	      return this.Events.trigger("zero");
-	    }
-	  }
-
-	  push(job) {
-	    return this._lists[job.options.priority].push(job);
-	  }
-
-	  queued(priority) {
-	    if (priority != null) {
-	      return this._lists[priority].length;
-	    } else {
-	      return this._length;
-	    }
-	  }
-
-	  shiftAll(fn) {
-	    return this._lists.forEach(function(list) {
-	      return list.forEachShift(fn);
-	    });
-	  }
-
-	  getFirst(arr = this._lists) {
-	    var j, len, list;
-	    for (j = 0, len = arr.length; j < len; j++) {
-	      list = arr[j];
-	      if (list.length > 0) {
-	        return list;
-	      }
-	    }
-	    return [];
-	  }
-
-	  shiftLastFrom(priority) {
-	    return this.getFirst(this._lists.slice(priority).reverse()).shift();
-	  }
-
-	};
-
-	var Queues_1 = Queues;
-
-	var BottleneckError;
-
-	BottleneckError = class BottleneckError extends Error {};
-
-	var BottleneckError_1 = BottleneckError;
-
-	var BottleneckError$1, DEFAULT_PRIORITY, Job, NUM_PRIORITIES, parser$1;
-
-	NUM_PRIORITIES = 10;
-
-	DEFAULT_PRIORITY = 5;
-
-	parser$1 = parser;
-
-	BottleneckError$1 = BottleneckError_1;
-
-	Job = class Job {
-	  constructor(task, args, options, jobDefaults, rejectOnDrop, Events, _states, Promise) {
-	    this.task = task;
-	    this.args = args;
-	    this.rejectOnDrop = rejectOnDrop;
-	    this.Events = Events;
-	    this._states = _states;
-	    this.Promise = Promise;
-	    this.options = parser$1.load(options, jobDefaults);
-	    this.options.priority = this._sanitizePriority(this.options.priority);
-	    if (this.options.id === jobDefaults.id) {
-	      this.options.id = `${this.options.id}-${this._randomIndex()}`;
-	    }
-	    this.promise = new this.Promise((_resolve, _reject) => {
-	      this._resolve = _resolve;
-	      this._reject = _reject;
-	    });
-	    this.retryCount = 0;
-	  }
-
-	  _sanitizePriority(priority) {
-	    var sProperty;
-	    sProperty = ~~priority !== priority ? DEFAULT_PRIORITY : priority;
-	    if (sProperty < 0) {
-	      return 0;
-	    } else if (sProperty > NUM_PRIORITIES - 1) {
-	      return NUM_PRIORITIES - 1;
-	    } else {
-	      return sProperty;
-	    }
-	  }
-
-	  _randomIndex() {
-	    return Math.random().toString(36).slice(2);
-	  }
-
-	  doDrop({error, message = "This job has been dropped by Bottleneck"} = {}) {
-	    if (this._states.remove(this.options.id)) {
-	      if (this.rejectOnDrop) {
-	        this._reject(error != null ? error : new BottleneckError$1(message));
-	      }
-	      this.Events.trigger("dropped", {args: this.args, options: this.options, task: this.task, promise: this.promise});
-	      return true;
-	    } else {
-	      return false;
-	    }
-	  }
-
-	  _assertStatus(expected) {
-	    var status;
-	    status = this._states.jobStatus(this.options.id);
-	    if (!(status === expected || (expected === "DONE" && status === null))) {
-	      throw new BottleneckError$1(`Invalid job status ${status}, expected ${expected}. Please open an issue at https://github.com/SGrondin/bottleneck/issues`);
-	    }
-	  }
-
-	  doReceive() {
-	    this._states.start(this.options.id);
-	    return this.Events.trigger("received", {args: this.args, options: this.options});
-	  }
-
-	  doQueue(reachedHWM, blocked) {
-	    this._assertStatus("RECEIVED");
-	    this._states.next(this.options.id);
-	    return this.Events.trigger("queued", {args: this.args, options: this.options, reachedHWM, blocked});
-	  }
-
-	  doRun() {
-	    if (this.retryCount === 0) {
-	      this._assertStatus("QUEUED");
-	      this._states.next(this.options.id);
-	    } else {
-	      this._assertStatus("EXECUTING");
-	    }
-	    return this.Events.trigger("scheduled", {args: this.args, options: this.options});
-	  }
-
-	  async doExecute(chained, clearGlobalState, run, free) {
-	    var error, eventInfo, passed;
-	    if (this.retryCount === 0) {
-	      this._assertStatus("RUNNING");
-	      this._states.next(this.options.id);
-	    } else {
-	      this._assertStatus("EXECUTING");
-	    }
-	    eventInfo = {args: this.args, options: this.options, retryCount: this.retryCount};
-	    this.Events.trigger("executing", eventInfo);
-	    try {
-	      passed = (await (chained != null ? chained.schedule(this.options, this.task, ...this.args) : this.task(...this.args)));
-	      if (clearGlobalState()) {
-	        this.doDone(eventInfo);
-	        await free(this.options, eventInfo);
-	        this._assertStatus("DONE");
-	        return this._resolve(passed);
-	      }
-	    } catch (error1) {
-	      error = error1;
-	      return this._onFailure(error, eventInfo, clearGlobalState, run, free);
-	    }
-	  }
-
-	  doExpire(clearGlobalState, run, free) {
-	    var error, eventInfo;
-	    if (this._states.jobStatus(this.options.id) === "RUNNING") {
-	      this._states.next(this.options.id);
-	    }
-	    this._assertStatus("EXECUTING");
-	    eventInfo = {args: this.args, options: this.options, retryCount: this.retryCount};
-	    error = new BottleneckError$1(`This job timed out after ${this.options.expiration} ms.`);
-	    return this._onFailure(error, eventInfo, clearGlobalState, run, free);
-	  }
-
-	  async _onFailure(error, eventInfo, clearGlobalState, run, free) {
-	    var retry, retryAfter;
-	    if (clearGlobalState()) {
-	      retry = (await this.Events.trigger("failed", error, eventInfo));
-	      if (retry != null) {
-	        retryAfter = ~~retry;
-	        this.Events.trigger("retry", `Retrying ${this.options.id} after ${retryAfter} ms`, eventInfo);
-	        this.retryCount++;
-	        return run(retryAfter);
-	      } else {
-	        this.doDone(eventInfo);
-	        await free(this.options, eventInfo);
-	        this._assertStatus("DONE");
-	        return this._reject(error);
-	      }
-	    }
-	  }
-
-	  doDone(eventInfo) {
-	    this._assertStatus("EXECUTING");
-	    this._states.next(this.options.id);
-	    return this.Events.trigger("done", eventInfo);
-	  }
-
-	};
-
-	var Job_1 = Job;
-
-	var BottleneckError$2, LocalDatastore, parser$2;
-
-	parser$2 = parser;
-
-	BottleneckError$2 = BottleneckError_1;
-
-	LocalDatastore = class LocalDatastore {
-	  constructor(instance, storeOptions, storeInstanceOptions) {
-	    this.instance = instance;
-	    this.storeOptions = storeOptions;
-	    this.clientId = this.instance._randomIndex();
-	    parser$2.load(storeInstanceOptions, storeInstanceOptions, this);
-	    this._nextRequest = this._lastReservoirRefresh = this._lastReservoirIncrease = Date.now();
-	    this._running = 0;
-	    this._done = 0;
-	    this._unblockTime = 0;
-	    this.ready = this.Promise.resolve();
-	    this.clients = {};
-	    this._startHeartbeat();
-	  }
-
-	  _startHeartbeat() {
-	    var base;
-	    if ((this.heartbeat == null) && (((this.storeOptions.reservoirRefreshInterval != null) && (this.storeOptions.reservoirRefreshAmount != null)) || ((this.storeOptions.reservoirIncreaseInterval != null) && (this.storeOptions.reservoirIncreaseAmount != null)))) {
-	      return typeof (base = (this.heartbeat = setInterval(() => {
-	        var amount, incr, maximum, now, reservoir;
-	        now = Date.now();
-	        if ((this.storeOptions.reservoirRefreshInterval != null) && now >= this._lastReservoirRefresh + this.storeOptions.reservoirRefreshInterval) {
-	          this._lastReservoirRefresh = now;
-	          this.storeOptions.reservoir = this.storeOptions.reservoirRefreshAmount;
-	          this.instance._drainAll(this.computeCapacity());
-	        }
-	        if ((this.storeOptions.reservoirIncreaseInterval != null) && now >= this._lastReservoirIncrease + this.storeOptions.reservoirIncreaseInterval) {
-	          ({
-	            reservoirIncreaseAmount: amount,
-	            reservoirIncreaseMaximum: maximum,
-	            reservoir
-	          } = this.storeOptions);
-	          this._lastReservoirIncrease = now;
-	          incr = maximum != null ? Math.min(amount, maximum - reservoir) : amount;
-	          if (incr > 0) {
-	            this.storeOptions.reservoir += incr;
-	            return this.instance._drainAll(this.computeCapacity());
-	          }
-	        }
-	      }, this.heartbeatInterval))).unref === "function" ? base.unref() : void 0;
-	    } else {
-	      return clearInterval(this.heartbeat);
-	    }
-	  }
-
-	  async __publish__(message) {
-	    await this.yieldLoop();
-	    return this.instance.Events.trigger("message", message.toString());
-	  }
-
-	  async __disconnect__(flush) {
-	    await this.yieldLoop();
-	    clearInterval(this.heartbeat);
-	    return this.Promise.resolve();
-	  }
-
-	  yieldLoop(t = 0) {
-	    return new this.Promise(function(resolve, reject) {
-	      return setTimeout(resolve, t);
-	    });
-	  }
-
-	  computePenalty() {
-	    var ref;
-	    return (ref = this.storeOptions.penalty) != null ? ref : (15 * this.storeOptions.minTime) || 5000;
-	  }
-
-	  async __updateSettings__(options) {
-	    await this.yieldLoop();
-	    parser$2.overwrite(options, options, this.storeOptions);
-	    this._startHeartbeat();
-	    this.instance._drainAll(this.computeCapacity());
-	    return true;
-	  }
-
-	  async __running__() {
-	    await this.yieldLoop();
-	    return this._running;
-	  }
-
-	  async __queued__() {
-	    await this.yieldLoop();
-	    return this.instance.queued();
-	  }
-
-	  async __done__() {
-	    await this.yieldLoop();
-	    return this._done;
-	  }
-
-	  async __groupCheck__(time) {
-	    await this.yieldLoop();
-	    return (this._nextRequest + this.timeout) < time;
-	  }
-
-	  computeCapacity() {
-	    var maxConcurrent, reservoir;
-	    ({maxConcurrent, reservoir} = this.storeOptions);
-	    if ((maxConcurrent != null) && (reservoir != null)) {
-	      return Math.min(maxConcurrent - this._running, reservoir);
-	    } else if (maxConcurrent != null) {
-	      return maxConcurrent - this._running;
-	    } else if (reservoir != null) {
-	      return reservoir;
-	    } else {
-	      return null;
-	    }
-	  }
-
-	  conditionsCheck(weight) {
-	    var capacity;
-	    capacity = this.computeCapacity();
-	    return (capacity == null) || weight <= capacity;
-	  }
-
-	  async __incrementReservoir__(incr) {
-	    var reservoir;
-	    await this.yieldLoop();
-	    reservoir = this.storeOptions.reservoir += incr;
-	    this.instance._drainAll(this.computeCapacity());
-	    return reservoir;
-	  }
-
-	  async __currentReservoir__() {
-	    await this.yieldLoop();
-	    return this.storeOptions.reservoir;
-	  }
-
-	  isBlocked(now) {
-	    return this._unblockTime >= now;
-	  }
-
-	  check(weight, now) {
-	    return this.conditionsCheck(weight) && (this._nextRequest - now) <= 0;
-	  }
-
-	  async __check__(weight) {
-	    var now;
-	    await this.yieldLoop();
-	    now = Date.now();
-	    return this.check(weight, now);
-	  }
-
-	  async __register__(index, weight, expiration) {
-	    var now, wait;
-	    await this.yieldLoop();
-	    now = Date.now();
-	    if (this.conditionsCheck(weight)) {
-	      this._running += weight;
-	      if (this.storeOptions.reservoir != null) {
-	        this.storeOptions.reservoir -= weight;
-	      }
-	      wait = Math.max(this._nextRequest - now, 0);
-	      this._nextRequest = now + wait + this.storeOptions.minTime;
-	      return {
-	        success: true,
-	        wait,
-	        reservoir: this.storeOptions.reservoir
-	      };
-	    } else {
-	      return {
-	        success: false
-	      };
-	    }
-	  }
-
-	  strategyIsBlock() {
-	    return this.storeOptions.strategy === 3;
-	  }
-
-	  async __submit__(queueLength, weight) {
-	    var blocked, now, reachedHWM;
-	    await this.yieldLoop();
-	    if ((this.storeOptions.maxConcurrent != null) && weight > this.storeOptions.maxConcurrent) {
-	      throw new BottleneckError$2(`Impossible to add a job having a weight of ${weight} to a limiter having a maxConcurrent setting of ${this.storeOptions.maxConcurrent}`);
-	    }
-	    now = Date.now();
-	    reachedHWM = (this.storeOptions.highWater != null) && queueLength === this.storeOptions.highWater && !this.check(weight, now);
-	    blocked = this.strategyIsBlock() && (reachedHWM || this.isBlocked(now));
-	    if (blocked) {
-	      this._unblockTime = now + this.computePenalty();
-	      this._nextRequest = this._unblockTime + this.storeOptions.minTime;
-	      this.instance._dropAllQueued();
-	    }
-	    return {
-	      reachedHWM,
-	      blocked,
-	      strategy: this.storeOptions.strategy
-	    };
-	  }
-
-	  async __free__(index, weight) {
-	    await this.yieldLoop();
-	    this._running -= weight;
-	    this._done += weight;
-	    this.instance._drainAll(this.computeCapacity());
-	    return {
-	      running: this._running
-	    };
-	  }
-
-	};
-
-	var LocalDatastore_1 = LocalDatastore;
-
-	var BottleneckError$3, States;
-
-	BottleneckError$3 = BottleneckError_1;
-
-	States = class States {
-	  constructor(status1) {
-	    this.status = status1;
-	    this._jobs = {};
-	    this.counts = this.status.map(function() {
-	      return 0;
-	    });
-	  }
-
-	  next(id) {
-	    var current, next;
-	    current = this._jobs[id];
-	    next = current + 1;
-	    if ((current != null) && next < this.status.length) {
-	      this.counts[current]--;
-	      this.counts[next]++;
-	      return this._jobs[id]++;
-	    } else if (current != null) {
-	      this.counts[current]--;
-	      return delete this._jobs[id];
-	    }
-	  }
-
-	  start(id) {
-	    var initial;
-	    initial = 0;
-	    this._jobs[id] = initial;
-	    return this.counts[initial]++;
-	  }
-
-	  remove(id) {
-	    var current;
-	    current = this._jobs[id];
-	    if (current != null) {
-	      this.counts[current]--;
-	      delete this._jobs[id];
-	    }
-	    return current != null;
-	  }
-
-	  jobStatus(id) {
-	    var ref;
-	    return (ref = this.status[this._jobs[id]]) != null ? ref : null;
-	  }
-
-	  statusJobs(status) {
-	    var k, pos, ref, results, v;
-	    if (status != null) {
-	      pos = this.status.indexOf(status);
-	      if (pos < 0) {
-	        throw new BottleneckError$3(`status must be one of ${this.status.join(', ')}`);
-	      }
-	      ref = this._jobs;
-	      results = [];
-	      for (k in ref) {
-	        v = ref[k];
-	        if (v === pos) {
-	          results.push(k);
-	        }
-	      }
-	      return results;
-	    } else {
-	      return Object.keys(this._jobs);
-	    }
-	  }
-
-	  statusCounts() {
-	    return this.counts.reduce(((acc, v, i) => {
-	      acc[this.status[i]] = v;
-	      return acc;
-	    }), {});
-	  }
-
-	};
-
-	var States_1 = States;
-
-	var DLList$2, Sync;
-
-	DLList$2 = DLList_1;
-
-	Sync = class Sync {
-	  constructor(name, Promise) {
-	    this.schedule = this.schedule.bind(this);
-	    this.name = name;
-	    this.Promise = Promise;
-	    this._running = 0;
-	    this._queue = new DLList$2();
-	  }
-
-	  isEmpty() {
-	    return this._queue.length === 0;
-	  }
-
-	  async _tryToRun() {
-	    var args, cb, error, reject, resolve, returned, task;
-	    if ((this._running < 1) && this._queue.length > 0) {
-	      this._running++;
-	      ({task, args, resolve, reject} = this._queue.shift());
-	      cb = (await (async function() {
-	        try {
-	          returned = (await task(...args));
-	          return function() {
-	            return resolve(returned);
-	          };
-	        } catch (error1) {
-	          error = error1;
-	          return function() {
-	            return reject(error);
-	          };
-	        }
-	      })());
-	      this._running--;
-	      this._tryToRun();
-	      return cb();
-	    }
-	  }
-
-	  schedule(task, ...args) {
-	    var promise, reject, resolve;
-	    resolve = reject = null;
-	    promise = new this.Promise(function(_resolve, _reject) {
-	      resolve = _resolve;
-	      return reject = _reject;
-	    });
-	    this._queue.push({task, args, resolve, reject});
-	    this._tryToRun();
-	    return promise;
-	  }
-
-	};
-
-	var Sync_1 = Sync;
-
-	var version = "2.19.6";
-	var version$1 = {
-		version: version
-	};
-
-	var version$2 = /*#__PURE__*/Object.freeze({
-		version: version,
-		default: version$1
-	});
-
-	var require$$2 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
-
-	var require$$3 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
-
-	var require$$4 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
-
-	var Events$2, Group, IORedisConnection$1, RedisConnection$1, Scripts$1, parser$3;
-
-	parser$3 = parser;
-
-	Events$2 = Events_1;
-
-	RedisConnection$1 = require$$2;
-
-	IORedisConnection$1 = require$$3;
-
-	Scripts$1 = require$$4;
-
-	Group = (function() {
-	  class Group {
-	    constructor(limiterOptions = {}) {
-	      this.deleteKey = this.deleteKey.bind(this);
-	      this.limiterOptions = limiterOptions;
-	      parser$3.load(this.limiterOptions, this.defaults, this);
-	      this.Events = new Events$2(this);
-	      this.instances = {};
-	      this.Bottleneck = Bottleneck_1;
-	      this._startAutoCleanup();
-	      this.sharedConnection = this.connection != null;
-	      if (this.connection == null) {
-	        if (this.limiterOptions.datastore === "redis") {
-	          this.connection = new RedisConnection$1(Object.assign({}, this.limiterOptions, {Events: this.Events}));
-	        } else if (this.limiterOptions.datastore === "ioredis") {
-	          this.connection = new IORedisConnection$1(Object.assign({}, this.limiterOptions, {Events: this.Events}));
-	        }
-	      }
-	    }
-
-	    key(key = "") {
-	      var ref;
-	      return (ref = this.instances[key]) != null ? ref : (() => {
-	        var limiter;
-	        limiter = this.instances[key] = new this.Bottleneck(Object.assign(this.limiterOptions, {
-	          id: `${this.id}-${key}`,
-	          timeout: this.timeout,
-	          connection: this.connection
-	        }));
-	        this.Events.trigger("created", limiter, key);
-	        return limiter;
-	      })();
-	    }
-
-	    async deleteKey(key = "") {
-	      var deleted, instance;
-	      instance = this.instances[key];
-	      if (this.connection) {
-	        deleted = (await this.connection.__runCommand__(['del', ...Scripts$1.allKeys(`${this.id}-${key}`)]));
-	      }
-	      if (instance != null) {
-	        delete this.instances[key];
-	        await instance.disconnect();
-	      }
-	      return (instance != null) || deleted > 0;
-	    }
-
-	    limiters() {
-	      var k, ref, results, v;
-	      ref = this.instances;
-	      results = [];
-	      for (k in ref) {
-	        v = ref[k];
-	        results.push({
-	          key: k,
-	          limiter: v
-	        });
-	      }
-	      return results;
-	    }
-
-	    keys() {
-	      return Object.keys(this.instances);
-	    }
-
-	    async clusterKeys() {
-	      var cursor, end, found, i, k, keys, len, next, start;
-	      if (this.connection == null) {
-	        return this.Promise.resolve(this.keys());
-	      }
-	      keys = [];
-	      cursor = null;
-	      start = `b_${this.id}-`.length;
-	      end = "_settings".length;
-	      while (cursor !== 0) {
-	        [next, found] = (await this.connection.__runCommand__(["scan", cursor != null ? cursor : 0, "match", `b_${this.id}-*_settings`, "count", 10000]));
-	        cursor = ~~next;
-	        for (i = 0, len = found.length; i < len; i++) {
-	          k = found[i];
-	          keys.push(k.slice(start, -end));
-	        }
-	      }
-	      return keys;
-	    }
-
-	    _startAutoCleanup() {
-	      var base;
-	      clearInterval(this.interval);
-	      return typeof (base = (this.interval = setInterval(async() => {
-	        var e, k, ref, results, time, v;
-	        time = Date.now();
-	        ref = this.instances;
-	        results = [];
-	        for (k in ref) {
-	          v = ref[k];
-	          try {
-	            if ((await v._store.__groupCheck__(time))) {
-	              results.push(this.deleteKey(k));
-	            } else {
-	              results.push(void 0);
-	            }
-	          } catch (error) {
-	            e = error;
-	            results.push(v.Events.trigger("error", e));
-	          }
-	        }
-	        return results;
-	      }, this.timeout / 2))).unref === "function" ? base.unref() : void 0;
-	    }
-
-	    updateSettings(options = {}) {
-	      parser$3.overwrite(options, this.defaults, this);
-	      parser$3.overwrite(options, options, this.limiterOptions);
-	      if (options.timeout != null) {
-	        return this._startAutoCleanup();
-	      }
-	    }
-
-	    disconnect(flush = true) {
-	      var ref;
-	      if (!this.sharedConnection) {
-	        return (ref = this.connection) != null ? ref.disconnect(flush) : void 0;
-	      }
-	    }
-
-	  }
-	  Group.prototype.defaults = {
-	    timeout: 1000 * 60 * 5,
-	    connection: null,
-	    Promise: Promise,
-	    id: "group-key"
-	  };
-
-	  return Group;
-
-	}).call(commonjsGlobal);
-
-	var Group_1 = Group;
-
-	var Batcher, Events$3, parser$4;
-
-	parser$4 = parser;
-
-	Events$3 = Events_1;
-
-	Batcher = (function() {
-	  class Batcher {
-	    constructor(options = {}) {
-	      this.options = options;
-	      parser$4.load(this.options, this.defaults, this);
-	      this.Events = new Events$3(this);
-	      this._arr = [];
-	      this._resetPromise();
-	      this._lastFlush = Date.now();
-	    }
-
-	    _resetPromise() {
-	      return this._promise = new this.Promise((res, rej) => {
-	        return this._resolve = res;
-	      });
-	    }
-
-	    _flush() {
-	      clearTimeout(this._timeout);
-	      this._lastFlush = Date.now();
-	      this._resolve();
-	      this.Events.trigger("batch", this._arr);
-	      this._arr = [];
-	      return this._resetPromise();
-	    }
-
-	    add(data) {
-	      var ret;
-	      this._arr.push(data);
-	      ret = this._promise;
-	      if (this._arr.length === this.maxSize) {
-	        this._flush();
-	      } else if ((this.maxTime != null) && this._arr.length === 1) {
-	        this._timeout = setTimeout(() => {
-	          return this._flush();
-	        }, this.maxTime);
-	      }
-	      return ret;
-	    }
-
-	  }
-	  Batcher.prototype.defaults = {
-	    maxTime: null,
-	    maxSize: null,
-	    Promise: Promise
-	  };
-
-	  return Batcher;
-
-	}).call(commonjsGlobal);
-
-	var Batcher_1 = Batcher;
-
-	var require$$4$1 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
-
-	var require$$8 = getCjsExportFromNamespace(version$2);
-
-	var Bottleneck, DEFAULT_PRIORITY$1, Events$4, Job$1, LocalDatastore$1, NUM_PRIORITIES$1, Queues$1, RedisDatastore$1, States$1, Sync$1, parser$5,
-	  splice = [].splice;
-
-	NUM_PRIORITIES$1 = 10;
-
-	DEFAULT_PRIORITY$1 = 5;
-
-	parser$5 = parser;
-
-	Queues$1 = Queues_1;
-
-	Job$1 = Job_1;
-
-	LocalDatastore$1 = LocalDatastore_1;
-
-	RedisDatastore$1 = require$$4$1;
-
-	Events$4 = Events_1;
-
-	States$1 = States_1;
-
-	Sync$1 = Sync_1;
-
-	Bottleneck = (function() {
-	  class Bottleneck {
-	    constructor(options = {}, ...invalid) {
-	      var storeInstanceOptions, storeOptions;
-	      this._addToQueue = this._addToQueue.bind(this);
-	      this._validateOptions(options, invalid);
-	      parser$5.load(options, this.instanceDefaults, this);
-	      this._queues = new Queues$1(NUM_PRIORITIES$1);
-	      this._scheduled = {};
-	      this._states = new States$1(["RECEIVED", "QUEUED", "RUNNING", "EXECUTING"].concat(this.trackDoneStatus ? ["DONE"] : []));
-	      this._limiter = null;
-	      this.Events = new Events$4(this);
-	      this._submitLock = new Sync$1("submit", this.Promise);
-	      this._registerLock = new Sync$1("register", this.Promise);
-	      storeOptions = parser$5.load(options, this.storeDefaults, {});
-	      this._store = (function() {
-	        if (this.datastore === "redis" || this.datastore === "ioredis" || (this.connection != null)) {
-	          storeInstanceOptions = parser$5.load(options, this.redisStoreDefaults, {});
-	          return new RedisDatastore$1(this, storeOptions, storeInstanceOptions);
-	        } else if (this.datastore === "local") {
-	          storeInstanceOptions = parser$5.load(options, this.localStoreDefaults, {});
-	          return new LocalDatastore$1(this, storeOptions, storeInstanceOptions);
-	        } else {
-	          throw new Bottleneck.prototype.BottleneckError(`Invalid datastore type: ${this.datastore}`);
-	        }
-	      }).call(this);
-	      this._queues.on("leftzero", () => {
-	        var ref;
-	        return (ref = this._store.heartbeat) != null ? typeof ref.ref === "function" ? ref.ref() : void 0 : void 0;
-	      });
-	      this._queues.on("zero", () => {
-	        var ref;
-	        return (ref = this._store.heartbeat) != null ? typeof ref.unref === "function" ? ref.unref() : void 0 : void 0;
-	      });
-	    }
-
-	    _validateOptions(options, invalid) {
-	      if (!((options != null) && typeof options === "object" && invalid.length === 0)) {
-	        throw new Bottleneck.prototype.BottleneckError("Bottleneck v2 takes a single object argument. Refer to https://github.com/SGrondin/bottleneck#upgrading-to-v2 if you're upgrading from Bottleneck v1.");
-	      }
-	    }
-
-	    ready() {
-	      return this._store.ready;
-	    }
-
-	    clients() {
-	      return this._store.clients;
-	    }
-
-	    channel() {
-	      return `b_${this.id}`;
-	    }
-
-	    channel_client() {
-	      return `b_${this.id}_${this._store.clientId}`;
-	    }
-
-	    publish(message) {
-	      return this._store.__publish__(message);
-	    }
-
-	    disconnect(flush = true) {
-	      return this._store.__disconnect__(flush);
-	    }
-
-	    chain(_limiter) {
-	      this._limiter = _limiter;
-	      return this;
-	    }
-
-	    queued(priority) {
-	      return this._queues.queued(priority);
-	    }
-
-	    clusterQueued() {
-	      return this._store.__queued__();
-	    }
-
-	    empty() {
-	      return this.queued() === 0 && this._submitLock.isEmpty();
-	    }
-
-	    running() {
-	      return this._store.__running__();
-	    }
-
-	    done() {
-	      return this._store.__done__();
-	    }
-
-	    jobStatus(id) {
-	      return this._states.jobStatus(id);
-	    }
-
-	    jobs(status) {
-	      return this._states.statusJobs(status);
-	    }
-
-	    counts() {
-	      return this._states.statusCounts();
-	    }
-
-	    _randomIndex() {
-	      return Math.random().toString(36).slice(2);
-	    }
-
-	    check(weight = 1) {
-	      return this._store.__check__(weight);
-	    }
-
-	    _clearGlobalState(index) {
-	      if (this._scheduled[index] != null) {
-	        clearTimeout(this._scheduled[index].expiration);
-	        delete this._scheduled[index];
-	        return true;
-	      } else {
-	        return false;
-	      }
-	    }
-
-	    async _free(index, job, options, eventInfo) {
-	      var e, running;
-	      try {
-	        ({running} = (await this._store.__free__(index, options.weight)));
-	        this.Events.trigger("debug", `Freed ${options.id}`, eventInfo);
-	        if (running === 0 && this.empty()) {
-	          return this.Events.trigger("idle");
-	        }
-	      } catch (error1) {
-	        e = error1;
-	        return this.Events.trigger("error", e);
-	      }
-	    }
-
-	    _run(index, job, wait) {
-	      var clearGlobalState, free, run;
-	      job.doRun();
-	      clearGlobalState = this._clearGlobalState.bind(this, index);
-	      run = this._run.bind(this, index, job);
-	      free = this._free.bind(this, index, job);
-	      return this._scheduled[index] = {
-	        timeout: setTimeout(() => {
-	          return job.doExecute(this._limiter, clearGlobalState, run, free);
-	        }, wait),
-	        expiration: job.options.expiration != null ? setTimeout(function() {
-	          return job.doExpire(clearGlobalState, run, free);
-	        }, wait + job.options.expiration) : void 0,
-	        job: job
-	      };
-	    }
-
-	    _drainOne(capacity) {
-	      return this._registerLock.schedule(() => {
-	        var args, index, next, options, queue;
-	        if (this.queued() === 0) {
-	          return this.Promise.resolve(null);
-	        }
-	        queue = this._queues.getFirst();
-	        ({options, args} = next = queue.first());
-	        if ((capacity != null) && options.weight > capacity) {
-	          return this.Promise.resolve(null);
-	        }
-	        this.Events.trigger("debug", `Draining ${options.id}`, {args, options});
-	        index = this._randomIndex();
-	        return this._store.__register__(index, options.weight, options.expiration).then(({success, wait, reservoir}) => {
-	          var empty;
-	          this.Events.trigger("debug", `Drained ${options.id}`, {success, args, options});
-	          if (success) {
-	            queue.shift();
-	            empty = this.empty();
-	            if (empty) {
-	              this.Events.trigger("empty");
-	            }
-	            if (reservoir === 0) {
-	              this.Events.trigger("depleted", empty);
-	            }
-	            this._run(index, next, wait);
-	            return this.Promise.resolve(options.weight);
-	          } else {
-	            return this.Promise.resolve(null);
-	          }
-	        });
-	      });
-	    }
-
-	    _drainAll(capacity, total = 0) {
-	      return this._drainOne(capacity).then((drained) => {
-	        var newCapacity;
-	        if (drained != null) {
-	          newCapacity = capacity != null ? capacity - drained : capacity;
-	          return this._drainAll(newCapacity, total + drained);
-	        } else {
-	          return this.Promise.resolve(total);
-	        }
-	      }).catch((e) => {
-	        return this.Events.trigger("error", e);
-	      });
-	    }
-
-	    _dropAllQueued(message) {
-	      return this._queues.shiftAll(function(job) {
-	        return job.doDrop({message});
-	      });
-	    }
-
-	    stop(options = {}) {
-	      var done, waitForExecuting;
-	      options = parser$5.load(options, this.stopDefaults);
-	      waitForExecuting = (at) => {
-	        var finished;
-	        finished = () => {
-	          var counts;
-	          counts = this._states.counts;
-	          return (counts[0] + counts[1] + counts[2] + counts[3]) === at;
-	        };
-	        return new this.Promise((resolve, reject) => {
-	          if (finished()) {
-	            return resolve();
-	          } else {
-	            return this.on("done", () => {
-	              if (finished()) {
-	                this.removeAllListeners("done");
-	                return resolve();
-	              }
-	            });
-	          }
-	        });
-	      };
-	      done = options.dropWaitingJobs ? (this._run = function(index, next) {
-	        return next.doDrop({
-	          message: options.dropErrorMessage
-	        });
-	      }, this._drainOne = () => {
-	        return this.Promise.resolve(null);
-	      }, this._registerLock.schedule(() => {
-	        return this._submitLock.schedule(() => {
-	          var k, ref, v;
-	          ref = this._scheduled;
-	          for (k in ref) {
-	            v = ref[k];
-	            if (this.jobStatus(v.job.options.id) === "RUNNING") {
-	              clearTimeout(v.timeout);
-	              clearTimeout(v.expiration);
-	              v.job.doDrop({
-	                message: options.dropErrorMessage
-	              });
-	            }
-	          }
-	          this._dropAllQueued(options.dropErrorMessage);
-	          return waitForExecuting(0);
-	        });
-	      })) : this.schedule({
-	        priority: NUM_PRIORITIES$1 - 1,
-	        weight: 0
-	      }, () => {
-	        return waitForExecuting(1);
-	      });
-	      this._receive = function(job) {
-	        return job._reject(new Bottleneck.prototype.BottleneckError(options.enqueueErrorMessage));
-	      };
-	      this.stop = () => {
-	        return this.Promise.reject(new Bottleneck.prototype.BottleneckError("stop() has already been called"));
-	      };
-	      return done;
-	    }
-
-	    async _addToQueue(job) {
-	      var args, blocked, error, options, reachedHWM, shifted, strategy;
-	      ({args, options} = job);
-	      try {
-	        ({reachedHWM, blocked, strategy} = (await this._store.__submit__(this.queued(), options.weight)));
-	      } catch (error1) {
-	        error = error1;
-	        this.Events.trigger("debug", `Could not queue ${options.id}`, {args, options, error});
-	        job.doDrop({error});
-	        return false;
-	      }
-	      if (blocked) {
-	        job.doDrop();
-	        return true;
-	      } else if (reachedHWM) {
-	        shifted = strategy === Bottleneck.prototype.strategy.LEAK ? this._queues.shiftLastFrom(options.priority) : strategy === Bottleneck.prototype.strategy.OVERFLOW_PRIORITY ? this._queues.shiftLastFrom(options.priority + 1) : strategy === Bottleneck.prototype.strategy.OVERFLOW ? job : void 0;
-	        if (shifted != null) {
-	          shifted.doDrop();
-	        }
-	        if ((shifted == null) || strategy === Bottleneck.prototype.strategy.OVERFLOW) {
-	          if (shifted == null) {
-	            job.doDrop();
-	          }
-	          return reachedHWM;
-	        }
-	      }
-	      job.doQueue(reachedHWM, blocked);
-	      this._queues.push(job);
-	      await this._drainAll();
-	      return reachedHWM;
-	    }
-
-	    _receive(job) {
-	      if (this._states.jobStatus(job.options.id) != null) {
-	        job._reject(new Bottleneck.prototype.BottleneckError(`A job with the same id already exists (id=${job.options.id})`));
-	        return false;
-	      } else {
-	        job.doReceive();
-	        return this._submitLock.schedule(this._addToQueue, job);
-	      }
-	    }
-
-	    submit(...args) {
-	      var cb, fn, job, options, ref, ref1, task;
-	      if (typeof args[0] === "function") {
-	        ref = args, [fn, ...args] = ref, [cb] = splice.call(args, -1);
-	        options = parser$5.load({}, this.jobDefaults);
-	      } else {
-	        ref1 = args, [options, fn, ...args] = ref1, [cb] = splice.call(args, -1);
-	        options = parser$5.load(options, this.jobDefaults);
-	      }
-	      task = (...args) => {
-	        return new this.Promise(function(resolve, reject) {
-	          return fn(...args, function(...args) {
-	            return (args[0] != null ? reject : resolve)(args);
-	          });
-	        });
-	      };
-	      job = new Job$1(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
-	      job.promise.then(function(args) {
-	        return typeof cb === "function" ? cb(...args) : void 0;
-	      }).catch(function(args) {
-	        if (Array.isArray(args)) {
-	          return typeof cb === "function" ? cb(...args) : void 0;
-	        } else {
-	          return typeof cb === "function" ? cb(args) : void 0;
-	        }
-	      });
-	      return this._receive(job);
-	    }
-
-	    schedule(...args) {
-	      var job, options, task;
-	      if (typeof args[0] === "function") {
-	        [task, ...args] = args;
-	        options = {};
-	      } else {
-	        [options, task, ...args] = args;
-	      }
-	      job = new Job$1(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
-	      this._receive(job);
-	      return job.promise;
-	    }
-
-	    wrap(fn) {
-	      var schedule, wrapped;
-	      schedule = this.schedule.bind(this);
-	      wrapped = function(...args) {
-	        return schedule(fn.bind(this), ...args);
-	      };
-	      wrapped.withOptions = function(options, ...args) {
-	        return schedule(options, fn, ...args);
-	      };
-	      return wrapped;
-	    }
-
-	    async updateSettings(options = {}) {
-	      await this._store.__updateSettings__(parser$5.overwrite(options, this.storeDefaults));
-	      parser$5.overwrite(options, this.instanceDefaults, this);
-	      return this;
-	    }
-
-	    currentReservoir() {
-	      return this._store.__currentReservoir__();
-	    }
-
-	    incrementReservoir(incr = 0) {
-	      return this._store.__incrementReservoir__(incr);
-	    }
-
-	  }
-	  Bottleneck.default = Bottleneck;
-
-	  Bottleneck.Events = Events$4;
-
-	  Bottleneck.version = Bottleneck.prototype.version = require$$8.version;
-
-	  Bottleneck.strategy = Bottleneck.prototype.strategy = {
-	    LEAK: 1,
-	    OVERFLOW: 2,
-	    OVERFLOW_PRIORITY: 4,
-	    BLOCK: 3
-	  };
-
-	  Bottleneck.BottleneckError = Bottleneck.prototype.BottleneckError = BottleneckError_1;
-
-	  Bottleneck.Group = Bottleneck.prototype.Group = Group_1;
-
-	  Bottleneck.RedisConnection = Bottleneck.prototype.RedisConnection = require$$2;
-
-	  Bottleneck.IORedisConnection = Bottleneck.prototype.IORedisConnection = require$$3;
-
-	  Bottleneck.Batcher = Bottleneck.prototype.Batcher = Batcher_1;
-
-	  Bottleneck.prototype.jobDefaults = {
-	    priority: DEFAULT_PRIORITY$1,
-	    weight: 1,
-	    expiration: null,
-	    id: "<no-id>"
-	  };
-
-	  Bottleneck.prototype.storeDefaults = {
-	    maxConcurrent: null,
-	    minTime: 0,
-	    highWater: null,
-	    strategy: Bottleneck.prototype.strategy.LEAK,
-	    penalty: null,
-	    reservoir: null,
-	    reservoirRefreshInterval: null,
-	    reservoirRefreshAmount: null,
-	    reservoirIncreaseInterval: null,
-	    reservoirIncreaseAmount: null,
-	    reservoirIncreaseMaximum: null
-	  };
-
-	  Bottleneck.prototype.localStoreDefaults = {
-	    Promise: Promise,
-	    timeout: null,
-	    heartbeatInterval: 250
-	  };
-
-	  Bottleneck.prototype.redisStoreDefaults = {
-	    Promise: Promise,
-	    timeout: null,
-	    heartbeatInterval: 5000,
-	    clientTimeout: 10000,
-	    Redis: null,
-	    clientOptions: {},
-	    clusterNodes: null,
-	    clearDatastore: false,
-	    connection: null
-	  };
-
-	  Bottleneck.prototype.instanceDefaults = {
-	    datastore: "local",
-	    connection: null,
-	    id: "<no-id>",
-	    rejectOnDrop: true,
-	    trackDoneStatus: false,
-	    Promise: Promise
-	  };
-
-	  Bottleneck.prototype.stopDefaults = {
-	    enqueueErrorMessage: "This limiter has been stopped and cannot accept new jobs.",
-	    dropWaitingJobs: true,
-	    dropErrorMessage: "This limiter has been stopped."
-	  };
-
-	  return Bottleneck;
-
-	}).call(commonjsGlobal);
-
-	var Bottleneck_1 = Bottleneck;
-
-	var lib = Bottleneck_1;
-
-	return lib;
+    /******************************************************************************
+    Copyright (c) Microsoft Corporation.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+    /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+    var extendStatics = function(d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+
+    function __extends(d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    }
+
+    var __assign = function() {
+        __assign = Object.assign || function __assign(t) {
+            for (var s, i = 1, n = arguments.length; i < n; i++) {
+                s = arguments[i];
+                for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+            }
+            return t;
+        };
+        return __assign.apply(this, arguments);
+    };
+
+    function __rest(s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                    t[p[i]] = s[p[i]];
+            }
+        return t;
+    }
+
+    function __decorate(decorators, target, key, desc) {
+        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+        return c > 3 && r && Object.defineProperty(target, key, r), r;
+    }
+
+    function __param(paramIndex, decorator) {
+        return function (target, key) { decorator(target, key, paramIndex); }
+    }
+
+    function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+        function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+        var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+        var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+        var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+        var _, done = false;
+        for (var i = decorators.length - 1; i >= 0; i--) {
+            var context = {};
+            for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+            for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+            context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+            var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+            if (kind === "accessor") {
+                if (result === void 0) continue;
+                if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+                if (_ = accept(result.get)) descriptor.get = _;
+                if (_ = accept(result.set)) descriptor.set = _;
+                if (_ = accept(result.init)) initializers.unshift(_);
+            }
+            else if (_ = accept(result)) {
+                if (kind === "field") initializers.unshift(_);
+                else descriptor[key] = _;
+            }
+        }
+        if (target) Object.defineProperty(target, contextIn.name, descriptor);
+        done = true;
+    }
+    function __runInitializers(thisArg, initializers, value) {
+        var useValue = arguments.length > 2;
+        for (var i = 0; i < initializers.length; i++) {
+            value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+        }
+        return useValue ? value : void 0;
+    }
+    function __propKey(x) {
+        return typeof x === "symbol" ? x : "".concat(x);
+    }
+    function __setFunctionName(f, name, prefix) {
+        if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+        return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
+    }
+    function __metadata(metadataKey, metadataValue) {
+        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+    }
+
+    function __awaiter(thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    }
+
+    function __generator(thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+        return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (g && (g = 0, op[0] && (_ = 0)), _) try {
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    }
+
+    var __createBinding = Object.create ? (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        var desc = Object.getOwnPropertyDescriptor(m, k);
+        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+            desc = { enumerable: true, get: function() { return m[k]; } };
+        }
+        Object.defineProperty(o, k2, desc);
+    }) : (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        o[k2] = m[k];
+    });
+
+    function __exportStar(m, o) {
+        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+    }
+
+    function __values(o) {
+        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+        if (m) return m.call(o);
+        if (o && typeof o.length === "number") return {
+            next: function () {
+                if (o && i >= o.length) o = void 0;
+                return { value: o && o[i++], done: !o };
+            }
+        };
+        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+    }
+
+    function __read(o, n) {
+        var m = typeof Symbol === "function" && o[Symbol.iterator];
+        if (!m) return o;
+        var i = m.call(o), r, ar = [], e;
+        try {
+            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+        }
+        catch (error) { e = { error: error }; }
+        finally {
+            try {
+                if (r && !r.done && (m = i["return"])) m.call(i);
+            }
+            finally { if (e) throw e.error; }
+        }
+        return ar;
+    }
+
+    /** @deprecated */
+    function __spread() {
+        for (var ar = [], i = 0; i < arguments.length; i++)
+            ar = ar.concat(__read(arguments[i]));
+        return ar;
+    }
+
+    /** @deprecated */
+    function __spreadArrays() {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+        for (var r = Array(s), k = 0, i = 0; i < il; i++)
+            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+                r[k] = a[j];
+        return r;
+    }
+
+    function __spreadArray(to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
+        }
+        return to.concat(ar || Array.prototype.slice.call(from));
+    }
+
+    function __await(v) {
+        return this instanceof __await ? (this.v = v, this) : new __await(v);
+    }
+
+    function __asyncGenerator(thisArg, _arguments, generator) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var g = generator.apply(thisArg, _arguments || []), i, q = [];
+        return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function () { return this; }, i;
+        function awaitReturn(f) { return function (v) { return Promise.resolve(v).then(f, reject); }; }
+        function verb(n, f) { if (g[n]) { i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; if (f) i[n] = f(i[n]); } }
+        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
+        function fulfill(value) { resume("next", value); }
+        function reject(value) { resume("throw", value); }
+        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+    }
+
+    function __asyncDelegator(o) {
+        var i, p;
+        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: false } : f ? f(v) : v; } : f; }
+    }
+
+    function __asyncValues(o) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var m = o[Symbol.asyncIterator], i;
+        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+    }
+
+    function __makeTemplateObject(cooked, raw) {
+        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+        return cooked;
+    }
+    var __setModuleDefault = Object.create ? (function(o, v) {
+        Object.defineProperty(o, "default", { enumerable: true, value: v });
+    }) : function(o, v) {
+        o["default"] = v;
+    };
+
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+
+    function __importStar(mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    }
+
+    function __importDefault(mod) {
+        return (mod && mod.__esModule) ? mod : { default: mod };
+    }
+
+    function __classPrivateFieldGet(receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    }
+
+    function __classPrivateFieldSet(receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    }
+
+    function __classPrivateFieldIn(state, receiver) {
+        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
+        return typeof state === "function" ? receiver === state : state.has(receiver);
+    }
+
+    function __addDisposableResource(env, value, async) {
+        if (value !== null && value !== void 0) {
+            if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
+            var dispose, inner;
+            if (async) {
+                if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
+                dispose = value[Symbol.asyncDispose];
+            }
+            if (dispose === void 0) {
+                if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
+                dispose = value[Symbol.dispose];
+                if (async) inner = dispose;
+            }
+            if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
+            if (inner) dispose = function() { try { inner.call(this); } catch (e) { return Promise.reject(e); } };
+            env.stack.push({ value: value, dispose: dispose, async: async });
+        }
+        else if (async) {
+            env.stack.push({ async: true });
+        }
+        return value;
+
+    }
+
+    var _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+        var e = new Error(message);
+        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
+
+    function __disposeResources(env) {
+        function fail(e) {
+            env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
+            env.hasError = true;
+        }
+        var r, s = 0;
+        function next() {
+            while (r = env.stack.pop()) {
+                try {
+                    if (!r.async && s === 1) return s = 0, env.stack.push(r), Promise.resolve().then(next);
+                    if (r.dispose) {
+                        var result = r.dispose.call(r.value);
+                        if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) { fail(e); return next(); });
+                    }
+                    else s |= 1;
+                }
+                catch (e) {
+                    fail(e);
+                }
+            }
+            if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
+            if (env.hasError) throw env.error;
+        }
+        return next();
+    }
+
+    function __rewriteRelativeImportExtension(path, preserveJsx) {
+        if (typeof path === "string" && /^\.\.?\//.test(path)) {
+            return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function (m, tsx, d, ext, cm) {
+                return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : (d + ext + "." + cm.toLowerCase() + "js");
+            });
+        }
+        return path;
+    }
+
+    var tslib_1 = {
+        __extends: __extends,
+        __assign: __assign,
+        __rest: __rest,
+        __decorate: __decorate,
+        __param: __param,
+        __esDecorate: __esDecorate,
+        __runInitializers: __runInitializers,
+        __propKey: __propKey,
+        __setFunctionName: __setFunctionName,
+        __metadata: __metadata,
+        __awaiter: __awaiter,
+        __generator: __generator,
+        __createBinding: __createBinding,
+        __exportStar: __exportStar,
+        __values: __values,
+        __read: __read,
+        __spread: __spread,
+        __spreadArrays: __spreadArrays,
+        __spreadArray: __spreadArray,
+        __await: __await,
+        __asyncGenerator: __asyncGenerator,
+        __asyncDelegator: __asyncDelegator,
+        __asyncValues: __asyncValues,
+        __makeTemplateObject: __makeTemplateObject,
+        __importStar: __importStar,
+        __importDefault: __importDefault,
+        __classPrivateFieldGet: __classPrivateFieldGet,
+        __classPrivateFieldSet: __classPrivateFieldSet,
+        __classPrivateFieldIn: __classPrivateFieldIn,
+        __addDisposableResource: __addDisposableResource,
+        __disposeResources: __disposeResources,
+        __rewriteRelativeImportExtension: __rewriteRelativeImportExtension,
+    };
+
+    function unwrapExports (x) {
+    	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+    }
+
+    function createCommonjsModule(fn, module) {
+    	return module = { exports: {} }, fn(module, module.exports), module.exports;
+    }
+
+    function getCjsExportFromNamespace (n) {
+    	return n && n['default'] || n;
+    }
+
+    var parser = createCommonjsModule(function (module, exports) {
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.overwrite = exports.load = void 0;
+    const load = (received, defaults, onto = {}) => {
+        for (const k in defaults) {
+            onto[k] = received[k] != null ? received[k] : defaults[k];
+        }
+        return onto;
+    };
+    exports.load = load;
+    const overwrite = (received, defaults, onto = {}) => {
+        for (const k in received) {
+            if (defaults[k] !== undefined) {
+                onto[k] = received[k];
+            }
+        }
+        return onto;
+    };
+    exports.overwrite = overwrite;
+
+    });
+
+    unwrapExports(parser);
+    var parser_1 = parser.overwrite;
+    var parser_2 = parser.load;
+
+    class DLList {
+        constructor(incr, decr) {
+            this.incr = incr;
+            this.decr = decr;
+            this._first = null;
+            this._last = null;
+            this.length = 0;
+        }
+        push(value) {
+            var _a;
+            this.length++;
+            (_a = this.incr) === null || _a === void 0 ? void 0 : _a.call(this);
+            const node = { value, prev: this._last, next: null };
+            if (this._last) {
+                this._last.next = node;
+                this._last = node;
+            }
+            else {
+                this._first = this._last = node;
+            }
+        }
+        shift() {
+            var _a;
+            if (!this._first) {
+                return;
+            }
+            this.length--;
+            (_a = this.decr) === null || _a === void 0 ? void 0 : _a.call(this);
+            const value = this._first.value;
+            this._first = this._first.next;
+            if (this._first) {
+                this._first.prev = null;
+            }
+            else {
+                this._last = null;
+            }
+            return value;
+        }
+        first() {
+            var _a;
+            return (_a = this._first) === null || _a === void 0 ? void 0 : _a.value;
+        }
+        getArray() {
+            const result = [];
+            let node = this._first;
+            while (node) {
+                result.push(node.value);
+                node = node.next;
+            }
+            return result;
+        }
+        forEachShift(cb) {
+            let node = this.shift();
+            while (node !== undefined) {
+                cb(node);
+                node = this.shift();
+            }
+        }
+        debug() {
+            var _a, _b;
+            const result = [];
+            let node = this._first;
+            while (node) {
+                result.push({
+                    value: node.value,
+                    prev: (_a = node.prev) === null || _a === void 0 ? void 0 : _a.value,
+                    next: (_b = node.next) === null || _b === void 0 ? void 0 : _b.value,
+                });
+                node = node.next;
+            }
+            return result;
+        }
+    }
+    var DLList_1 = DLList;
+
+    class Events {
+        constructor(instance) {
+            this.instance = instance;
+            this._events = {};
+            if (this.instance.on || this.instance.once || this.instance.removeAllListeners) {
+                throw new Error("An Emitter already exists for this object");
+            }
+            this.instance.on = (name, cb) => this._addListener(name, "many", cb);
+            this.instance.once = (name, cb) => this._addListener(name, "once", cb);
+            this.instance.removeAllListeners = (name) => {
+                if (name != null) {
+                    delete this._events[name];
+                }
+                else {
+                    this._events = {};
+                }
+            };
+        }
+        _addListener(name, status, cb) {
+            if (!this._events[name]) {
+                this._events[name] = [];
+            }
+            this._events[name].push({ cb, status });
+            return this.instance;
+        }
+        listenerCount(name) {
+            return this._events[name] ? this._events[name].length : 0;
+        }
+        async trigger(name, ...args) {
+            try {
+                if (name !== "debug") {
+                    this.trigger("debug", `Event triggered: ${name}`, args);
+                }
+                if (!this._events[name]) {
+                    return;
+                }
+                this._events[name] = this._events[name].filter(listener => listener.status !== "none");
+                const promises = this._events[name].map(async (listener) => {
+                    var _a;
+                    if (listener.status === "none") {
+                        return;
+                    }
+                    if (listener.status === "once") {
+                        listener.status = "none";
+                    }
+                    try {
+                        const returned = (_a = listener.cb) === null || _a === void 0 ? void 0 : _a.call(listener, ...args);
+                        if (typeof (returned === null || returned === void 0 ? void 0 : returned.then) === "function") {
+                            return await returned;
+                        }
+                        else {
+                            return returned;
+                        }
+                    }
+                    catch (e) {
+                        if (name !== "error") {
+                            this.trigger("error", e);
+                        }
+                        return null;
+                    }
+                });
+                const results = await Promise.all(promises);
+                return results.find(x => x != null);
+            }
+            catch (e) {
+                if (name !== "error") {
+                    this.trigger("error", e);
+                }
+                return null;
+            }
+        }
+    }
+    var Events_1 = Events;
+
+    class Queues {
+        constructor(num_priorities) {
+            this._length = 0;
+            this.Events = new Events_1(this);
+            this._lists = [];
+            for (let i = 0; i < num_priorities; i++) {
+                this._lists.push(new DLList_1(() => this.incr(), () => this.decr()));
+            }
+        }
+        incr() {
+            if (this._length++ === 0) {
+                this.Events.trigger("leftzero");
+            }
+        }
+        decr() {
+            if (--this._length === 0) {
+                this.Events.trigger("zero");
+            }
+        }
+        push(job) {
+            this._lists[job.options.priority].push(job);
+        }
+        queued(priority) {
+            return priority != null ? this._lists[priority].length : this._length;
+        }
+        shiftAll(fn) {
+            this._lists.forEach(list => list.forEachShift(fn));
+        }
+        getFirst(arr = this._lists) {
+            for (const list of arr) {
+                if (list.length > 0) {
+                    return list;
+                }
+            }
+            return new DLList_1();
+        }
+        shiftLastFrom(priority) {
+            const reversedLists = this._lists.slice(priority).reverse();
+            return this.getFirst(reversedLists).shift();
+        }
+    }
+    var Queues_1 = Queues;
+
+    class BottleneckError extends Error {
+    }
+    var BottleneckError_1 = BottleneckError;
+
+    const NUM_PRIORITIES = 10;
+    const DEFAULT_PRIORITY = 5;
+    const parser$2 = tslib_1.__importStar(parser);
+
+    class Job {
+        constructor(task, args, options, jobDefaults, rejectOnDrop, Events, _states, Promise) {
+            this.task = task;
+            this.args = args;
+            this.rejectOnDrop = rejectOnDrop;
+            this.Events = Events;
+            this._states = _states;
+            this.Promise = Promise;
+            this.retryCount = 0;
+            this.options = parser$2.load(options, jobDefaults);
+            this.options.priority = this._sanitizePriority(this.options.priority);
+            if (this.options.id === jobDefaults.id) {
+                this.options.id = `${this.options.id}-${this._randomIndex()}`;
+            }
+            this.promise = new this.Promise((resolve, reject) => {
+                this._resolve = resolve;
+                this._reject = reject;
+            });
+        }
+        _sanitizePriority(priority) {
+            const sProperty = ~~priority !== priority ? DEFAULT_PRIORITY : priority;
+            if (sProperty < 0)
+                return 0;
+            if (sProperty > NUM_PRIORITIES - 1)
+                return NUM_PRIORITIES - 1;
+            return sProperty;
+        }
+        _randomIndex() {
+            return Math.random().toString(36).slice(2);
+        }
+        doDrop({ error, message = "This job has been dropped by Bottleneck" } = {}) {
+            if (this._states.remove(this.options.id)) {
+                if (this.rejectOnDrop) {
+                    this._reject(error !== null && error !== void 0 ? error : new BottleneckError_1(message));
+                }
+                this.Events.trigger("dropped", {
+                    args: this.args,
+                    options: this.options,
+                    task: this.task,
+                    promise: this.promise
+                });
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        _assertStatus(expected) {
+            const status = this._states.jobStatus(this.options.id);
+            if (!(status === expected || (expected === "DONE" && status === null))) {
+                throw new BottleneckError_1(`Invalid job status ${status}, expected ${expected}. Please open an issue at https://github.com/SGrondin/bottleneck/issues`);
+            }
+        }
+        doReceive() {
+            this._states.start(this.options.id);
+            this.Events.trigger("received", { args: this.args, options: this.options });
+        }
+        doQueue(reachedHWM, blocked) {
+            this._assertStatus("RECEIVED");
+            this._states.next(this.options.id);
+            this.Events.trigger("queued", { args: this.args, options: this.options, reachedHWM, blocked });
+        }
+        doRun() {
+            if (this.retryCount === 0) {
+                this._assertStatus("QUEUED");
+                this._states.next(this.options.id);
+            }
+            else {
+                this._assertStatus("EXECUTING");
+            }
+            this.Events.trigger("scheduled", { args: this.args, options: this.options });
+        }
+        async doExecute(chained, clearGlobalState, run, free) {
+            if (this.retryCount === 0) {
+                this._assertStatus("RUNNING");
+                this._states.next(this.options.id);
+            }
+            else {
+                this._assertStatus("EXECUTING");
+            }
+            const eventInfo = { args: this.args, options: this.options, retryCount: this.retryCount };
+            this.Events.trigger("executing", eventInfo);
+            try {
+                const passed = chained != null
+                    ? await chained.schedule(this.options, this.task, ...this.args)
+                    : await this.task(...this.args);
+                if (clearGlobalState()) {
+                    this.doDone(eventInfo);
+                    await free(this.options, eventInfo);
+                    this._assertStatus("DONE");
+                    this._resolve(passed);
+                }
+            }
+            catch (error) {
+                this._onFailure(error, eventInfo, clearGlobalState, run, free);
+            }
+        }
+        doExpire(clearGlobalState, run, free) {
+            if (this._states.jobStatus(this.options.id) === "RUNNING") {
+                this._states.next(this.options.id);
+            }
+            this._assertStatus("EXECUTING");
+            const eventInfo = { args: this.args, options: this.options, retryCount: this.retryCount };
+            const error = new BottleneckError_1(`This job timed out after ${this.options.expiration} ms.`);
+            this._onFailure(error, eventInfo, clearGlobalState, run, free);
+        }
+        async _onFailure(error, eventInfo, clearGlobalState, run, free) {
+            if (clearGlobalState()) {
+                const retry = await this.Events.trigger("failed", error, eventInfo);
+                if (retry != null) {
+                    const retryAfter = ~~retry;
+                    this.Events.trigger("retry", `Retrying ${this.options.id} after ${retryAfter} ms`, eventInfo);
+                    this.retryCount++;
+                    run(retryAfter);
+                }
+                else {
+                    this.doDone(eventInfo);
+                    await free(this.options, eventInfo);
+                    this._assertStatus("DONE");
+                    this._reject(error);
+                }
+            }
+        }
+        doDone(eventInfo) {
+            this._assertStatus("EXECUTING");
+            this._states.next(this.options.id);
+            this.Events.trigger("done", eventInfo);
+        }
+    }
+    var Job_1 = Job;
+
+    const parser$3 = tslib_1.__importStar(parser);
+
+    class LocalDatastore {
+        constructor(instance, storeOptions, storeInstanceOptions) {
+            this.instance = instance;
+            this.storeOptions = storeOptions;
+            this.clients = {};
+            this._running = 0;
+            this._done = 0;
+            this._unblockTime = 0;
+            this.clientId = this.instance._randomIndex();
+            parser$3.load(storeInstanceOptions, storeInstanceOptions, this);
+            this._nextRequest = this._lastReservoirRefresh = this._lastReservoirIncrease = Date.now();
+            this.ready = this.Promise.resolve();
+            this._startHeartbeat();
+        }
+        _startHeartbeat() {
+            if (!this.heartbeat &&
+                ((this.storeOptions.reservoirRefreshInterval != null && this.storeOptions.reservoirRefreshAmount != null) ||
+                    (this.storeOptions.reservoirIncreaseInterval != null && this.storeOptions.reservoirIncreaseAmount != null))) {
+                this.heartbeat = setInterval(() => {
+                    const now = Date.now();
+                    if (this.storeOptions.reservoirRefreshInterval != null &&
+                        now >= this._lastReservoirRefresh + this.storeOptions.reservoirRefreshInterval) {
+                        this._lastReservoirRefresh = now;
+                        this.storeOptions.reservoir = this.storeOptions.reservoirRefreshAmount;
+                        this.instance._drainAll(this.computeCapacity());
+                    }
+                    if (this.storeOptions.reservoirIncreaseInterval != null &&
+                        now >= this._lastReservoirIncrease + this.storeOptions.reservoirIncreaseInterval) {
+                        const { reservoirIncreaseAmount: amount, reservoirIncreaseMaximum: maximum, reservoir } = this.storeOptions;
+                        this._lastReservoirIncrease = now;
+                        const incr = maximum != null ? Math.min(amount, maximum - reservoir) : amount;
+                        if (incr > 0) {
+                            this.storeOptions.reservoir += incr;
+                            this.instance._drainAll(this.computeCapacity());
+                        }
+                    }
+                }, this.heartbeatInterval);
+                if (this.heartbeat.unref) {
+                    this.heartbeat.unref();
+                }
+            }
+            else if (this.heartbeat) {
+                clearInterval(this.heartbeat);
+            }
+        }
+        async __publish__(message) {
+            await this.yieldLoop();
+            this.instance.Events.trigger("message", message.toString());
+        }
+        async __disconnect__(flush) {
+            await this.yieldLoop();
+            if (this.heartbeat) {
+                clearInterval(this.heartbeat);
+            }
+            return this.Promise.resolve();
+        }
+        yieldLoop(t = 0) {
+            return new this.Promise((resolve) => setTimeout(resolve, t));
+        }
+        computePenalty() {
+            var _a;
+            return (_a = this.storeOptions.penalty) !== null && _a !== void 0 ? _a : (15 * this.storeOptions.minTime || 5000);
+        }
+        async __updateSettings__(options) {
+            await this.yieldLoop();
+            parser$3.overwrite(options, options, this.storeOptions);
+            this._startHeartbeat();
+            this.instance._drainAll(this.computeCapacity());
+            return true;
+        }
+        async __running__() {
+            await this.yieldLoop();
+            return this._running;
+        }
+        async __queued__() {
+            await this.yieldLoop();
+            return this.instance.queued();
+        }
+        async __done__() {
+            await this.yieldLoop();
+            return this._done;
+        }
+        async __groupCheck__(time) {
+            await this.yieldLoop();
+            return (this._nextRequest + this.timeout) < time;
+        }
+        computeCapacity() {
+            const { maxConcurrent, reservoir } = this.storeOptions;
+            if (maxConcurrent != null && reservoir != null) {
+                return Math.min(maxConcurrent - this._running, reservoir);
+            }
+            else if (maxConcurrent != null) {
+                return maxConcurrent - this._running;
+            }
+            else if (reservoir != null) {
+                return reservoir;
+            }
+            else {
+                return null;
+            }
+        }
+        conditionsCheck(weight) {
+            const capacity = this.computeCapacity();
+            return capacity == null || weight <= capacity;
+        }
+        async __incrementReservoir__(incr) {
+            await this.yieldLoop();
+            const reservoir = (this.storeOptions.reservoir += incr);
+            this.instance._drainAll(this.computeCapacity());
+            return reservoir;
+        }
+        async __currentReservoir__() {
+            await this.yieldLoop();
+            return this.storeOptions.reservoir;
+        }
+        isBlocked(now) {
+            return this._unblockTime >= now;
+        }
+        check(weight, now) {
+            return this.conditionsCheck(weight) && this._nextRequest - now <= 0;
+        }
+        async __check__(weight) {
+            await this.yieldLoop();
+            const now = Date.now();
+            return this.check(weight, now);
+        }
+        async __register__(index, weight, expiration) {
+            await this.yieldLoop();
+            const now = Date.now();
+            if (this.conditionsCheck(weight)) {
+                this._running += weight;
+                if (this.storeOptions.reservoir != null) {
+                    this.storeOptions.reservoir -= weight;
+                }
+                const wait = Math.max(this._nextRequest - now, 0);
+                this._nextRequest = now + wait + this.storeOptions.minTime;
+                return { success: true, wait, reservoir: this.storeOptions.reservoir };
+            }
+            else {
+                return { success: false };
+            }
+        }
+        strategyIsBlock() {
+            return this.storeOptions.strategy === 3;
+        }
+        async __submit__(queueLength, weight) {
+            await this.yieldLoop();
+            if (this.storeOptions.maxConcurrent != null && weight > this.storeOptions.maxConcurrent) {
+                throw new BottleneckError_1(`Impossible to add a job having a weight of ${weight} to a limiter having a maxConcurrent setting of ${this.storeOptions.maxConcurrent}`);
+            }
+            const now = Date.now();
+            const reachedHWM = this.storeOptions.highWater != null &&
+                queueLength === this.storeOptions.highWater &&
+                !this.check(weight, now);
+            const blocked = this.strategyIsBlock() && (reachedHWM || this.isBlocked(now));
+            if (blocked) {
+                this._unblockTime = now + this.computePenalty();
+                this._nextRequest = this._unblockTime + this.storeOptions.minTime;
+                this.instance._dropAllQueued();
+            }
+            return { reachedHWM, blocked, strategy: this.storeOptions.strategy };
+        }
+        async __free__(index, weight) {
+            await this.yieldLoop();
+            this._running -= weight;
+            this._done += weight;
+            this.instance._drainAll(this.computeCapacity());
+            return { running: this._running };
+        }
+    }
+    var LocalDatastore_1 = LocalDatastore;
+
+    class States {
+        constructor(status) {
+            this.status = status;
+            this._jobs = {};
+            this.counts = this.status.map(() => 0);
+        }
+        next(id) {
+            const current = this._jobs[id];
+            const next = current + 1;
+            if (current != null && next < this.status.length) {
+                this.counts[current]--;
+                this.counts[next]++;
+                this._jobs[id]++;
+            }
+            else if (current != null) {
+                this.counts[current]--;
+                delete this._jobs[id];
+            }
+        }
+        start(id) {
+            const initial = 0;
+            this._jobs[id] = initial;
+            this.counts[initial]++;
+        }
+        remove(id) {
+            const current = this._jobs[id];
+            if (current != null) {
+                this.counts[current]--;
+                delete this._jobs[id];
+            }
+            return current != null;
+        }
+        jobStatus(id) {
+            var _a;
+            return (_a = this.status[this._jobs[id]]) !== null && _a !== void 0 ? _a : null;
+        }
+        statusJobs(status) {
+            if (status != null) {
+                const pos = this.status.indexOf(status);
+                if (pos < 0) {
+                    throw new BottleneckError_1(`status must be one of ${this.status.join(', ')}`);
+                }
+                return Object.keys(this._jobs).filter(k => this._jobs[k] === pos);
+            }
+            else {
+                return Object.keys(this._jobs);
+            }
+        }
+        statusCounts() {
+            return this.counts.reduce((acc, v, i) => {
+                acc[this.status[i]] = v;
+                return acc;
+            }, {});
+        }
+    }
+    var States_1 = States;
+
+    class Sync {
+        constructor(name, Promise) {
+            this.name = name;
+            this.Promise = Promise;
+            this._running = 0;
+            this.schedule = (task, ...args) => {
+                let resolve;
+                let reject;
+                const promise = new this.Promise((_resolve, _reject) => {
+                    resolve = _resolve;
+                    reject = _reject;
+                });
+                this._queue.push({ task, args, resolve: resolve, reject: reject });
+                this._tryToRun();
+                return promise;
+            };
+            this._queue = new DLList_1();
+        }
+        isEmpty() {
+            return this._queue.length === 0;
+        }
+        async _tryToRun() {
+            if (this._running < 1 && this._queue.length > 0) {
+                this._running++;
+                const { task, args, resolve, reject } = this._queue.shift();
+                let cb;
+                try {
+                    const returned = await task(...args);
+                    cb = () => resolve(returned);
+                }
+                catch (error) {
+                    cb = () => reject(error);
+                }
+                this._running--;
+                this._tryToRun();
+                cb();
+            }
+        }
+    }
+    var Sync_1 = Sync;
+
+    var version = "2.19.6";
+    var version$1 = {
+    	version: version
+    };
+
+    var version$2 = /*#__PURE__*/Object.freeze({
+        version: version,
+        default: version$1
+    });
+
+    var require$$2 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+    var require$$3 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+    var require$$4 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+    const parser$4 = tslib_1.__importStar(parser);
+    const Events_1$1 = tslib_1.__importDefault(Events_1);
+    const RedisConnection_1 = tslib_1.__importDefault(require$$2);
+    const IORedisConnection_1 = tslib_1.__importDefault(require$$3);
+    const Scripts$1 = tslib_1.__importStar(require$$4);
+    class Group {
+        constructor(limiterOptions = {}) {
+            this.limiterOptions = limiterOptions;
+            this.defaults = {
+                timeout: 1000 * 60 * 5,
+                connection: null,
+                Promise: Promise,
+                id: "group-key"
+            };
+            this.instances = {};
+            this.deleteKey = async (key = "") => {
+                const instance = this.instances[key];
+                let deleted = 0;
+                if (this.connection) {
+                    deleted = await this.connection.__runCommand__(["del", ...Scripts$1.allKeys(`${this.id}-${key}`)]);
+                }
+                if (instance != null) {
+                    delete this.instances[key];
+                    await instance.disconnect();
+                }
+                return instance != null || deleted > 0;
+            };
+            parser$4.load(this.limiterOptions, this.defaults, this);
+            this.Events = new Events_1$1.default(this);
+            this.Bottleneck = Bottleneck_1;
+            this._startAutoCleanup();
+            this.sharedConnection = this.connection != null;
+            if (this.connection == null) {
+                if (this.limiterOptions.datastore === "redis") {
+                    this.connection = new RedisConnection_1.default({ ...this.limiterOptions, Events: this.Events });
+                }
+                else if (this.limiterOptions.datastore === "ioredis") {
+                    this.connection = new IORedisConnection_1.default({ ...this.limiterOptions, Events: this.Events });
+                }
+            }
+        }
+        key(key = "") {
+            var _a;
+            return (_a = this.instances[key]) !== null && _a !== void 0 ? _a : (() => {
+                const limiter = this.instances[key] = new this.Bottleneck({
+                    ...this.limiterOptions,
+                    id: `${this.id}-${key}`,
+                    timeout: this.timeout,
+                    connection: this.connection
+                });
+                this.Events.trigger("created", limiter, key);
+                return limiter;
+            })();
+        }
+        limiters() {
+            return Object.keys(this.instances).map(k => ({ key: k, limiter: this.instances[k] }));
+        }
+        keys() {
+            return Object.keys(this.instances);
+        }
+        async clusterKeys() {
+            if (this.connection == null) {
+                return this.Promise.resolve(this.keys());
+            }
+            const keys = [];
+            let cursor = null;
+            const start = `b_${this.id}-`.length;
+            const end = "_settings".length;
+            do {
+                const result = await this.connection.__runCommand__([
+                    "scan",
+                    cursor !== null && cursor !== void 0 ? cursor : 0,
+                    "match",
+                    `b_${this.id}-*_settings`,
+                    "count",
+                    10000
+                ]);
+                const [next, found] = result;
+                cursor = ~~next;
+                for (const k of found) {
+                    keys.push(k.slice(start, -end));
+                }
+            } while (cursor !== 0);
+            return keys;
+        }
+        _startAutoCleanup() {
+            if (this.interval) {
+                clearInterval(this.interval);
+            }
+            this.interval = setInterval(async () => {
+                const time = Date.now();
+                for (const [k, v] of Object.entries(this.instances)) {
+                    try {
+                        if (await v._store.__groupCheck__(time)) {
+                            this.deleteKey(k);
+                        }
+                    }
+                    catch (e) {
+                        v.Events.trigger("error", e);
+                    }
+                }
+            }, this.timeout / 2);
+            if (this.interval.unref) {
+                this.interval.unref();
+            }
+        }
+        updateSettings(options = {}) {
+            parser$4.overwrite(options, this.defaults, this);
+            parser$4.overwrite(options, options, this.limiterOptions);
+            if (options.timeout != null) {
+                this._startAutoCleanup();
+            }
+        }
+        disconnect(flush = true) {
+            var _a;
+            if (!this.sharedConnection) {
+                (_a = this.connection) === null || _a === void 0 ? void 0 : _a.disconnect(flush);
+            }
+        }
+    }
+    var Group_1 = Group;
+
+    const parser$5 = tslib_1.__importStar(parser);
+
+    class Batcher {
+        constructor(options = {}) {
+            this.options = options;
+            this.defaults = {
+                maxTime: null,
+                maxSize: null,
+                Promise: Promise
+            };
+            this._arr = [];
+            parser$5.load(this.options, this.defaults, this);
+            this.Events = new Events_1(this);
+            this._resetPromise();
+            this._lastFlush = Date.now();
+        }
+        _resetPromise() {
+            this._promise = new this.Promise((res) => {
+                this._resolve = res;
+            });
+        }
+        _flush() {
+            if (this._timeout) {
+                clearTimeout(this._timeout);
+            }
+            this._lastFlush = Date.now();
+            this._resolve();
+            this.Events.trigger("batch", this._arr);
+            this._arr = [];
+            this._resetPromise();
+        }
+        add(data) {
+            this._arr.push(data);
+            const ret = this._promise;
+            if (this._arr.length === this.maxSize) {
+                this._flush();
+            }
+            else if (this.maxTime != null && this._arr.length === 1) {
+                this._timeout = setTimeout(() => {
+                    this._flush();
+                }, this.maxTime);
+            }
+            return ret;
+        }
+    }
+    var Batcher_1 = Batcher;
+
+    var RedisDatastore$1 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+    var require$$1 = getCjsExportFromNamespace(version$2);
+
+    const NUM_PRIORITIES$1 = 10;
+    const DEFAULT_PRIORITY$1 = 5;
+    const parser$6 = tslib_1.__importStar(parser);
+
+
+
+
+
+
+
+    class Bottleneck {
+        constructor(options = {}, ...invalid) {
+            this.strategy = Bottleneck.strategy;
+            this.BottleneckError = Bottleneck.BottleneckError;
+            this.jobDefaults = {
+                priority: DEFAULT_PRIORITY$1,
+                weight: 1,
+                expiration: null,
+                id: "<no-id>"
+            };
+            this.storeDefaults = {
+                maxConcurrent: null,
+                minTime: 0,
+                highWater: null,
+                strategy: Bottleneck.strategy.LEAK,
+                penalty: null,
+                reservoir: null,
+                reservoirRefreshInterval: null,
+                reservoirRefreshAmount: null,
+                reservoirIncreaseInterval: null,
+                reservoirIncreaseAmount: null,
+                reservoirIncreaseMaximum: null
+            };
+            this.localStoreDefaults = {
+                Promise: Promise,
+                timeout: null,
+                heartbeatInterval: 250
+            };
+            this.redisStoreDefaults = {
+                Promise: Promise,
+                timeout: null,
+                heartbeatInterval: 5000,
+                clientTimeout: 10000,
+                Redis: null,
+                clientOptions: {},
+                clusterNodes: null,
+                clearDatastore: false,
+                connection: null
+            };
+            this.instanceDefaults = {
+                datastore: "local",
+                connection: null,
+                id: "<no-id>",
+                rejectOnDrop: true,
+                trackDoneStatus: false,
+                Promise: Promise
+            };
+            this.stopDefaults = {
+                enqueueErrorMessage: "This limiter has been stopped and cannot accept new jobs.",
+                dropWaitingJobs: true,
+                dropErrorMessage: "This limiter has been stopped."
+            };
+            this._scheduled = {};
+            this._limiter = null;
+            this._addToQueue = async (job) => {
+                const { args, options } = job;
+                let reachedHWM, blocked, strategy;
+                try {
+                    const result = await this._store.__submit__(this.queued(), options.weight);
+                    reachedHWM = result.reachedHWM;
+                    blocked = result.blocked;
+                    strategy = result.strategy;
+                }
+                catch (error) {
+                    this.Events.trigger("debug", `Could not queue ${options.id}`, { args, options, error });
+                    job.doDrop({ error });
+                    return false;
+                }
+                if (blocked) {
+                    job.doDrop();
+                    return true;
+                }
+                else if (reachedHWM) {
+                    let shifted;
+                    if (strategy === Bottleneck.strategy.LEAK) {
+                        shifted = this._queues.shiftLastFrom(options.priority);
+                    }
+                    else if (strategy === Bottleneck.strategy.OVERFLOW_PRIORITY) {
+                        shifted = this._queues.shiftLastFrom(options.priority + 1);
+                    }
+                    else if (strategy === Bottleneck.strategy.OVERFLOW) {
+                        shifted = job;
+                    }
+                    if (shifted != null) {
+                        shifted.doDrop();
+                    }
+                    if (shifted == null || strategy === Bottleneck.strategy.OVERFLOW) {
+                        if (shifted == null) {
+                            job.doDrop();
+                        }
+                        return reachedHWM;
+                    }
+                }
+                job.doQueue(reachedHWM, blocked);
+                this._queues.push(job);
+                await this._drainAll();
+                return reachedHWM;
+            };
+            // Initialize static version if not set
+            if (!Bottleneck.version) {
+                Bottleneck.version = require$$1.version;
+            }
+            this.version = Bottleneck.version;
+            this._validateOptions(options, invalid);
+            parser$6.load(options, this.instanceDefaults, this);
+            this._queues = new Queues_1(NUM_PRIORITIES$1);
+            this._states = new States_1(["RECEIVED", "QUEUED", "RUNNING", "EXECUTING"].concat(this.trackDoneStatus ? ["DONE"] : []));
+            this.Events = new Events_1(this);
+            this._submitLock = new Sync_1("submit", this.Promise);
+            this._registerLock = new Sync_1("register", this.Promise);
+            const storeOptions = parser$6.load(options, this.storeDefaults, {});
+            this._store =
+                this.datastore === "redis" || this.datastore === "ioredis" || this.connection != null
+                    ? (() => {
+                        const storeInstanceOptions = parser$6.load(options, this.redisStoreDefaults, {});
+                        return new RedisDatastore$1(this, storeOptions, storeInstanceOptions);
+                    })()
+                    : this.datastore === "local"
+                        ? (() => {
+                            const storeInstanceOptions = parser$6.load(options, this.localStoreDefaults, {});
+                            return new LocalDatastore_1(this, storeOptions, storeInstanceOptions);
+                        })()
+                        : (() => {
+                            throw new Bottleneck.BottleneckError(`Invalid datastore type: ${this.datastore}`);
+                        })();
+            this._queues.on("leftzero", () => { var _a, _b; return (_b = (_a = this._store.heartbeat) === null || _a === void 0 ? void 0 : _a.ref) === null || _b === void 0 ? void 0 : _b.call(_a); });
+            this._queues.on("zero", () => { var _a, _b; return (_b = (_a = this._store.heartbeat) === null || _a === void 0 ? void 0 : _a.unref) === null || _b === void 0 ? void 0 : _b.call(_a); });
+        }
+        _validateOptions(options, invalid) {
+            if (options == null || typeof options !== "object" || invalid.length !== 0) {
+                throw new Bottleneck.BottleneckError("Bottleneck v2 takes a single object argument. Refer to https://github.com/SGrondin/bottleneck#upgrading-to-v2 if you're upgrading from Bottleneck v1.");
+            }
+        }
+        ready() {
+            return this._store.ready;
+        }
+        clients() {
+            return this._store.clients;
+        }
+        channel() {
+            return `b_${this.id}`;
+        }
+        channel_client() {
+            return `b_${this.id}_${this._store.clientId}`;
+        }
+        publish(message) {
+            this._store.__publish__(message);
+        }
+        disconnect(flush = true) {
+            return this._store.__disconnect__(flush);
+        }
+        chain(limiter) {
+            this._limiter = limiter;
+            return this;
+        }
+        queued(priority) {
+            return this._queues.queued(priority);
+        }
+        clusterQueued() {
+            return this._store.__queued__();
+        }
+        empty() {
+            return this.queued() === 0 && this._submitLock.isEmpty();
+        }
+        running() {
+            return this._store.__running__();
+        }
+        done() {
+            return this._store.__done__();
+        }
+        jobStatus(id) {
+            return this._states.jobStatus(id);
+        }
+        jobs(status) {
+            return this._states.statusJobs(status);
+        }
+        counts() {
+            return this._states.statusCounts();
+        }
+        _randomIndex() {
+            return Math.random().toString(36).slice(2);
+        }
+        check(weight = 1) {
+            return this._store.__check__(weight);
+        }
+        _clearGlobalState(index) {
+            if (this._scheduled[index] != null) {
+                clearTimeout(this._scheduled[index].expiration);
+                delete this._scheduled[index];
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        async _free(index, job, options, eventInfo) {
+            try {
+                const { running } = await this._store.__free__(index, options.weight);
+                this.Events.trigger("debug", `Freed ${options.id}`, eventInfo);
+                if (running === 0 && this.empty()) {
+                    this.Events.trigger("idle");
+                }
+            }
+            catch (e) {
+                this.Events.trigger("error", e);
+            }
+        }
+        _run(index, job, wait) {
+            job.doRun();
+            const clearGlobalState = this._clearGlobalState.bind(this, index);
+            const run = this._run.bind(this, index, job);
+            const free = this._free.bind(this, index, job);
+            this._scheduled[index] = {
+                timeout: setTimeout(() => {
+                    job.doExecute(this._limiter, clearGlobalState, run, free);
+                }, wait),
+                expiration: job.options.expiration != null ? setTimeout(() => {
+                    job.doExpire(clearGlobalState, run, free);
+                }, wait + job.options.expiration) : undefined,
+                job: job
+            };
+        }
+        _drainOne(capacity) {
+            return this._registerLock.schedule(async () => {
+                if (this.queued() === 0) {
+                    return null;
+                }
+                const queue = this._queues.getFirst();
+                const next = queue.first();
+                if (next == null) {
+                    return null;
+                }
+                const { options, args } = next;
+                if (capacity != null && options.weight > capacity) {
+                    return null;
+                }
+                this.Events.trigger("debug", `Draining ${options.id}`, { args, options });
+                const index = this._randomIndex();
+                const { success, wait, reservoir } = await this._store.__register__(index, options.weight, options.expiration);
+                this.Events.trigger("debug", `Drained ${options.id}`, { success, args, options });
+                if (success) {
+                    queue.shift();
+                    const empty = this.empty();
+                    if (empty) {
+                        this.Events.trigger("empty");
+                    }
+                    if (reservoir === 0) {
+                        this.Events.trigger("depleted", empty);
+                    }
+                    this._run(index, next, wait);
+                    return options.weight;
+                }
+                else {
+                    return null;
+                }
+            });
+        }
+        async _drainAll(capacity, total = 0) {
+            try {
+                const drained = await this._drainOne(capacity);
+                if (drained != null) {
+                    const newCapacity = capacity != null ? capacity - drained : capacity;
+                    return this._drainAll(newCapacity, total + drained);
+                }
+                else {
+                    return total;
+                }
+            }
+            catch (e) {
+                this.Events.trigger("error", e);
+                return total;
+            }
+        }
+        _dropAllQueued(message) {
+            this._queues.shiftAll((job) => job.doDrop({ message }));
+        }
+        stop(options = {}) {
+            options = parser$6.load(options, this.stopDefaults);
+            const waitForExecuting = (at) => {
+                const finished = () => {
+                    const counts = this._states.counts;
+                    return counts[0] + counts[1] + counts[2] + counts[3] === at;
+                };
+                return new this.Promise((resolve) => {
+                    if (finished()) {
+                        resolve();
+                    }
+                    else {
+                        const handler = () => {
+                            if (finished()) {
+                                this.Events.instance.removeAllListeners("done");
+                                resolve();
+                            }
+                        };
+                        this.Events.instance.on("done", handler);
+                    }
+                });
+            };
+            const done = options.dropWaitingJobs
+                ? (() => {
+                    this._run = (index, next) => next.doDrop({ message: options.dropErrorMessage });
+                    this._drainOne = () => this.Promise.resolve(null);
+                    return this._registerLock.schedule(() => this._submitLock.schedule(() => {
+                        for (const [k, v] of Object.entries(this._scheduled)) {
+                            if (this.jobStatus(v.job.options.id) === "RUNNING") {
+                                clearTimeout(v.timeout);
+                                clearTimeout(v.expiration);
+                                v.job.doDrop({ message: options.dropErrorMessage });
+                            }
+                        }
+                        this._dropAllQueued(options.dropErrorMessage);
+                        return waitForExecuting(0);
+                    }));
+                })()
+                : this.schedule({ priority: NUM_PRIORITIES$1 - 1, weight: 0 }, () => waitForExecuting(1));
+            this._receive = (job) => {
+                job._reject(new Bottleneck.BottleneckError(options.enqueueErrorMessage));
+                return Promise.resolve();
+            };
+            this.stop = () => this.Promise.reject(new Bottleneck.BottleneckError("stop() has already been called"));
+            return done;
+        }
+        _receive(job) {
+            if (this._states.jobStatus(job.options.id) != null) {
+                job._reject(new Bottleneck.BottleneckError(`A job with the same id already exists (id=${job.options.id})`));
+                return Promise.resolve(false);
+            }
+            else {
+                job.doReceive();
+                return this._submitLock.schedule(this._addToQueue, job);
+            }
+        }
+        submit(...args) {
+            let fn, options, cb;
+            if (typeof args[0] === "function") {
+                [fn, ...args] = args;
+                cb = args.pop();
+                options = parser$6.load({}, this.jobDefaults);
+            }
+            else {
+                [options, fn, ...args] = args;
+                cb = args.pop();
+                options = parser$6.load(options, this.jobDefaults);
+            }
+            const task = (...taskArgs) => {
+                return new this.Promise((resolve, reject) => {
+                    fn(...taskArgs, (...cbArgs) => {
+                        if (cbArgs[0] != null) {
+                            reject(cbArgs);
+                        }
+                        else {
+                            resolve(cbArgs);
+                        }
+                    });
+                });
+            };
+            const job = new Job_1(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
+            job.promise
+                .then((args) => cb === null || cb === void 0 ? void 0 : cb(...args))
+                .catch((args) => {
+                if (Array.isArray(args)) {
+                    cb === null || cb === void 0 ? void 0 : cb(...args);
+                }
+                else {
+                    cb === null || cb === void 0 ? void 0 : cb(args);
+                }
+            });
+            return this._receive(job);
+        }
+        schedule(...args) {
+            let task, options;
+            if (typeof args[0] === "function") {
+                [task, ...args] = args;
+                options = {};
+            }
+            else {
+                [options, task, ...args] = args;
+            }
+            const job = new Job_1(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
+            this._receive(job);
+            return job.promise;
+        }
+        wrap(fn) {
+            const schedule = this.schedule.bind(this);
+            const wrapped = function (...args) { return schedule(fn.bind(this), ...args); };
+            wrapped.withOptions = (options, ...args) => schedule(options, fn, ...args);
+            return wrapped;
+        }
+        async updateSettings(options = {}) {
+            await this._store.__updateSettings__(parser$6.overwrite(options, this.storeDefaults));
+            parser$6.overwrite(options, this.instanceDefaults, this);
+            return this;
+        }
+        currentReservoir() {
+            return this._store.__currentReservoir__();
+        }
+        incrementReservoir(incr = 0) {
+            return this._store.__incrementReservoir__(incr);
+        }
+    }
+    // Static properties
+    Bottleneck.default = Bottleneck;
+    Bottleneck.Events = Events_1;
+    Bottleneck.strategy = { LEAK: 1, OVERFLOW: 2, OVERFLOW_PRIORITY: 4, BLOCK: 3 };
+    Bottleneck.BottleneckError = BottleneckError_1;
+    Bottleneck.Group = Group_1;
+    Bottleneck.RedisConnection = require$$2;
+    Bottleneck.IORedisConnection = require$$3;
+    Bottleneck.Batcher = Batcher_1;
+    // Set static version
+    try {
+        Bottleneck.version = Bottleneck.prototype.version = require$$1.version;
+    }
+    catch (e) {
+        // Fallback if version.json doesn't exist
+        Bottleneck.version = Bottleneck.prototype.version = "2.19.6";
+    }
+    var Bottleneck_1 = Bottleneck;
+
+    var lib = Bottleneck_1;
+
+    return lib;
 
 })));

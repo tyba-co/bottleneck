@@ -1,13 +1,14 @@
-"use strict";
+import BottleneckError = require("./BottleneckError");
 
-const BottleneckError = require("./BottleneckError");
 class States {
-  constructor(status) {
-    this.status = status;
-    this._jobs = {};
+  private _jobs: { [id: string]: number } = {};
+  public counts: number[];
+
+  constructor(private status: string[]) {
     this.counts = this.status.map(() => 0);
   }
-  next(id) {
+
+  next(id: string): void {
     const current = this._jobs[id];
     const next = current + 1;
     if (current != null && next < this.status.length) {
@@ -19,12 +20,14 @@ class States {
       delete this._jobs[id];
     }
   }
-  start(id) {
+
+  start(id: string): void {
     const initial = 0;
     this._jobs[id] = initial;
     this.counts[initial]++;
   }
-  remove(id) {
+
+  remove(id: string): boolean {
     const current = this._jobs[id];
     if (current != null) {
       this.counts[current]--;
@@ -32,11 +35,12 @@ class States {
     }
     return current != null;
   }
-  jobStatus(id) {
-    var _a;
-    return (_a = this.status[this._jobs[id]]) !== null && _a !== void 0 ? _a : null;
+
+  jobStatus(id: string): string | null {
+    return this.status[this._jobs[id]] ?? null;
   }
-  statusJobs(status) {
+
+  statusJobs(status?: string): string[] {
     if (status != null) {
       const pos = this.status.indexOf(status);
       if (pos < 0) {
@@ -47,11 +51,13 @@ class States {
       return Object.keys(this._jobs);
     }
   }
-  statusCounts() {
+
+  statusCounts(): { [status: string]: number } {
     return this.counts.reduce((acc, v, i) => {
       acc[this.status[i]] = v;
       return acc;
-    }, {});
+    }, {} as { [status: string]: number });
   }
 }
-module.exports = States;
+
+export = States;

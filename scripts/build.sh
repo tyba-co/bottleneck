@@ -17,23 +17,24 @@ clean() {
 }
 
 makeLib10() {
-  echo '[B] Compiling Bottleneck to Node 10+...'
-  npx coffee --compile --bare --no-header src/*.coffee
-  mv src/*.js lib/
+  echo '[B] Compiling Bottleneck to Node 10+ with TypeScript...'
+  npx tsc --project tsconfig.json
 }
 
 makeLib6() {
-  echo '[B] Compiling Bottleneck to Node 6+...'
+  echo '[B] Compiling Bottleneck to Node 6+ with TypeScript and Babel...'
+  npx tsc --project tsconfig.json --target ES2015
+  # Then transpile with Babel for Node 6+ compatibility
   ln -s .babelrc.lib .babelrc
-  npx coffee --compile --bare --no-header --transpile src/*.coffee
-  mv src/*.js lib/
+  npx babel lib --out-dir lib --extensions .js
 }
 
 makeES5() {
-  echo '[B] Compiling Bottleneck to ES5...'
+  echo '[B] Compiling Bottleneck to ES5 with TypeScript and Babel...'
+  npx tsc --project tsconfig.json --target ES2015
+  # Then transpile with Babel for ES5 compatibility
   ln -s .babelrc.es5 .babelrc
-  npx coffee --compile --bare --no-header src/*.coffee
-  mv src/*.js lib/
+  npx babel lib --out-dir lib --extensions .js
 
   echo '[B] Assembling ES5 bundle...'
   npx rollup -c rollup.config.es5.js
