@@ -163,6 +163,7 @@ class RedisDatastore {
   async __disconnect__(flush: boolean): Promise<void> {
     if (this.heartbeat) {
       clearInterval(this.heartbeat);
+      this.heartbeat = undefined;
       await this.unregisterClient();
     }
     if (this.sharedConnection) {

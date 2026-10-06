@@ -23,6 +23,9 @@ interface GlideConnectionDefaults {
 // subscribe() resolves on confirmation or after this long; it never rejects on timeout
 const SUBSCRIPTION_TIMEOUT_MS = 10000;
 const DEFAULT_ADDRESSES = [{ host: "127.0.0.1", port: 6379 }];
+// GLIDE never reconnects a client whose first connection failed, so creating it is retried this many times
+const MAX_CONNECTION_RETRIES = 2;
+const CONNECTION_RETRY_DELAY_MS = 500;
 
 /**
  * Connection to Valkey/Redis or a cluster through valkey-glide (GlideClient / GlideClusterClient).
@@ -89,7 +92,7 @@ class GlideConnection {
         return { client, subscriber };
       })
       .catch((e: any) => {
-        // GLIDE never reconnects a client that failed to connect, so close the one that did connect instead of leaking it
+        // The connection is unusable without both clients, so close the one that did connect instead of leaking it
         this.terminated = true;
         this.openedClients.forEach((client) => client.close());
         this.Events.trigger("error", e);
@@ -102,7 +105,7 @@ class GlideConnection {
   }
 
   private async _createClient(ClientClass: any, configuration: any): Promise<any> {
-    const client = await ClientClass.createClient(configuration);
+    const client = await this._connectWithRetries(ClientClass, configuration, MAX_CONNECTION_RETRIES);
     // A disconnect() or failed connection that happened while the client was being created could not close it
     if (this.terminated) {
       client.close();
@@ -110,6 +113,29 @@ class GlideConnection {
       this.openedClients.push(client);
     }
     return client;
+  }
+
+  /**
+   * Creates a GLIDE client, retrying a failed first connection unless the connection was terminated meanwhile.
+   * @param {any} ClientClass
+   * @param {any} configuration
+   * @param {number} retriesLeft
+   * @returns {Promise<any>}
+   */
+  private async _connectWithRetries(ClientClass: any, configuration: any, retriesLeft: number): Promise<any> {
+    try {
+      return await ClientClass.createClient(configuration);
+    } catch (e: any) {
+      if (retriesLeft === 0 || this.terminated) {
+        throw e;
+      }
+      this.Events.trigger("debug", `Retrying the valkey-glide connection (${retriesLeft} left)`, { error: e });
+      await new this.Promise((resolve) => setTimeout(resolve, CONNECTION_RETRY_DELAY_MS));
+      if (this.terminated) {
+        throw e;
+      }
+      return this._connectWithRetries(ClientClass, configuration, retriesLeft - 1);
+    }
   }
 
   private _onMessage(msg: any): void {
