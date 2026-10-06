@@ -6,6 +6,7 @@ end
 
 redis.call(unpack(args))
 
+apply_default_expiration(now)
 process_tick(now, true)
 
 local groupTimeout = tonumber(redis.call('hget', settings_key, 'groupTimeout'))

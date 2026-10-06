@@ -5,6 +5,7 @@ const headers: { [key: string]: any } = {
   validate_keys: lua["validate_keys.lua"],
   validate_client: lua["validate_client.lua"],
   refresh_expiration: lua["refresh_expiration.lua"],
+  apply_default_expiration: lua["apply_default_expiration.lua"],
   process_tick: lua["process_tick.lua"],
   conditions_check: lua["conditions_check.lua"],
   get_time: lua["get_time.lua"]
@@ -53,7 +54,7 @@ interface ScriptTemplate {
 const templates: { [name: string]: ScriptTemplate } = {
   init: {
     keys: allKeys,
-    headers: ["process_tick"],
+    headers: ["apply_default_expiration", "process_tick"],
     refresh_expiration: true,
     code: lua["init.lua"]
   },
@@ -77,13 +78,13 @@ const templates: { [name: string]: ScriptTemplate } = {
   },
   heartbeat: {
     keys: allKeys,
-    headers: ["validate_keys", "validate_client", "process_tick"],
+    headers: ["validate_keys", "validate_client", "apply_default_expiration", "process_tick"],
     refresh_expiration: false,
     code: lua["heartbeat.lua"]
   },
   update_settings: {
     keys: allKeys,
-    headers: ["validate_keys", "validate_client", "process_tick"],
+    headers: ["validate_keys", "validate_client", "apply_default_expiration", "process_tick"],
     refresh_expiration: true,
     code: lua["update_settings.lua"]
   },

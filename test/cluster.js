@@ -266,7 +266,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         var settings_key = limiterKeys(c.limiter)[0]
         return Promise.all([
           runCommand(c.limiter, 'hset', [settings_key, 'version', '2.8.0']),
-          runCommand(c.limiter, 'hdel', [settings_key, 'done', 'capacityPriorityCounter', 'clientTimeout']),
+          runCommand(c.limiter, 'hdel', [settings_key, 'done', 'capacityPriorityCounter', 'clientTimeout', 'defaultExpiration']),
           runCommand(c.limiter, 'hset', [settings_key, 'lastReservoirRefresh', ''])
         ])
       })
@@ -288,6 +288,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
           'clientTimeout',
           'reservoirIncreaseAmount',
           'reservoirIncreaseMaximum',
+          'defaultExpiration',
           // Add new values here, before these 2 timestamps
           'lastReservoirRefresh',
           'lastReservoirIncrease'
@@ -297,12 +298,13 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         var timestamps = values.slice(-2)
         timestamps.forEach((t) => assert(parseInt(t) > Date.now() - 500))
         c.mustEqual(values.slice(0, -timestamps.length), [
-          '2.18.0',
+          '3.0.0',
           '0',
           '',
           '',
           '0',
           '10000',
+          '',
           '',
           ''
          ])
@@ -344,7 +346,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         await limiter2.ready()
 
         // ASSERT
-        c.mustEqual(await runCommand(c.limiter, 'hget', [settings_key, 'version']), '2.18.0')
+        c.mustEqual(await runCommand(c.limiter, 'hget', [settings_key, 'version']), '3.0.0')
       } finally {
         await limiter2.disconnect(false)
       }
@@ -748,6 +750,129 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
       c.mustEqual(await numClients(), [1,1,1,1])
 
       await limiter2.disconnect(false)
+    })
+
+    describe('defaultExpiration', function () {
+      var getJobExpirations = async function (limiter) {
+        var [, job_weights_key, job_expirations_key] = limiterKeys(limiter)
+        var weights = await runCommand(limiter, 'hgetall', [job_weights_key])
+        var scores = await runCommand(limiter, 'zrange', [job_expirations_key, '0', '-1', 'WITHSCORES'])
+        var expirationsByWeight = {}
+        for (var i = 0; i < scores.length; i += 2) expirationsByWeight[weights[scores[i]]] = Number(scores[i + 1])
+        return expirationsByWeight
+      }
+      var waitForRunning = async function (limiter, running) {
+        while (await limiter.running() !== running) await c.wait(10)
+      }
+      var isAround = function (actual, expected) {
+        return Math.abs(actual - expected) < 1000
+      }
+
+      it('Should register jobs without an expiration with defaultExpiration and keep explicit ones', async function () {
+        // ARRANGE
+        c = makeTest({ id: 'default-expiration-register', maxConcurrent: 3, defaultExpiration: 60000 })
+        await c.limiter.ready()
+        var scheduledAt = Date.now()
+
+        // ACT
+        var jobs = [
+          c.limiter.schedule({ weight: 1 }, c.slowPromise, 200, null, 1),
+          c.limiter.schedule({ weight: 2, expiration: 30000 }, c.slowPromise, 200, null, 2)
+        ]
+        await waitForRunning(c.limiter, 3)
+
+        // ASSERT
+        var expirationsByWeight = await getJobExpirations(c.limiter)
+        assert(isAround(expirationsByWeight['1'], scheduledAt + 60000))
+        assert(isAround(expirationsByWeight['2'], scheduledAt + 30000))
+        await Promise.all(jobs)
+      })
+
+      it('Should not register expirations without defaultExpiration', async function () {
+        // ARRANGE
+        c = makeTest({ id: 'default-expiration-none', maxConcurrent: 1 })
+        await c.limiter.ready()
+
+        // ACT
+        var job = c.limiter.schedule(c.slowPromise, 200, null, 1)
+        await waitForRunning(c.limiter, 1)
+
+        // ASSERT
+        c.mustEqual(await getJobExpirations(c.limiter), {})
+        await job
+      })
+
+      it('Should give running jobs without an expiration the defaultExpiration once it is set', async function () {
+        // ARRANGE
+        c = makeTest({ id: 'default-expiration-update', maxConcurrent: 3 })
+        await c.limiter.ready()
+        var jobs = [
+          c.limiter.schedule({ weight: 1 }, c.slowPromise, 300, null, 1),
+          c.limiter.schedule({ weight: 2, expiration: 30000 }, c.slowPromise, 300, null, 2)
+        ]
+        await waitForRunning(c.limiter, 3)
+        var explicitExpiration = (await getJobExpirations(c.limiter))['2']
+        var limiter2 = new Bottleneck({ id: 'default-expiration-update', datastore: process.env.DATASTORE, defaultExpiration: 60000 })
+
+        try {
+          // ACT
+          var connectedAt = Date.now()
+          await limiter2.ready()
+          await limiter2.updateSettings({ defaultExpiration: 60000 })
+
+          // ASSERT
+          var expirationsByWeight = await getJobExpirations(c.limiter)
+          assert(isAround(expirationsByWeight['1'], connectedAt + 60000))
+          c.mustEqual(expirationsByWeight['2'], explicitExpiration)
+          await Promise.all(jobs)
+        } finally {
+          await limiter2.disconnect(false)
+        }
+      })
+
+      it('Should give running jobs without an expiration the defaultExpiration when a limiter connects', async function () {
+        // ARRANGE
+        c = makeTest({ id: 'default-expiration-init', maxConcurrent: 1, defaultExpiration: 60000, heartbeatInterval: 60000 })
+        await c.limiter.ready()
+        var olderLimiter = new Bottleneck({ id: 'default-expiration-init', datastore: process.env.DATASTORE })
+        var job = olderLimiter.schedule(c.slowPromise, 300, null, 1)
+        await waitForRunning(c.limiter, 1)
+        var limiter3 = new Bottleneck({ id: 'default-expiration-init', datastore: process.env.DATASTORE })
+
+        try {
+          // ACT
+          var connectedAt = Date.now()
+          await limiter3.ready()
+
+          // ASSERT
+          assert(isAround((await getJobExpirations(c.limiter))['1'], connectedAt + 60000))
+          await job
+        } finally {
+          await Promise.all([olderLimiter.disconnect(false), limiter3.disconnect(false)])
+        }
+      })
+
+      it('Should free the capacity held by a crashed client after defaultExpiration', async function () {
+        // ARRANGE
+        c = makeTest({ id: 'default-expiration-crash', maxConcurrent: 1, defaultExpiration: 300, heartbeatInterval: 50 })
+        await c.limiter.ready()
+        var crashedLimiter = new Bottleneck({ id: 'default-expiration-crash', datastore: process.env.DATASTORE })
+        crashedLimiter.schedule(function () { return new Promise(function () {}) })
+        await waitForRunning(c.limiter, 1)
+        await crashedLimiter.disconnect(false)
+        var crashedAt = Date.now()
+
+        // ACT
+        c.mustEqual(await c.limiter.schedule(c.promise, null, 1), [1])
+
+        // ASSERT
+        var waited = Date.now() - crashedAt
+        assert(waited < 300 + 2 * 50 + 100 + timingTolerance, 'waited ' + waited + 'ms')
+        c.mustEqual(await c.limiter.running(), 0)
+        c.mustEqual(await c.limiter.done(), 2)
+        var clientRunning = await runCommand(c.limiter, 'zrange', [limiterKeys(c.limiter)[4], '0', '-1', 'WITHSCORES'])
+        assert(clientRunning.filter(function (_, i) { return i % 2 === 1 }).every(function (score) { return Number(score) === 0 }))
+      })
     })
 
     it('Should use shared settings', function () {

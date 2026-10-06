@@ -1437,7 +1437,8 @@
 		            reservoirRefreshAmount: null,
 		            reservoirIncreaseInterval: null,
 		            reservoirIncreaseAmount: null,
-		            reservoirIncreaseMaximum: null
+		            reservoirIncreaseMaximum: null,
+		            defaultExpiration: null
 		        };
 		        this.localStoreDefaults = {
 		            Promise: Promise,
@@ -1748,17 +1749,22 @@
 		            return this._submitLock.schedule(this._addToQueue, job);
 		        }
 		    }
+		    _getJobDefaults() {
+		        var _a;
+		        return { ...this.jobDefaults, expiration: (_a = this._store.storeOptions.defaultExpiration) !== null && _a !== void 0 ? _a : this.jobDefaults.expiration };
+		    }
 		    submit(...args) {
 		        let fn, options, cb;
+		        const jobDefaults = this._getJobDefaults();
 		        if (typeof args[0] === "function") {
 		            [fn, ...args] = args;
 		            cb = args.pop();
-		            options = parser.load({}, this.jobDefaults);
+		            options = parser.load({}, jobDefaults);
 		        }
 		        else {
 		            [options, fn, ...args] = args;
 		            cb = args.pop();
-		            options = parser.load(options, this.jobDefaults);
+		            options = parser.load(options, jobDefaults);
 		        }
 		        const task = (...taskArgs) => {
 		            return new this.Promise((resolve, reject) => {
@@ -1772,7 +1778,7 @@
 		                });
 		            });
 		        };
-		        const job = new Job(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
+		        const job = new Job(task, args, options, jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
 		        job.promise
 		            .then((args) => cb === null || cb === void 0 ? void 0 : cb(...args))
 		            .catch((args) => {
@@ -1794,7 +1800,7 @@
 		        else {
 		            [options, task, ...args] = args;
 		        }
-		        const job = new Job(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
+		        const job = new Job(task, args, options, this._getJobDefaults(), this.rejectOnDrop, this.Events, this._states, this.Promise);
 		        this._receive(job);
 		        return job.promise;
 		    }

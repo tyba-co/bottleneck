@@ -13,6 +13,7 @@ interface StoreOptions {
   reservoirIncreaseInterval?: number;
   reservoirIncreaseAmount?: number;
   reservoirIncreaseMaximum?: number;
+  defaultExpiration?: number;
 }
 
 interface StoreInstanceOptions {

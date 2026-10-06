@@ -851,6 +851,7 @@ const limiter = new Bottleneck({
 |--------|---------|-------------|
 | `datastore` | `"local"` | Where the limiter stores its internal state. The default (`"local"`) keeps the state in the limiter itself. Set it to `"redis"` (node-redis v4) or `"valkey-glide"` to enable Clustering. `"ioredis"` was removed in 3.0.0 and throws. |
 | `clearDatastore` | `false` | When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db. |
+| `defaultExpiration` | `null` | The [`expiration`](#job-options) of every job scheduled without one. It is stored with the shared settings (change it with `updateSettings()`), and on every heartbeat, limiter startup and `updateSettings()` each running job registered without an `expiration` receives `now + defaultExpiration`, including jobs from crashed clients or older versions. Jobs that already have an `expiration` keep it. |
 | `clientOptions` | `{}` | node-redis v4 options, passed to `createClient(clientOptions)`, or as `defaults` to `createCluster` when `clusterNodes` is set. |
 | `clusterNodes` | `null` | When not null, the client is created with `createCluster({ rootNodes: clusterNodes, defaults: clientOptions })` instead of `createClient(clientOptions)`. |
 | `timeout` | `null` (no TTL) | The Redis TTL in milliseconds ([TTL](https://redis.io/commands/ttl)) for the keys created by the limiter. When `timeout` is set, the limiter's state will be automatically removed from Redis after `timeout` milliseconds of inactivity. |
@@ -892,6 +893,8 @@ The current design guarantees reliability, is highly performant and lets limiter
 It is **strongly recommended** that you give an `id` to every limiter and Group since it is used to build the name of your limiter's Redis keys! Limiters with the same `id` inside the same Redis db will be sharing the same datastore.
 
 It is **strongly recommended** that you set an `expiration` (See [Job Options](#job-options)) *on every job*, since that lets the cluster recover from crashed or disconnected clients. Otherwise, a client crashing while executing a job would not be able to tell the cluster to decrease its number of "running" jobs. By using expirations, those lost jobs are automatically cleared after the specified time has passed. Using expirations is essential to keeping a cluster reliable in the face of unpredictable application bugs, network hiccups, and so on.
+
+The `defaultExpiration` [option](#clustering) enforces this: jobs scheduled without an `expiration` use it, and the cluster also gives it to running jobs that were registered without one, so a client that crashed mid-job releases its capacity after `defaultExpiration` plus at most one heartbeat. Set it longer than your slowest job: a job that outlives it is failed with a `BottleneckError` like any expired job, and its weight is released while it may still be running, briefly allowing more concurrency than `maxConcurrent`.
 
 Network latency between Node.js and Redis is not taken into account when calculating timings (such as `minTime`). To minimize the impact of latency, Bottleneck only performs a single Redis call per [lifecycle transition](#jobs-lifecycle). Keeping the Redis server close to your limiters will help you get a more consistent experience. Keeping the system time consistent across all clients will also help.
 
