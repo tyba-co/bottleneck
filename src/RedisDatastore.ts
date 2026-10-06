@@ -300,8 +300,9 @@ class RedisDatastore {
       };
     } catch (e) {
       const error = e as any;
-      if (error.message.indexOf("OVERWEIGHT") === 0) {
-        const [overweight, weight, maxConcurrent] = error.message.split(":");
+      const overweight = error.message.match(/^(?:.*\s)?OVERWEIGHT:(\d+):(\d+)$/);
+      if (overweight != null) {
+        const [, weight, maxConcurrent] = overweight;
         throw new BottleneckError(
           `Impossible to add a job having a weight of ${weight} to a limiter having a maxConcurrent setting of ${maxConcurrent}`
         );

@@ -599,7 +599,10 @@ describe('General', function () {
       return c.last()
       .then(function (results) {
         c.checkDuration(400)
-        c.checkResultsOrder([[1], [2], [3], [4], [5]])
+        // Jobs 3, 4 and 5 start together once job 2 frees its weight; with Redis their start order follows round trips
+        var order = results.calls.map(function (call) { return call.result[0] })
+        c.mustEqual(order.slice(0, 2), [1, 2])
+        c.mustEqual(order.slice(2).sort(), [3, 4, 5])
       })
     })
 
@@ -756,7 +759,7 @@ describe('General', function () {
       .then(function (results) {
         c.checkResultsOrder([[1], [2], [3], [4], [5]])
         c.mustEqual(calledDepleted, 2)
-        c.checkDuration(350, 100) // Increase tolerance for timing variations
+        c.checkDuration(300)
       })
     })
 
@@ -783,7 +786,7 @@ describe('General', function () {
       })
       .then(function (results) {
         c.checkResultsOrder([[1], [2], [3], [4]])
-        c.checkDuration(200, 90) // Increase tolerance to 90ms below expected time for timing variations
+        c.checkDuration(150)
       })
     })
 
@@ -829,7 +832,7 @@ describe('General', function () {
       const results = await c.last({ weight: 0, priority: 9 })
       c.checkResultsOrder([[1], [2], [3], [4], [5]])
       c.mustEqual(calledDepleted, 1)
-      c.checkDuration(500, 90)
+      c.checkDuration(450)
     })
 
     it('Should auto-increase the reservoir up to a maximum', async function () {
@@ -859,7 +862,7 @@ describe('General', function () {
       const results = await c.last({ weight: 0, priority: 9 })
       c.checkResultsOrder([[1], [2], [3], [4], [5]])
       c.mustEqual(calledDepleted, 1)
-      c.checkDuration(550, 100)  // Allow for a larger deviation from the expected time
+      c.checkDuration(450)
     })
 
     it('Should allow staggered X by Y type usage', function () {
@@ -885,7 +888,7 @@ describe('General', function () {
       })
       .then(function (results) {
         c.checkResultsOrder([[1], [2], [3], [4]])
-        c.checkDuration(200, 90) // Increase tolerance to 90ms below expected time for timing variations
+        c.checkDuration(150)
       })
     })
 

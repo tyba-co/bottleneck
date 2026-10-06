@@ -194,7 +194,10 @@ describe('Promises', function () {
         return c.last()
       })
       .then(function (results) {
-        c.checkResultsOrder([[1], [2], [5], [6], [3], [4]])
+        // Job 2 may still be in flight to Redis when the priority jobs arrive, so it can run before or after them
+        var order = results.calls.map(function (call) { return call.result[0] })
+        c.mustEqual(order.filter(function (x) { return x !== 2 }), [1, 5, 6, 3, 4])
+        assert(order.indexOf(2) > 0 && order.indexOf(2) < order.indexOf(3))
         c.checkDuration(250)
       })
     })

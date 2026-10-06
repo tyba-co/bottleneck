@@ -2991,6 +2991,18 @@
 	function _nonIterableSpread$1() {
 	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
+	function _iterableToArray$1(r) {
+	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+	}
+	function _arrayWithoutHoles$1(r) {
+	  if (Array.isArray(r)) return _arrayLikeToArray$2(r);
+	}
+	function _slicedToArray(r, e) {
+	  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray$2(r, e) || _nonIterableRest();
+	}
+	function _nonIterableRest() {
+	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
 	function _unsupportedIterableToArray$2(r, a) {
 	  if (r) {
 	    if ("string" == typeof r) return _arrayLikeToArray$2(r, a);
@@ -2998,16 +3010,40 @@
 	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$2(r, a) : void 0;
 	  }
 	}
-	function _iterableToArray$1(r) {
-	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-	}
-	function _arrayWithoutHoles$1(r) {
-	  if (Array.isArray(r)) return _arrayLikeToArray$2(r);
-	}
 	function _arrayLikeToArray$2(r, a) {
 	  (null == a || a > r.length) && (a = r.length);
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
+	}
+	function _iterableToArrayLimit(r, l) {
+	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (null != t) {
+	    var e,
+	      n,
+	      i,
+	      u,
+	      a = [],
+	      f = !0,
+	      o = !1;
+	    try {
+	      if (i = (t = t.call(r)).next, 0 === l) {
+	        if (Object(t) !== t) return;
+	        f = !1;
+	      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+	    } catch (r) {
+	      o = !0, n = r;
+	    } finally {
+	      try {
+	        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
+	      } finally {
+	        if (o) throw n;
+	      }
+	    }
+	    return a;
+	  }
+	}
+	function _arrayWithHoles(r) {
+	  if (Array.isArray(r)) return r;
 	}
 	function _regenerator$3() {
 	  /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */var e,
@@ -3246,6 +3282,41 @@
 	        }, _callee, this);
 	      }));
 	    }
+	    /**
+	     * @param {string} pattern
+	     * @returns {Promise<string[]>}
+	     */
+	  }, {
+	    key: "__scanKeys__",
+	    value: function __scanKeys__(pattern) {
+	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$3().m(function _callee2() {
+	        var keys, cursor, _yield$this$__runComm, _yield$this$__runComm2, next, found;
+	        return _regenerator$3().w(function (_context2) {
+	          while (1) switch (_context2.n) {
+	            case 0:
+	              keys = [];
+	              cursor = "0";
+	            case 1:
+	              _context2.n = 2;
+	              return this.__runCommand__(["scan", cursor, "match", pattern, "count", 10000]);
+	            case 2:
+	              _yield$this$__runComm = _context2.v;
+	              _yield$this$__runComm2 = _slicedToArray(_yield$this$__runComm, 2);
+	              next = _yield$this$__runComm2[0];
+	              found = _yield$this$__runComm2[1];
+	              cursor = next;
+	              keys.push.apply(keys, _toConsumableArray$1(found));
+	            case 3:
+	              if (cursor !== "0") {
+	                _context2.n = 1;
+	                break;
+	              }
+	            case 4:
+	              return _context2.a(2, keys);
+	          }
+	        }, _callee2, this);
+	      }));
+	    }
 	  }, {
 	    key: "__addLimiter__",
 	    value: function __addLimiter__(instance) {
@@ -3267,22 +3338,22 @@
 	  }, {
 	    key: "__removeLimiter__",
 	    value: function __removeLimiter__(instance) {
-	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$3().m(function _callee3() {
+	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$3().m(function _callee4() {
 	        var _this7 = this;
-	        return _regenerator$3().w(function (_context3) {
-	          while (1) switch (_context3.n) {
+	        return _regenerator$3().w(function (_context4) {
+	          while (1) switch (_context4.n) {
 	            case 0:
-	              return _context3.a(2, Promise.all([instance.channel(), instance.channel_client()].map(function (channel) {
-	                return tslib_1.__awaiter(_this7, void 0, void 0, /*#__PURE__*/_regenerator$3().m(function _callee2() {
+	              return _context4.a(2, Promise.all([instance.channel(), instance.channel_client()].map(function (channel) {
+	                return tslib_1.__awaiter(_this7, void 0, void 0, /*#__PURE__*/_regenerator$3().m(function _callee3() {
 	                  var _this8 = this;
-	                  return _regenerator$3().w(function (_context2) {
-	                    while (1) switch (_context2.n) {
+	                  return _regenerator$3().w(function (_context3) {
+	                    while (1) switch (_context3.n) {
 	                      case 0:
 	                        if (this.terminated) {
-	                          _context2.n = 1;
+	                          _context3.n = 1;
 	                          break;
 	                        }
-	                        _context2.n = 1;
+	                        _context3.n = 1;
 	                        return new this.Promise(function (resolve, reject) {
 	                          _this8.subscriber.unsubscribe(channel, function (err, chan) {
 	                            if (err != null) {
@@ -3296,13 +3367,13 @@
 	                      case 1:
 	                        delete this.limiters[channel];
 	                      case 2:
-	                        return _context2.a(2);
+	                        return _context3.a(2);
 	                    }
-	                  }, _callee2, this);
+	                  }, _callee3, this);
 	                }));
 	              })));
 	          }
-	        }, _callee3);
+	        }, _callee4);
 	      }));
 	    }
 	  }, {
@@ -3354,6 +3425,54 @@
 	}
 	function _arrayWithoutHoles$2(r) {
 	  if (Array.isArray(r)) return _arrayLikeToArray$3(r);
+	}
+	function _createForOfIteratorHelper$1(r, e) {
+	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (!t) {
+	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$3(r)) || e && r && "number" == typeof r.length) {
+	      t && (r = t);
+	      var _n = 0,
+	        F = function F() {};
+	      return {
+	        s: F,
+	        n: function n() {
+	          return _n >= r.length ? {
+	            done: !0
+	          } : {
+	            done: !1,
+	            value: r[_n++]
+	          };
+	        },
+	        e: function e(r) {
+	          throw r;
+	        },
+	        f: F
+	      };
+	    }
+	    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	  }
+	  var o,
+	    a = !0,
+	    u = !1;
+	  return {
+	    s: function s() {
+	      t = t.call(r);
+	    },
+	    n: function n() {
+	      var r = t.next();
+	      return a = r.done, r;
+	    },
+	    e: function e(r) {
+	      u = !0, o = r;
+	    },
+	    f: function f() {
+	      try {
+	        a || null == t["return"] || t["return"]();
+	      } finally {
+	        if (u) throw o;
+	      }
+	    }
+	  };
 	}
 	function _regenerator$4() {
 	  /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */var e,
@@ -3462,10 +3581,10 @@
 	    }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2));
 	  }, _regeneratorDefine2$4(e, r, n, t);
 	}
-	function _slicedToArray(r, e) {
-	  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray$3(r, e) || _nonIterableRest();
+	function _slicedToArray$1(r, e) {
+	  return _arrayWithHoles$1(r) || _iterableToArrayLimit$1(r, e) || _unsupportedIterableToArray$3(r, e) || _nonIterableRest$1();
 	}
-	function _nonIterableRest() {
+	function _nonIterableRest$1() {
 	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
 	function _unsupportedIterableToArray$3(r, a) {
@@ -3480,7 +3599,7 @@
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
 	}
-	function _iterableToArrayLimit(r, l) {
+	function _iterableToArrayLimit$1(r, l) {
 	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (null != t) {
 	    var e,
@@ -3507,7 +3626,7 @@
 	    return a;
 	  }
 	}
-	function _arrayWithHoles(r) {
+	function _arrayWithHoles$1(r) {
 	  if (Array.isArray(r)) return r;
 	}
 	function _classCallCheck$7(a, n) {
@@ -3624,13 +3743,76 @@
 	              return this.client.pipeline([cmd]).exec();
 	            case 2:
 	              _yield$this$client$pi = _context.v;
-	              _yield$this$client$pi2 = _slicedToArray(_yield$this$client$pi, 1);
-	              _yield$this$client$pi3 = _slicedToArray(_yield$this$client$pi2[0], 2);
+	              _yield$this$client$pi2 = _slicedToArray$1(_yield$this$client$pi, 1);
+	              _yield$this$client$pi3 = _slicedToArray$1(_yield$this$client$pi2[0], 2);
 	              _ = _yield$this$client$pi3[0];
 	              deleted = _yield$this$client$pi3[1];
 	              return _context.a(2, deleted);
 	          }
 	        }, _callee, this);
+	      }));
+	    }
+	    /**
+	     * Scans every master, since on Redis Cluster a SCAN only covers the node that receives it
+	     * @param {string} pattern
+	     * @returns {Promise<string[]>}
+	     */
+	  }, {
+	    key: "__scanKeys__",
+	    value: function __scanKeys__(pattern) {
+	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$4().m(function _callee2() {
+	        var nodes, keys, _iterator, _step, node, cursor, _yield$node$scan, _yield$node$scan2, next, found, _t;
+	        return _regenerator$4().w(function (_context2) {
+	          while (1) switch (_context2.p = _context2.n) {
+	            case 0:
+	              _context2.n = 1;
+	              return this.ready;
+	            case 1:
+	              nodes = typeof this.client.nodes === "function" ? this.client.nodes("master") : [this.client];
+	              keys = [];
+	              _iterator = _createForOfIteratorHelper$1(nodes);
+	              _context2.p = 2;
+	              _iterator.s();
+	            case 3:
+	              if ((_step = _iterator.n()).done) {
+	                _context2.n = 8;
+	                break;
+	              }
+	              node = _step.value;
+	              cursor = "0";
+	            case 4:
+	              _context2.n = 5;
+	              return node.scan(cursor, "MATCH", pattern, "COUNT", 10000);
+	            case 5:
+	              _yield$node$scan = _context2.v;
+	              _yield$node$scan2 = _slicedToArray$1(_yield$node$scan, 2);
+	              next = _yield$node$scan2[0];
+	              found = _yield$node$scan2[1];
+	              cursor = next;
+	              keys.push.apply(keys, _toConsumableArray$2(found));
+	            case 6:
+	              if (cursor !== "0") {
+	                _context2.n = 4;
+	                break;
+	              }
+	            case 7:
+	              _context2.n = 3;
+	              break;
+	            case 8:
+	              _context2.n = 10;
+	              break;
+	            case 9:
+	              _context2.p = 9;
+	              _t = _context2.v;
+	              _iterator.e(_t);
+	            case 10:
+	              _context2.p = 10;
+	              _iterator.f();
+	              return _context2.f(10);
+	            case 11:
+	              return _context2.a(2, keys);
+	          }
+	        }, _callee2, this, [[2, 9, 10, 11]]);
 	      }));
 	    }
 	  }, {
@@ -3649,35 +3831,35 @@
 	  }, {
 	    key: "__removeLimiter__",
 	    value: function __removeLimiter__(instance) {
-	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$4().m(function _callee2() {
+	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$4().m(function _callee3() {
 	        var channels, _i, _channels, channel;
-	        return _regenerator$4().w(function (_context2) {
-	          while (1) switch (_context2.n) {
+	        return _regenerator$4().w(function (_context3) {
+	          while (1) switch (_context3.n) {
 	            case 0:
 	              channels = [instance.channel(), instance.channel_client()];
 	              _i = 0, _channels = channels;
 	            case 1:
 	              if (!(_i < _channels.length)) {
-	                _context2.n = 4;
+	                _context3.n = 4;
 	                break;
 	              }
 	              channel = _channels[_i];
 	              if (this.terminated) {
-	                _context2.n = 2;
+	                _context3.n = 2;
 	                break;
 	              }
-	              _context2.n = 2;
+	              _context3.n = 2;
 	              return this.subscriber.unsubscribe(channel);
 	            case 2:
 	              delete this.limiters[channel];
 	            case 3:
 	              _i++;
-	              _context2.n = 1;
+	              _context3.n = 1;
 	              break;
 	            case 4:
-	              return _context2.a(2);
+	              return _context3.a(2);
 	          }
-	        }, _callee2, this);
+	        }, _callee3, this);
 	      }));
 	    }
 	  }, {
@@ -3736,10 +3918,10 @@
 	function _arrayWithoutHoles$3(r) {
 	  if (Array.isArray(r)) return _arrayLikeToArray$4(r);
 	}
-	function _slicedToArray$1(r, e) {
-	  return _arrayWithHoles$1(r) || _iterableToArrayLimit$1(r, e) || _unsupportedIterableToArray$4(r, e) || _nonIterableRest$1();
+	function _slicedToArray$2(r, e) {
+	  return _arrayWithHoles$2(r) || _iterableToArrayLimit$2(r, e) || _unsupportedIterableToArray$4(r, e) || _nonIterableRest$2();
 	}
-	function _nonIterableRest$1() {
+	function _nonIterableRest$2() {
 	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
 	function _unsupportedIterableToArray$4(r, a) {
@@ -3754,7 +3936,7 @@
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
 	}
-	function _iterableToArrayLimit$1(r, l) {
+	function _iterableToArrayLimit$2(r, l) {
 	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (null != t) {
 	    var e,
@@ -3781,7 +3963,7 @@
 	    return a;
 	  }
 	}
-	function _arrayWithHoles$1(r) {
+	function _arrayWithHoles$2(r) {
 	  if (Array.isArray(r)) return r;
 	}
 	function _regenerator$5() {
@@ -4014,7 +4196,7 @@
 	                _context3.n = 7;
 	                break;
 	              }
-	              _data$split = data.split(":"), _data$split2 = _slicedToArray$1(_data$split, 3), rawCapacity = _data$split2[0], priorityClient = _data$split2[1], counter = _data$split2[2];
+	              _data$split = data.split(":"), _data$split2 = _slicedToArray$2(_data$split, 3), rawCapacity = _data$split2[0], priorityClient = _data$split2[1], counter = _data$split2[2];
 	              capacity = rawCapacity.length > 0 ? ~~rawCapacity : undefined;
 	              if (!(priorityClient === this.clientId)) {
 	                _context3.n = 5;
@@ -4164,7 +4346,7 @@
 	    value: function prepareObject(obj) {
 	      var arr = [];
 	      for (var _i = 0, _Object$entries = Object.entries(obj); _i < _Object$entries.length; _i++) {
-	        var _Object$entries$_i = _slicedToArray$1(_Object$entries[_i], 2),
+	        var _Object$entries$_i = _slicedToArray$2(_Object$entries[_i], 2),
 	          k = _Object$entries$_i[0],
 	          v = _Object$entries$_i[1];
 	        arr.push(k, v != null ? v.toString() : "");
@@ -4276,7 +4458,7 @@
 	              return this.runScript("register", this.prepareArray([index, weight, expiration]));
 	            case 1:
 	              _yield$this$runScript = _context8.v;
-	              _yield$this$runScript2 = _slicedToArray$1(_yield$this$runScript, 3);
+	              _yield$this$runScript2 = _slicedToArray$2(_yield$this$runScript, 3);
 	              success = _yield$this$runScript2[0];
 	              wait = _yield$this$runScript2[1];
 	              reservoir = _yield$this$runScript2[2];
@@ -4293,7 +4475,7 @@
 	    key: "__submit__",
 	    value: function __submit__(queueLength, weight) {
 	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$5().m(function _callee9() {
-	        var _yield$this$runScript3, _yield$this$runScript4, reachedHWM, blocked, strategy, error, _error$message$split, _error$message$split2, overweight, _weight, maxConcurrent, _t5;
+	        var _yield$this$runScript3, _yield$this$runScript4, reachedHWM, blocked, strategy, error, overweight, _overweight, _weight, maxConcurrent, _t5;
 	        return _regenerator$5().w(function (_context9) {
 	          while (1) switch (_context9.p = _context9.n) {
 	            case 0:
@@ -4302,7 +4484,7 @@
 	              return this.runScript("submit", this.prepareArray([queueLength, weight]));
 	            case 1:
 	              _yield$this$runScript3 = _context9.v;
-	              _yield$this$runScript4 = _slicedToArray$1(_yield$this$runScript3, 3);
+	              _yield$this$runScript4 = _slicedToArray$2(_yield$this$runScript3, 3);
 	              reachedHWM = _yield$this$runScript4[0];
 	              blocked = _yield$this$runScript4[1];
 	              strategy = _yield$this$runScript4[2];
@@ -4315,11 +4497,12 @@
 	              _context9.p = 2;
 	              _t5 = _context9.v;
 	              error = _t5;
-	              if (!(error.message.indexOf("OVERWEIGHT") === 0)) {
+	              overweight = error.message.match(/^(?:.*\s)?OVERWEIGHT:(\d+):(\d+)$/);
+	              if (!(overweight != null)) {
 	                _context9.n = 3;
 	                break;
 	              }
-	              _error$message$split = error.message.split(":"), _error$message$split2 = _slicedToArray$1(_error$message$split, 3), overweight = _error$message$split2[0], _weight = _error$message$split2[1], maxConcurrent = _error$message$split2[2];
+	              _overweight = _slicedToArray$2(overweight, 3), _weight = _overweight[1], maxConcurrent = _overweight[2];
 	              throw new BottleneckError_1("Impossible to add a job having a weight of ".concat(_weight, " to a limiter having a maxConcurrent setting of ").concat(maxConcurrent));
 	            case 3:
 	              throw _t5;
@@ -4728,61 +4911,13 @@
 	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
 	  }, _typeof$b(o);
 	}
-	function _createForOfIteratorHelper$1(r, e) {
-	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-	  if (!t) {
-	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$6(r)) || e && r && "number" == typeof r.length) {
-	      t && (r = t);
-	      var _n = 0,
-	        F = function F() {};
-	      return {
-	        s: F,
-	        n: function n() {
-	          return _n >= r.length ? {
-	            done: !0
-	          } : {
-	            done: !1,
-	            value: r[_n++]
-	          };
-	        },
-	        e: function e(r) {
-	          throw r;
-	        },
-	        f: F
-	      };
-	    }
-	    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	  }
-	  var o,
-	    a = !0,
-	    u = !1;
-	  return {
-	    s: function s() {
-	      t = t.call(r);
-	    },
-	    n: function n() {
-	      var r = t.next();
-	      return a = r.done, r;
-	    },
-	    e: function e(r) {
-	      u = !0, o = r;
-	    },
-	    f: function f() {
-	      try {
-	        a || null == t["return"] || t["return"]();
-	      } finally {
-	        if (u) throw o;
-	      }
-	    }
-	  };
+	function _slicedToArray$3(r, e) {
+	  return _arrayWithHoles$3(r) || _iterableToArrayLimit$3(r, e) || _unsupportedIterableToArray$6(r, e) || _nonIterableRest$3();
 	}
-	function _slicedToArray$2(r, e) {
-	  return _arrayWithHoles$2(r) || _iterableToArrayLimit$2(r, e) || _unsupportedIterableToArray$6(r, e) || _nonIterableRest$2();
-	}
-	function _nonIterableRest$2() {
+	function _nonIterableRest$3() {
 	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
-	function _iterableToArrayLimit$2(r, l) {
+	function _iterableToArrayLimit$3(r, l) {
 	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (null != t) {
 	    var e,
@@ -4809,7 +4944,7 @@
 	    return a;
 	  }
 	}
-	function _arrayWithHoles$2(r) {
+	function _arrayWithHoles$3(r) {
 	  if (Array.isArray(r)) return r;
 	}
 	function _regenerator$7() {
@@ -4990,35 +5125,41 @@
 	    };
 	    this.instances = {};
 	    this.deleteKey = function () {
-	      var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
-	      return tslib_1.__awaiter(_this, void 0, void 0, /*#__PURE__*/_regenerator$7().m(function _callee() {
-	        var instance, deleted;
-	        return _regenerator$7().w(function (_context) {
-	          while (1) switch (_context.n) {
-	            case 0:
-	              instance = this.instances[key];
-	              deleted = 0;
-	              if (!this.connection) {
-	                _context.n = 2;
-	                break;
-	              }
-	              _context.n = 1;
-	              return this.connection.__runCommand__(["del"].concat(_toConsumableArray$5(Scripts$4.allKeys("".concat(this.id, "-").concat(key)))));
-	            case 1:
-	              deleted = _context.v;
-	            case 2:
-	              if (!(instance != null)) {
+	      for (var _len = arguments.length, args_1 = new Array(_len), _key2 = 0; _key2 < _len; _key2++) {
+	        args_1[_key2] = arguments[_key2];
+	      }
+	      return tslib_1.__awaiter(_this, [].concat(args_1), void 0, function () {
+	        var _this2 = this;
+	        var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
+	        return /*#__PURE__*/_regenerator$7().m(function _callee() {
+	          var instance, deleted;
+	          return _regenerator$7().w(function (_context) {
+	            while (1) switch (_context.n) {
+	              case 0:
+	                instance = _this2.instances[key];
+	                deleted = 0;
+	                if (!_this2.connection) {
+	                  _context.n = 2;
+	                  break;
+	                }
+	                _context.n = 1;
+	                return _this2.connection.__runCommand__(["del"].concat(_toConsumableArray$5(Scripts$4.allKeys("".concat(_this2.id, "-").concat(key)))));
+	              case 1:
+	                deleted = _context.v;
+	              case 2:
+	                if (!(instance != null)) {
+	                  _context.n = 3;
+	                  break;
+	                }
+	                delete _this2.instances[key];
 	                _context.n = 3;
-	                break;
-	              }
-	              delete this.instances[key];
-	              _context.n = 3;
-	              return instance.disconnect();
-	            case 3:
-	              return _context.a(2, instance != null || deleted > 0);
-	          }
-	        }, _callee, this);
-	      }));
+	                return instance.disconnect();
+	              case 3:
+	                return _context.a(2, instance != null || deleted > 0);
+	            }
+	          }, _callee);
+	        })();
+	      });
 	    };
 	    parser$7.load(this.limiterOptions, this.defaults, this);
 	    this.Events = new Events_1$1["default"](this);
@@ -5040,27 +5181,27 @@
 	  return _createClass$b(Group, [{
 	    key: "key",
 	    value: function key() {
-	      var _this2 = this;
+	      var _this3 = this;
 	      var _key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
 	      var _a;
 	      return (_a = this.instances[_key]) !== null && _a !== void 0 ? _a : function () {
-	        var limiter = _this2.instances[_key] = new _this2.Bottleneck(Object.assign(Object.assign({}, _this2.limiterOptions), {
-	          id: "".concat(_this2.id, "-").concat(_key),
-	          timeout: _this2.timeout,
-	          connection: _this2.connection
+	        var limiter = _this3.instances[_key] = new _this3.Bottleneck(Object.assign(Object.assign({}, _this3.limiterOptions), {
+	          id: "".concat(_this3.id, "-").concat(_key),
+	          timeout: _this3.timeout,
+	          connection: _this3.connection
 	        }));
-	        _this2.Events.trigger("created", limiter, _key);
+	        _this3.Events.trigger("created", limiter, _key);
 	        return limiter;
 	      }();
 	    }
 	  }, {
 	    key: "limiters",
 	    value: function limiters() {
-	      var _this3 = this;
+	      var _this4 = this;
 	      return Object.keys(this.instances).map(function (k) {
 	        return {
 	          key: k,
-	          limiter: _this3.instances[k]
+	          limiter: _this4.instances[k]
 	        };
 	      });
 	    }
@@ -5073,7 +5214,7 @@
 	    key: "clusterKeys",
 	    value: function clusterKeys() {
 	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$7().m(function _callee2() {
-	        var keys, cursor, start, end, result, _result, next, found, _iterator, _step, k;
+	        var start, end, settingsKeys;
 	        return _regenerator$7().w(function (_context2) {
 	          while (1) switch (_context2.n) {
 	            case 0:
@@ -5083,35 +5224,15 @@
 	              }
 	              return _context2.a(2, this.Promise.resolve(this.keys()));
 	            case 1:
-	              keys = [];
-	              cursor = null;
 	              start = "b_".concat(this.id, "-").length;
 	              end = "_settings".length;
+	              _context2.n = 2;
+	              return this.connection.__scanKeys__("b_".concat(this.id, "-*_settings"));
 	            case 2:
-	              _context2.n = 3;
-	              return this.connection.__runCommand__(["scan", cursor !== null && cursor !== void 0 ? cursor : 0, "match", "b_".concat(this.id, "-*_settings"), "count", 10000]);
-	            case 3:
-	              result = _context2.v;
-	              _result = _slicedToArray$2(result, 2), next = _result[0], found = _result[1];
-	              cursor = ~~next;
-	              _iterator = _createForOfIteratorHelper$1(found);
-	              try {
-	                for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	                  k = _step.value;
-	                  keys.push(k.slice(start, -end));
-	                }
-	              } catch (err) {
-	                _iterator.e(err);
-	              } finally {
-	                _iterator.f();
-	              }
-	            case 4:
-	              if (cursor !== 0) {
-	                _context2.n = 2;
-	                break;
-	              }
-	            case 5:
-	              return _context2.a(2, keys);
+	              settingsKeys = _context2.v;
+	              return _context2.a(2, settingsKeys.map(function (k) {
+	                return k.slice(start, -end);
+	              }));
 	          }
 	        }, _callee2, this);
 	      }));
@@ -5119,12 +5240,12 @@
 	  }, {
 	    key: "_startAutoCleanup",
 	    value: function _startAutoCleanup() {
-	      var _this4 = this;
+	      var _this5 = this;
 	      if (this.interval) {
 	        clearInterval(this.interval);
 	      }
 	      this.interval = setInterval(function () {
-	        return tslib_1.__awaiter(_this4, void 0, void 0, /*#__PURE__*/_regenerator$7().m(function _callee3() {
+	        return tslib_1.__awaiter(_this5, void 0, void 0, /*#__PURE__*/_regenerator$7().m(function _callee3() {
 	          var time, _i, _Object$entries, _Object$entries$_i, k, v, _t;
 	          return _regenerator$7().w(function (_context3) {
 	            while (1) switch (_context3.p = _context3.n) {
@@ -5136,7 +5257,7 @@
 	                  _context3.n = 7;
 	                  break;
 	                }
-	                _Object$entries$_i = _slicedToArray$2(_Object$entries[_i], 2), k = _Object$entries$_i[0], v = _Object$entries$_i[1];
+	                _Object$entries$_i = _slicedToArray$3(_Object$entries[_i], 2), k = _Object$entries$_i[0], v = _Object$entries$_i[1];
 	                _context3.p = 2;
 	                _context3.n = 3;
 	                return v._store.__groupCheck__(time);
@@ -5295,15 +5416,15 @@
 	  if (Array.isArray(r)) return _arrayLikeToArray$7(r);
 	}
 	function _toArray(r) {
-	  return _arrayWithHoles$3(r) || _iterableToArray$6(r) || _unsupportedIterableToArray$7(r) || _nonIterableRest$3();
+	  return _arrayWithHoles$4(r) || _iterableToArray$6(r) || _unsupportedIterableToArray$7(r) || _nonIterableRest$4();
 	}
 	function _iterableToArray$6(r) {
 	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
 	}
-	function _slicedToArray$3(r, e) {
-	  return _arrayWithHoles$3(r) || _iterableToArrayLimit$3(r, e) || _unsupportedIterableToArray$7(r, e) || _nonIterableRest$3();
+	function _slicedToArray$4(r, e) {
+	  return _arrayWithHoles$4(r) || _iterableToArrayLimit$4(r, e) || _unsupportedIterableToArray$7(r, e) || _nonIterableRest$4();
 	}
-	function _nonIterableRest$3() {
+	function _nonIterableRest$4() {
 	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
 	function _unsupportedIterableToArray$7(r, a) {
@@ -5318,7 +5439,7 @@
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
 	}
-	function _iterableToArrayLimit$3(r, l) {
+	function _iterableToArrayLimit$4(r, l) {
 	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (null != t) {
 	    var e,
@@ -5345,7 +5466,7 @@
 	    return a;
 	  }
 	}
-	function _arrayWithHoles$3(r) {
+	function _arrayWithHoles$4(r) {
 	  if (Array.isArray(r)) return r;
 	}
 	function _typeof$d(o) {
@@ -5883,39 +6004,42 @@
 	    }
 	  }, {
 	    key: "_drainAll",
-	    value: function _drainAll(capacity) {
-	      var total = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$8().m(function _callee4() {
-	        var drained, newCapacity, _t3;
-	        return _regenerator$8().w(function (_context4) {
-	          while (1) switch (_context4.p = _context4.n) {
-	            case 0:
-	              _context4.p = 0;
-	              _context4.n = 1;
-	              return this._drainOne(capacity);
-	            case 1:
-	              drained = _context4.v;
-	              if (!(drained != null)) {
-	                _context4.n = 2;
+	    value: function _drainAll(capacity_1) {
+	      return tslib_1.__awaiter(this, arguments, void 0, function (capacity) {
+	        var _this4 = this;
+	        var total = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	        return /*#__PURE__*/_regenerator$8().m(function _callee4() {
+	          var drained, newCapacity, _t3;
+	          return _regenerator$8().w(function (_context4) {
+	            while (1) switch (_context4.p = _context4.n) {
+	              case 0:
+	                _context4.p = 0;
+	                _context4.n = 1;
+	                return _this4._drainOne(capacity);
+	              case 1:
+	                drained = _context4.v;
+	                if (!(drained != null)) {
+	                  _context4.n = 2;
+	                  break;
+	                }
+	                newCapacity = capacity != null ? capacity - drained : capacity;
+	                return _context4.a(2, _this4._drainAll(newCapacity, total + drained));
+	              case 2:
+	                return _context4.a(2, total);
+	              case 3:
+	                _context4.n = 5;
 	                break;
-	              }
-	              newCapacity = capacity != null ? capacity - drained : capacity;
-	              return _context4.a(2, this._drainAll(newCapacity, total + drained));
-	            case 2:
-	              return _context4.a(2, total);
-	            case 3:
-	              _context4.n = 5;
-	              break;
-	            case 4:
-	              _context4.p = 4;
-	              _t3 = _context4.v;
-	              this.Events.trigger("error", _t3);
-	              return _context4.a(2, total);
-	            case 5:
-	              return _context4.a(2);
-	          }
-	        }, _callee4, this, [[0, 4]]);
-	      }));
+	              case 4:
+	                _context4.p = 4;
+	                _t3 = _context4.v;
+	                _this4.Events.trigger("error", _t3);
+	                return _context4.a(2, total);
+	              case 5:
+	                return _context4.a(2);
+	            }
+	          }, _callee4, null, [[0, 4]]);
+	        })();
+	      });
 	    }
 	  }, {
 	    key: "_dropAllQueued",
@@ -5929,44 +6053,44 @@
 	  }, {
 	    key: "stop",
 	    value: function stop() {
-	      var _this4 = this;
+	      var _this5 = this;
 	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      options = parser$9.load(options, this.stopDefaults);
 	      var waitForExecuting = function waitForExecuting(at) {
 	        var finished = function finished() {
-	          var counts = _this4._states.counts;
+	          var counts = _this5._states.counts;
 	          return counts[0] + counts[1] + counts[2] + counts[3] === at;
 	        };
-	        return new _this4.Promise(function (resolve) {
+	        return new _this5.Promise(function (resolve) {
 	          if (finished()) {
 	            resolve();
 	          } else {
 	            var handler = function handler() {
 	              if (finished()) {
-	                _this4.Events.instance.removeAllListeners("done");
+	                _this5.Events.instance.removeAllListeners("done");
 	                resolve();
 	              }
 	            };
-	            _this4.Events.instance.on("done", handler);
+	            _this5.Events.instance.on("done", handler);
 	          }
 	        });
 	      };
 	      var done = options.dropWaitingJobs ? function () {
-	        _this4._run = function (index, next) {
+	        _this5._run = function (index, next) {
 	          return next.doDrop({
 	            message: options.dropErrorMessage
 	          });
 	        };
-	        _this4._drainOne = function () {
-	          return _this4.Promise.resolve(null);
+	        _this5._drainOne = function () {
+	          return _this5.Promise.resolve(null);
 	        };
-	        return _this4._registerLock.schedule(function () {
-	          return _this4._submitLock.schedule(function () {
-	            for (var _i = 0, _Object$entries = Object.entries(_this4._scheduled); _i < _Object$entries.length; _i++) {
-	              var _Object$entries$_i = _slicedToArray$3(_Object$entries[_i], 2),
+	        return _this5._registerLock.schedule(function () {
+	          return _this5._submitLock.schedule(function () {
+	            for (var _i = 0, _Object$entries = Object.entries(_this5._scheduled); _i < _Object$entries.length; _i++) {
+	              var _Object$entries$_i = _slicedToArray$4(_Object$entries[_i], 2),
 	                k = _Object$entries$_i[0],
 	                v = _Object$entries$_i[1];
-	              if (_this4.jobStatus(v.job.options.id) === "RUNNING") {
+	              if (_this5.jobStatus(v.job.options.id) === "RUNNING") {
 	                clearTimeout(v.timeout);
 	                clearTimeout(v.expiration);
 	                v.job.doDrop({
@@ -5974,7 +6098,7 @@
 	                });
 	              }
 	            }
-	            _this4._dropAllQueued(options.dropErrorMessage);
+	            _this5._dropAllQueued(options.dropErrorMessage);
 	            return waitForExecuting(0);
 	          });
 	        });
@@ -5989,7 +6113,7 @@
 	        return Promise.resolve();
 	      };
 	      this.stop = function () {
-	        return _this4.Promise.reject(new Bottleneck.BottleneckError("stop() has already been called"));
+	        return _this5.Promise.reject(new Bottleneck.BottleneckError("stop() has already been called"));
 	      };
 	      return done;
 	    }
@@ -6007,7 +6131,7 @@
 	  }, {
 	    key: "submit",
 	    value: function submit() {
-	      var _this5 = this;
+	      var _this6 = this;
 	      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
 	        args[_key2] = arguments[_key2];
 	      }
@@ -6032,7 +6156,7 @@
 	        for (var _len3 = arguments.length, taskArgs = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
 	          taskArgs[_key3] = arguments[_key3];
 	        }
-	        return new _this5.Promise(function (resolve, reject) {
+	        return new _this6.Promise(function (resolve, reject) {
 	          fn.apply(void 0, taskArgs.concat([function () {
 	            for (var _len4 = arguments.length, cbArgs = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
 	              cbArgs[_key4] = arguments[_key4];
@@ -6102,19 +6226,22 @@
 	  }, {
 	    key: "updateSettings",
 	    value: function updateSettings() {
-	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator$8().m(function _callee5() {
-	        return _regenerator$8().w(function (_context5) {
-	          while (1) switch (_context5.n) {
-	            case 0:
-	              _context5.n = 1;
-	              return this._store.__updateSettings__(parser$9.overwrite(options, this.storeDefaults));
-	            case 1:
-	              parser$9.overwrite(options, this.instanceDefaults, this);
-	              return _context5.a(2, this);
-	          }
-	        }, _callee5, this);
-	      }));
+	      return tslib_1.__awaiter(this, arguments, void 0, function () {
+	        var _this7 = this;
+	        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	        return /*#__PURE__*/_regenerator$8().m(function _callee5() {
+	          return _regenerator$8().w(function (_context5) {
+	            while (1) switch (_context5.n) {
+	              case 0:
+	                _context5.n = 1;
+	                return _this7._store.__updateSettings__(parser$9.overwrite(options, _this7.storeDefaults));
+	              case 1:
+	                parser$9.overwrite(options, _this7.instanceDefaults, _this7);
+	                return _context5.a(2, _this7);
+	            }
+	          }, _callee5);
+	        })();
+	      });
 	    }
 	  }, {
 	    key: "currentReservoir",

@@ -1127,26 +1127,10 @@
             if (this.connection == null) {
                 return this.Promise.resolve(this.keys());
             }
-            const keys = [];
-            let cursor = null;
             const start = `b_${this.id}-`.length;
             const end = "_settings".length;
-            do {
-                const result = await this.connection.__runCommand__([
-                    "scan",
-                    cursor !== null && cursor !== void 0 ? cursor : 0,
-                    "match",
-                    `b_${this.id}-*_settings`,
-                    "count",
-                    10000
-                ]);
-                const [next, found] = result;
-                cursor = ~~next;
-                for (const k of found) {
-                    keys.push(k.slice(start, -end));
-                }
-            } while (cursor !== 0);
-            return keys;
+            const settingsKeys = await this.connection.__scanKeys__(`b_${this.id}-*_settings`);
+            return settingsKeys.map(k => k.slice(start, -end));
         }
         _startAutoCleanup() {
             if (this.interval) {

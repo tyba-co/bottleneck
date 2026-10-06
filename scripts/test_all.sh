@@ -1,20 +1,11 @@
 #!/usr/bin/env bash
+# Requires Redis on 127.0.0.1:6379 and a Redis Cluster on 30001-30006: docker compose -f docker-compose.test.yml up -d --wait
 
 set -e
 
-source .env
+npm run build
 
-echo 'ioredis tests'
-DATASTORE=ioredis npm test
-
-echo 'NodeRedis tests'
-DATASTORE=redis npm test
-
-echo 'ES5 bundle tests'
-BUILD=es5 npm test
-
-echo 'Light bundle tests'
-BUILD=light npm test
-
-echo 'Local tests'
-npm test
+for suite in local es5 light redis cluster; do
+  echo "[T] $suite"
+  npm run -s "test:$suite"
+done
