@@ -3641,17 +3641,23 @@
 	        return this.Promise.all([instance.channel(), instance.channel_client()].map(function (channel) {
 	          return tslib_1.__awaiter(_this5, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee8() {
 	            var _this6 = this;
+	            var isSubscribed;
 	            return _regenerator().w(function (_context8) {
 	              while (1) switch (_context8.n) {
 	                case 0:
+	                  isSubscribed = this.limiters[channel] != null; // The latest limiter on a channel receives its messages, like upstream
+	                  this.limiters[channel] = instance;
+	                  // node-redis calls every listener of a channel, so a second subscribe would deliver each message twice
+	                  if (isSubscribed) {
+	                    _context8.n = 1;
+	                    break;
+	                  }
 	                  _context8.n = 1;
 	                  return this.subscriber.subscribe(channel, function (message) {
 	                    var _a;
 	                    (_a = _this6.limiters[channel]) === null || _a === void 0 ? void 0 : _a._store.onMessage(channel, message);
 	                  });
 	                case 1:
-	                  this.limiters[channel] = instance;
-	                case 2:
 	                  return _context8.a(2);
 	              }
 	            }, _callee8, this);
@@ -3671,14 +3677,19 @@
 	                    return _regenerator().w(function (_context9) {
 	                      while (1) switch (_context9.n) {
 	                        case 0:
-	                          if (this.terminated) {
+	                          if (!(this.limiters[channel] !== instance)) {
 	                            _context9.n = 1;
 	                            break;
 	                          }
-	                          _context9.n = 1;
-	                          return this.subscriber.unsubscribe(channel);
+	                          return _context9.a(2);
 	                        case 1:
 	                          delete this.limiters[channel];
+	                          if (this.terminated) {
+	                            _context9.n = 2;
+	                            break;
+	                          }
+	                          _context9.n = 2;
+	                          return this.subscriber.unsubscribe(channel);
 	                        case 2:
 	                          return _context9.a(2);
 	                      }
@@ -3760,6 +3771,54 @@
 	    } : function (o) {
 	      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
 	    }, _typeof(o);
+	  }
+	  function _createForOfIteratorHelper(r, e) {
+	    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	    if (!t) {
+	      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e) {
+	        t && (r = t);
+	        var _n = 0,
+	          F = function F() {};
+	        return {
+	          s: F,
+	          n: function n() {
+	            return _n >= r.length ? {
+	              done: true
+	            } : {
+	              done: false,
+	              value: r[_n++]
+	            };
+	          },
+	          e: function e(r) {
+	            throw r;
+	          },
+	          f: F
+	        };
+	      }
+	      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	    }
+	    var o,
+	      a = true,
+	      u = false;
+	    return {
+	      s: function s() {
+	        t = t.call(r);
+	      },
+	      n: function n() {
+	        var r = t.next();
+	        return a = r.done, r;
+	      },
+	      e: function e(r) {
+	        u = true, o = r;
+	      },
+	      f: function f() {
+	        try {
+	          a || null == t["return"] || t["return"]();
+	        } finally {
+	          if (u) throw o;
+	        }
+	      }
+	    };
 	  }
 	  function _toConsumableArray(r) {
 	    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
@@ -4274,22 +4333,33 @@
 	      key: "__removeLimiter__",
 	      value: function __removeLimiter__(instance) {
 	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee7() {
-	          var channels, _i2, _channels2, channel;
+	          var _this2 = this;
+	          var channels, _iterator, _step, channel;
 	          return _regenerator().w(function (_context7) {
 	            while (1) switch (_context7.n) {
 	              case 0:
-	                channels = [instance.channel(), instance.channel_client()];
-	                if (this.terminated) {
+	                // A newer limiter with the same id took over the channel and still needs it
+	                channels = [instance.channel(), instance.channel_client()].filter(function (channel) {
+	                  return _this2.limiters[channel] === instance;
+	                });
+	                _iterator = _createForOfIteratorHelper(channels);
+	                try {
+	                  for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	                    channel = _step.value;
+	                    delete this.limiters[channel];
+	                  }
+	                } catch (err) {
+	                  _iterator.e(err);
+	                } finally {
+	                  _iterator.f();
+	                }
+	                if (!(channels.length > 0 && !this.terminated)) {
 	                  _context7.n = 1;
 	                  break;
 	                }
 	                _context7.n = 1;
 	                return this.subscriber.unsubscribe(new Set(channels), SUBSCRIPTION_TIMEOUT_MS);
 	              case 1:
-	                for (_i2 = 0, _channels2 = channels; _i2 < _channels2.length; _i2++) {
-	                  channel = _channels2[_i2];
-	                  delete this.limiters[channel];
-	                }
 	                return _context7.a(2, []);
 	            }
 	          }, _callee7, this);
@@ -4304,27 +4374,27 @@
 	      key: "disconnect",
 	      value: function disconnect() {
 	        return tslib_1.__awaiter(this, arguments, void 0, function () {
-	          var _this2 = this;
+	          var _this3 = this;
 	          return /*#__PURE__*/_regenerator().m(function _callee8() {
-	            var _a, _b, limiters, _i3, _Object$keys, name;
+	            var _a, _b, limiters, _i2, _Object$keys, name;
 	            return _regenerator().w(function (_context8) {
 	              while (1) switch (_context8.n) {
 	                case 0:
-	                  limiters = Object.values(_this2.limiters);
-	                  _this2.limiters = {};
+	                  limiters = Object.values(_this3.limiters);
+	                  _this3.limiters = {};
 	                  _context8.n = 1;
-	                  return _this2.Promise.all(limiters.map(function (limiter) {
+	                  return _this3.Promise.all(limiters.map(function (limiter) {
 	                    return limiter._store.__leaveCluster__();
 	                  }));
 	                case 1:
-	                  _this2.terminated = true;
-	                  (_a = _this2.client) === null || _a === void 0 ? void 0 : _a.close();
-	                  (_b = _this2.subscriber) === null || _b === void 0 ? void 0 : _b.close();
-	                  for (_i3 = 0, _Object$keys = Object.keys(_this2.scripts); _i3 < _Object$keys.length; _i3++) {
-	                    name = _Object$keys[_i3];
-	                    _this2.scripts[name].release();
+	                  _this3.terminated = true;
+	                  (_a = _this3.client) === null || _a === void 0 ? void 0 : _a.close();
+	                  (_b = _this3.subscriber) === null || _b === void 0 ? void 0 : _b.close();
+	                  for (_i2 = 0, _Object$keys = Object.keys(_this3.scripts); _i2 < _Object$keys.length; _i2++) {
+	                    name = _Object$keys[_i2];
+	                    _this3.scripts[name].release();
 	                  }
-	                  _this2.scripts = {};
+	                  _this3.scripts = {};
 	                case 2:
 	                  return _context8.a(2);
 	              }
@@ -6166,8 +6236,6 @@
 	      var _this = this;
 	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      _classCallCheck(this, Bottleneck);
-	      this.strategy = Bottleneck.strategy;
-	      this.BottleneckError = Bottleneck.BottleneckError;
 	      this.jobDefaults = {
 	        priority: DEFAULT_PRIORITY,
 	        weight: 1,
@@ -6825,6 +6893,14 @@
 	  Bottleneck.GlideConnection = requireGlideConnection();
 	  Bottleneck.Batcher = requireBatcher();
 	  Bottleneck.version = Bottleneck.prototype.version = require$$14.version;
+	  Object.assign(Bottleneck.prototype, {
+	    strategy: Bottleneck.strategy,
+	    BottleneckError: Bottleneck.BottleneckError,
+	    Group: Bottleneck.Group,
+	    RedisConnection: Bottleneck.RedisConnection,
+	    GlideConnection: Bottleneck.GlideConnection,
+	    Batcher: Bottleneck.Batcher
+	  });
 	  Bottleneck_1 = Bottleneck;
 	  return Bottleneck_1;
 	}

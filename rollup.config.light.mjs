@@ -8,7 +8,7 @@ const bannerLines = [
 ].map(x => `  * ${x}`).join('\n');
 const banner = `/**\n${bannerLines}\n  */`;
 
-const missing = `export default () => console.log('You must import the full version of Bottleneck in order to use this feature.');`;
+const missing = `export default class { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }`;
 const exclude = [
   'RedisDatastore.js',
   'RedisConnection.js',

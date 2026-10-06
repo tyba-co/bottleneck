@@ -217,12 +217,13 @@ class GlideConnection {
   }
 
   async __removeLimiter__(instance: any): Promise<void[]> {
-    const channels = [instance.channel(), instance.channel_client()];
-    if (!this.terminated) {
-      await this.subscriber.unsubscribe(new Set(channels), SUBSCRIPTION_TIMEOUT_MS);
-    }
+    // A newer limiter with the same id took over the channel and still needs it
+    const channels = [instance.channel(), instance.channel_client()].filter((channel) => this.limiters[channel] === instance);
     for (const channel of channels) {
       delete this.limiters[channel];
+    }
+    if (channels.length > 0 && !this.terminated) {
+      await this.subscriber.unsubscribe(new Set(channels), SUBSCRIPTION_TIMEOUT_MS);
     }
     return [];
   }

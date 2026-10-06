@@ -95,8 +95,12 @@ class Bottleneck {
 
   // Instance properties
   public version: string;
-  public strategy = Bottleneck.strategy;
-  public BottleneckError = Bottleneck.BottleneckError;
+  declare public strategy: typeof Bottleneck.strategy;
+  declare public BottleneckError: typeof Bottleneck.BottleneckError;
+  declare public Group: typeof Bottleneck.Group;
+  declare public RedisConnection: typeof Bottleneck.RedisConnection;
+  declare public GlideConnection: typeof Bottleneck.GlideConnection;
+  declare public Batcher: typeof Bottleneck.Batcher;
   
   private jobDefaults: JobDefaults = {
     priority: DEFAULT_PRIORITY,
@@ -570,5 +574,13 @@ class Bottleneck {
 }
 
 Bottleneck.version = Bottleneck.prototype.version = require("./version.json").version;
+Object.assign(Bottleneck.prototype, {
+  strategy: Bottleneck.strategy,
+  BottleneckError: Bottleneck.BottleneckError,
+  Group: Bottleneck.Group,
+  RedisConnection: Bottleneck.RedisConnection,
+  GlideConnection: Bottleneck.GlideConnection,
+  Batcher: Bottleneck.Batcher
+});
 
 export = Bottleneck;

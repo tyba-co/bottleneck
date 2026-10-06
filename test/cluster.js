@@ -993,6 +993,41 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
       assert(updateSettingsError != null)
     })
 
+    it('Should deliver each message once to limiters sharing a connection and an id', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'shared-connection-same-id' })
+      var limiter2 = new Bottleneck({ id: 'shared-connection-same-id', connection: c.limiter.connection })
+      await Promise.all([c.limiter.ready(), limiter2.ready()])
+      var messages = []
+      limiter2.on('message', function (message) { messages.push(message) })
+
+      // ACT
+      await limiter2.publish('hello')
+      await c.wait(100)
+
+      // ASSERT
+      c.mustEqual(messages, ['hello'])
+    })
+
+    it('Should keep delivering messages to the newer limiter when an older one with the same id disconnects', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'shared-connection-owner-2' })
+      var olderLimiter = new Bottleneck({ id: 'shared-connection-channel', connection: c.limiter.connection })
+      await olderLimiter.ready()
+      var newerLimiter = new Bottleneck({ id: 'shared-connection-channel', connection: c.limiter.connection })
+      await newerLimiter.ready()
+      var messages = []
+      newerLimiter.on('message', function (message) { messages.push(message) })
+
+      // ACT
+      await olderLimiter.disconnect(false)
+      await newerLimiter.publish('hello')
+      await c.wait(100)
+
+      // ASSERT
+      c.mustEqual(messages, ['hello'])
+    })
+
     describe('clearDatastore with running jobs', function () {
       var waitForRunning = async function (limiter, running) {
         while (await limiter.running() !== running) await c.wait(10)

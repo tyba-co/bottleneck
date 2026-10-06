@@ -177,19 +177,28 @@ class RedisConnection {
 
   __addLimiter__(instance: any): Promise<void[]> {
     return this.Promise.all([instance.channel(), instance.channel_client()].map(async channel => {
-      await this.subscriber.subscribe(channel, (message: string) => {
-        this.limiters[channel]?._store.onMessage(channel, message);
-      });
+      const isSubscribed = this.limiters[channel] != null;
+      // The latest limiter on a channel receives its messages, like upstream
       this.limiters[channel] = instance;
+      // node-redis calls every listener of a channel, so a second subscribe would deliver each message twice
+      if (!isSubscribed) {
+        await this.subscriber.subscribe(channel, (message: string) => {
+          this.limiters[channel]?._store.onMessage(channel, message);
+        });
+      }
     }));
   }
 
   async __removeLimiter__(instance: any): Promise<void[]> {
     return this.Promise.all([instance.channel(), instance.channel_client()].map(async channel => {
+      // A newer limiter with the same id took over the channel and still needs it
+      if (this.limiters[channel] !== instance) {
+        return;
+      }
+      delete this.limiters[channel];
       if (!this.terminated) {
         await this.subscriber.unsubscribe(channel);
       }
-      delete this.limiters[channel];
     }));
   }
 

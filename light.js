@@ -1069,7 +1069,7 @@
 		return LocalDatastore_1;
 	}
 
-	var RedisDatastore = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+	class RedisDatastore { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }
 
 	var RedisDatastore$1 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
@@ -1196,7 +1196,7 @@
 		return Sync_1;
 	}
 
-	var RedisConnection = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+	class RedisConnection { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }
 
 	var RedisConnection$1 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
@@ -1205,7 +1205,7 @@
 
 	var require$$11 = /*@__PURE__*/getAugmentedNamespace(RedisConnection$1);
 
-	var GlideConnection = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+	class GlideConnection { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }
 
 	var GlideConnection$1 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
@@ -1214,7 +1214,7 @@
 
 	var require$$12 = /*@__PURE__*/getAugmentedNamespace(GlideConnection$1);
 
-	var Scripts = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+	class Scripts { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }
 
 	var Scripts$1 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
@@ -1419,8 +1419,6 @@
 		const Sync = requireSync();
 		class Bottleneck {
 		    constructor(options = {}, ...invalid) {
-		        this.strategy = Bottleneck.strategy;
-		        this.BottleneckError = Bottleneck.BottleneckError;
 		        this.jobDefaults = {
 		            priority: DEFAULT_PRIORITY,
 		            weight: 1,
@@ -1833,6 +1831,14 @@
 		Bottleneck.GlideConnection = require$$12;
 		Bottleneck.Batcher = requireBatcher();
 		Bottleneck.version = Bottleneck.prototype.version = require$$14.version;
+		Object.assign(Bottleneck.prototype, {
+		    strategy: Bottleneck.strategy,
+		    BottleneckError: Bottleneck.BottleneckError,
+		    Group: Bottleneck.Group,
+		    RedisConnection: Bottleneck.RedisConnection,
+		    GlideConnection: Bottleneck.GlideConnection,
+		    Batcher: Bottleneck.Batcher
+		});
 		Bottleneck_1 = Bottleneck;
 		
 		return Bottleneck_1;

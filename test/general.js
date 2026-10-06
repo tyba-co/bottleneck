@@ -129,6 +129,30 @@ describe('General', function () {
     })
   })
 
+  it('Should expose the library classes and constants on every limiter', function () {
+    // ARRANGE
+    c = makeTest()
+
+    // ASSERT
+    ;['strategy', 'BottleneckError', 'Group', 'RedisConnection', 'GlideConnection', 'Batcher'].forEach(function (name) {
+      assert.strictEqual(c.limiter[name], Bottleneck[name], 'limiter.' + name)
+      assert.strictEqual(Bottleneck.prototype[name], Bottleneck[name], 'Bottleneck.prototype.' + name)
+    })
+    assert.strictEqual(c.limiter.version, Bottleneck.version)
+  })
+
+  if (process.env.BUILD === 'light') {
+    it('Should throw when the light build is asked for Clustering', function () {
+      // ARRANGE
+      c = makeTest()
+
+      // ASSERT
+      assert.throws(function () { new Bottleneck({ datastore: 'redis' }) }, /full version of Bottleneck/)
+      assert.throws(function () { new Bottleneck.RedisConnection() }, /full version of Bottleneck/)
+      assert.throws(function () { new Bottleneck.GlideConnection() }, /full version of Bottleneck/)
+    })
+  }
+
   it('Should expose the Events library', function (cb) {
     c = makeTest()
 
