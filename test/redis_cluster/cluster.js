@@ -235,13 +235,16 @@ describe('Redis Cluster', function () {
       : new Bottleneck.RedisConnection({ client: client })
     var limiter = makeLimiter({ id: uniqueId('injected'), connection: connection, clearDatastore: true })
 
-    // ACT
-    var result = await limiter.schedule(function () { return Promise.resolve('ran') })
+    try {
+      // ACT
+      var result = await limiter.schedule(function () { return Promise.resolve('ran') })
 
-    // ASSERT
-    assert.strictEqual(result, 'ran')
-    await limiter.disconnect()
-    await connection.disconnect()
+      // ASSERT
+      assert.strictEqual(result, 'ran')
+    } finally {
+      await limiter.disconnect()
+      await connection.disconnect()
+    }
   })
 
   it('Should fail to start a limiter whose id has no hash tag', async function () {
