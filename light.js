@@ -1407,7 +1407,7 @@
 		return Batcher_1;
 	}
 
-	var version = "3.2.0";
+	var version = "3.3.0";
 	var require$$14 = {
 		version: version
 	};
