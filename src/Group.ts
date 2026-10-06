@@ -33,6 +33,7 @@ class Group {
   public Bottleneck: any;
   public timeout!: number;
   public connection: any;
+  public datastore: string;
   public Promise!: PromiseConstructor;
   public id!: string;
   private interval?: NodeJS.Timeout;
@@ -50,6 +51,7 @@ class Group {
     } else if (this.connection == null && this.limiterOptions.datastore === "valkey-glide") {
       this.connection = new GlideConnection({ ...this.limiterOptions, Events: this.Events });
     }
+    this.datastore = this.connection?.datastore ?? this.limiterOptions.datastore ?? "local";
   }
 
   key(key: string = ""): any {
@@ -102,7 +104,8 @@ class Group {
     }
     this.interval = setInterval(async () => {
       const time = Date.now();
-      for (const [k, v] of Object.entries(this.instances)) {
+      for (const k of Object.keys(this.instances)) {
+        const v = this.instances[k];
         try {
           if (await v._store.__groupCheck__(time)) {
             this.deleteKey(k);
@@ -127,7 +130,7 @@ class Group {
   }
 
   async disconnect(flush: boolean = true): Promise<void> {
-    await Promise.all(Object.values(this.instances).map((limiter: any) => limiter.disconnect(flush)));
+    await Promise.all(Object.keys(this.instances).map((k) => this.instances[k].disconnect(flush)));
     if (!this.sharedConnection) {
       await this.connection?.disconnect(flush);
     }

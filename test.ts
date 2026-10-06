@@ -1,6 +1,4 @@
-/// <reference path="bottleneck.d.ts" />
-
-import Bottleneck from "bottleneck";
+import Bottleneck from "./bottleneck";
 // import * as assert from "assert";
 function assert(b: boolean): void { }
 
@@ -228,7 +226,9 @@ let counts = limiter.counts();
 console.log(`${counts.EXECUTING + 2}`);
 console.log(limiter.jobStatus('some-id'))
 console.log(limiter.jobs());
-console.log(limiter.jobs(Bottleneck.Status.RUNNING));
+console.log(limiter.jobs("RUNNING"));
+const unknownJobStatus: Bottleneck.Status | null = limiter.jobStatus('unknown-id');
+const version: string = Bottleneck.version + limiter.version;
 
 
 group.deleteKey("pizza")
@@ -269,7 +269,7 @@ const redisConnection = new Bottleneck.RedisConnection({
   clusterNodes: [{ url: "redis://127.0.0.1:30001" }]
 })
 
-redisConnection.ready()
+redisConnection.ready
 .then(function (redisConnectionClients) {
   const client = redisConnectionClients.client;
   const subscriber = redisConnectionClients.subscriber;

@@ -53,7 +53,7 @@ It supports **Clustering**: it can rate limit jobs across multiple Node.js insta
 - **3.0.0:** the `valkey-glide` datastore runs on [valkey-glide](https://github.com/valkey-io/valkey-glide) 2.4+ (standalone or cluster). See [Using valkey-glide](#using-valkey-glide).
 - **3.0.0:** the `redis` datastore runs on node-redis v4 (with Redis Cluster via `clusterNodes`) and the `ioredis` datastore is removed. `clientOptions` now takes node-redis v4 options, e.g. `{ socket: { host, port } }` instead of `{ host, port }`. Limiters on 2.x and 3.x can share the same Redis keys during a rollout.
 
-It is published to GitHub Packages. Install it under the `bottleneck` name so `import Bottleneck from "bottleneck"` and the bundled typings keep working:
+It is published to GitHub Packages. Install it under the `bottleneck` name so existing `require("bottleneck")` / `import Bottleneck from "bottleneck"` code keeps working (the bundled typings work under either name):
 
 ```
 npm install --save bottleneck@npm:@tyba-co/bottleneck
@@ -846,7 +846,7 @@ const limiter = new Bottleneck({
 - GLIDE fails every request that takes longer than `requestTimeout`, which is **250 ms by default**. Bottleneck's Lua scripts can take longer while Redis forks (snapshots, a replica's initial sync) or fails over, so set `clientOptions.requestTimeout` explicitly. When a request times out, a job being submitted is rejected with the GLIDE error; a failed registration or heartbeat emits an `"error"` event and the job stays queued until the next capacity message or heartbeat.
 - Bottleneck opens two GLIDE clients: one for commands (RESP2 by default, override with `clientOptions.protocol`) and one subscriber that always uses RESP3, because GLIDE only supports Pub/Sub over RESP3.
 - To reuse an existing `GlideClient`/`GlideClusterClient`, pass it as `client` to `new Bottleneck.GlideConnection({ client, clusterNodes, clientOptions })`. GLIDE clients cannot be duplicated, so the same addresses and options are still needed to create the subscriber.
-- `disconnect(flush)` ignores `flush`: GLIDE closes immediately and rejects pending requests.
+- `disconnect(true)` lets the commands in flight finish before closing; `disconnect(false)` closes immediately and GLIDE rejects them.
 - GLIDE does not reconnect a client whose first connection failed, so Bottleneck retries creating each client up to 2 times, 500 ms apart. If a client still fails, `ready()` rejects, Bottleneck closes the one that did connect, and the limiter cannot be used anymore: create a new one to try again. A limiter cached for the life of the process should therefore be recreated when its `ready()` rejects.
 - Limiters on `redis` and `valkey-glide` can share the same id and keys, so an application can switch clients gradually.
 

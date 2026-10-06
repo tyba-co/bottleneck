@@ -52,12 +52,17 @@ class GlideConnection {
   private clusterNodes: any;
   private scripts: { [name: string]: any } = {};
   private openedClients: any[] = [];
+  private pendingRequests: Set<Promise<any>> = new Set();
   private terminated: boolean = false;
 
   constructor(options: GlideConnectionOptions = {}) {
     parser.load(options, this.defaults, this);
     this.Glide = this.Glide ?? eval("require")("@valkey/valkey-glide"); // Obfuscated or else Webpack/Angular will try to inline the optional valkey-glide module
-    this.Events = this.Events ?? new Events(this);
+    if (this.Events == null) {
+      this.Events = new Events(this);
+    } else {
+      this.Events.shareListenersWith(this);
+    }
 
     const ClientClass = this.clusterNodes != null || this._isClusterClient(this.client)
       ? this.Glide.GlideClusterClient
@@ -98,6 +103,8 @@ class GlideConnection {
         this.Events.trigger("error", e);
         throw e;
       });
+    // Whoever awaits ready still gets the rejection; a connection closed before it is ready must not crash the process
+    this.ready.catch(() => {});
   }
 
   private _isClusterClient(client: any): boolean {
@@ -155,11 +162,11 @@ class GlideConnection {
    * @returns {Promise<any>}
    */
   __runScript__(name: string, id: string, args: string[]): Promise<any> {
-    return this.client.invokeScript(this._script(name), {
+    return this._trackRequest(this.client.invokeScript(this._script(name), {
       keys: Scripts.keys(name, id),
       args,
       decoder: this.Glide.Decoder.String
-    });
+    }));
   }
 
   /**
@@ -168,7 +175,7 @@ class GlideConnection {
    * @returns {Promise<void>}
    */
   async __publish__(channel: string, message: string): Promise<void> {
-    await this.client.publish(message, channel);
+    await this._trackRequest(this.client.publish(message, channel));
   }
 
   async __runCommand__(cmd: any[]): Promise<any> {
@@ -177,7 +184,7 @@ class GlideConnection {
     const route = this._isClusterClient(this.client) && cmd[1] != null
       ? { route: { type: "primarySlotKey", key: String(cmd[1]) } }
       : {};
-    return this.client.customCommand(args, { ...route, decoder: this.Glide.Decoder.String });
+    return this._trackRequest(this.client.customCommand(args, { ...route, decoder: this.Glide.Decoder.String }));
   }
 
   /**
@@ -229,15 +236,30 @@ class GlideConnection {
   }
 
   /**
-   * GLIDE closes synchronously and rejects pending requests, so flush has no effect here.
+   * Remembers a request until it settles, so disconnect(true) can wait for it.
+   * @param {Promise<any>} request
+   * @returns {Promise<any>}
+   */
+  private _trackRequest<T>(request: Promise<T>): Promise<T> {
+    this.pendingRequests.add(request);
+    const forget = () => this.pendingRequests.delete(request);
+    request.then(forget, forget);
+    return request;
+  }
+
+  /**
+   * GLIDE's close() rejects every pending request, so with flush the requests in flight finish first, like node-redis QUIT.
    * @param {boolean} [flush]
    * @returns {Promise<void>}
    */
   async disconnect(flush: boolean = true): Promise<void> {
-    const limiters = Object.values(this.limiters);
+    const limiters = Object.keys(this.limiters).map((channel) => this.limiters[channel]);
     this.limiters = {};
     await this.Promise.all(limiters.map((limiter) => limiter._store.__leaveCluster__()));
     this.terminated = true;
+    if (flush) {
+      await this.Promise.all(Array.from(this.pendingRequests, (request) => request.catch(() => {})));
+    }
 
     this.client?.close();
     this.subscriber?.close();

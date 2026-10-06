@@ -141,6 +141,25 @@ describe('General', function () {
     assert.strictEqual(c.limiter.version, Bottleneck.version)
   })
 
+  it('Should report the datastore of a local Group', function () {
+    // ARRANGE
+    c = makeTest()
+
+    // ASSERT
+    c.mustEqual(new Bottleneck.Group().datastore, 'local')
+  })
+
+  if (process.env.BUILD === 'es5') {
+    it('Should only contain ES5 syntax in the ES5 bundle', function () {
+      // ARRANGE
+      c = makeTest()
+      var source = require('fs').readFileSync(require('path').join(__dirname, '..', 'es5.js'), 'utf8')
+
+      // ASSERT
+      require('acorn').parse(source, { ecmaVersion: 5 })
+    })
+  }
+
   if (process.env.BUILD === 'light') {
     it('Should throw when the light build is asked for Clustering', function () {
       // ARRANGE

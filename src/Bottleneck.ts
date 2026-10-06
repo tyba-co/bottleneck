@@ -418,7 +418,8 @@ class Bottleneck {
           this._run = (index: string, next: Job) => next.doDrop({ message: options.dropErrorMessage });
           this._drainOne = () => this.Promise.resolve(null);
           return this._registerLock.schedule(() => this._submitLock.schedule(() => {
-            for (const [k, v] of Object.entries(this._scheduled)) {
+            for (const k of Object.keys(this._scheduled)) {
+              const v = this._scheduled[k];
               if (this.jobStatus(v.job.options.id) === "RUNNING") {
                 clearTimeout(v.timeout);
                 clearTimeout(v.expiration);

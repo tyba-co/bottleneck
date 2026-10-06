@@ -1028,6 +1028,51 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
       c.mustEqual(messages, ['hello'])
     })
 
+    it('Should not leave an unhandled rejection when disconnected before it is ready', async function () {
+      // ARRANGE
+      c = makeTest()
+      var unhandledRejections = []
+      var recordUnhandledRejection = function (reason) { unhandledRejections.push(String(reason)) }
+      process.on('unhandledRejection', recordUnhandledRejection)
+      var Connection = process.env.DATASTORE === 'valkey-glide' ? Bottleneck.GlideConnection : Bottleneck.RedisConnection
+
+      try {
+        // ACT
+        var limiter = new Bottleneck({ id: uniqueId('early-disconnect'), datastore: process.env.DATASTORE })
+        var group = new Bottleneck.Group({ id: uniqueId('early-disconnect-group'), datastore: process.env.DATASTORE })
+        var connection = new Connection()
+        ;[limiter, group, connection].forEach(function (emitter) { emitter.on('error', function () {}) })
+        await Promise.all([limiter.disconnect(false), group.disconnect(false), connection.disconnect(false)])
+        await c.wait(300)
+
+        // ASSERT
+        c.mustEqual(unhandledRejections, [])
+      } finally {
+        process.removeListener('unhandledRejection', recordUnhandledRejection)
+      }
+    })
+
+    it('Should let listeners register on a connection created by a limiter or a Group', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'connection-listeners', errorEventsExpected: true })
+      var group = new Bottleneck.Group({ id: uniqueId('connection-listeners-group'), datastore: process.env.DATASTORE })
+      var errors = []
+      c.limiter.connection.on('error', function (err) { errors.push('limiter ' + err.message) })
+      group.connection.once('error', function (err) { errors.push('group ' + err.message) })
+
+      try {
+        // ACT
+        await c.limiter.connection.Events.trigger('error', new Error('boom'))
+        await group.connection.Events.trigger('error', new Error('boom'))
+
+        // ASSERT
+        c.mustEqual(errors, ['limiter boom', 'group boom'])
+        c.mustEqual(group.datastore, process.env.DATASTORE)
+      } finally {
+        await group.disconnect(false)
+      }
+    })
+
     describe('clearDatastore with running jobs', function () {
       var waitForRunning = async function (limiter, running) {
         while (await limiter.running() !== running) await c.wait(10)

@@ -1,5 +1,5 @@
 /**
-  * This file contains the Bottleneck library (MIT), compiled to ES2017, and without Clustering support.
+  * This file contains the Bottleneck library (MIT), compiled for Node.js 22+, and without Clustering support.
   * https://github.com/SGrondin/bottleneck
   */
 (function (global, factory) {
@@ -613,6 +613,15 @@
 		                this._events = {};
 		            }
 		        };
+		    }
+		    /**
+		     * Lets another object register listeners on this emitter, like a connection created by a limiter or Group.
+		     * @param {any} target
+		     */
+		    shareListenersWith(target) {
+		        target.on = this.instance.on;
+		        target.once = this.instance.once;
+		        target.removeAllListeners = this.instance.removeAllListeners;
 		    }
 		    _addListener(name, status, cb) {
 		        if (!this._events[name]) {
@@ -1237,6 +1246,7 @@
 		const Scripts = tslib_1.__importStar(require$$5);
 		class Group {
 		    constructor(limiterOptions = {}) {
+		        var _a, _b, _c;
 		        this.limiterOptions = limiterOptions;
 		        this.defaults = {
 		            timeout: 1000 * 60 * 5,
@@ -1268,6 +1278,7 @@
 		        else if (this.connection == null && this.limiterOptions.datastore === "valkey-glide") {
 		            this.connection = new GlideConnection_1.default({ ...this.limiterOptions, Events: this.Events });
 		        }
+		        this.datastore = (_c = (_b = (_a = this.connection) === null || _a === void 0 ? void 0 : _a.datastore) !== null && _b !== void 0 ? _b : this.limiterOptions.datastore) !== null && _c !== void 0 ? _c : "local";
 		    }
 		    key(key = "") {
 		        var _a;
@@ -1303,7 +1314,8 @@
 		        }
 		        this.interval = setInterval(async () => {
 		            const time = Date.now();
-		            for (const [k, v] of Object.entries(this.instances)) {
+		            for (const k of Object.keys(this.instances)) {
+		                const v = this.instances[k];
 		                try {
 		                    if (await v._store.__groupCheck__(time)) {
 		                        this.deleteKey(k);
@@ -1327,7 +1339,7 @@
 		    }
 		    async disconnect(flush = true) {
 		        var _a;
-		        await Promise.all(Object.values(this.instances).map((limiter) => limiter.disconnect(flush)));
+		        await Promise.all(Object.keys(this.instances).map((k) => this.instances[k].disconnect(flush)));
 		        if (!this.sharedConnection) {
 		            await ((_a = this.connection) === null || _a === void 0 ? void 0 : _a.disconnect(flush));
 		        }
@@ -1719,7 +1731,8 @@
 		                this._run = (index, next) => next.doDrop({ message: options.dropErrorMessage });
 		                this._drainOne = () => this.Promise.resolve(null);
 		                return this._registerLock.schedule(() => this._submitLock.schedule(() => {
-		                    for (const [k, v] of Object.entries(this._scheduled)) {
+		                    for (const k of Object.keys(this._scheduled)) {
+		                        const v = this._scheduled[k];
 		                        if (this.jobStatus(v.job.options.id) === "RUNNING") {
 		                            clearTimeout(v.timeout);
 		                            clearTimeout(v.expiration);
