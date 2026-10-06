@@ -1,0 +1,81 @@
+name: Create release
+
+# Bumps the latest release tag, commits the new version to main, tags it, creates the GitHub release and publishes it.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Part of the latest tag to increment (use major for breaking changes)
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+concurrency:
+  group: create-release
+  cancel-in-progress: false
+
+jobs:
+  create:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      tag: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Next version
+        id: version
+        run: |
+          VERSION="$(node scripts/next_version.js "${{ inputs.bump }}")"
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "::error::Tag $VERSION already exists"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Releasing $VERSION"
+
+      - run: npm ci
+
+      - name: Set package.json version and rebuild the committed bundles
+        run: |
+          npm version --no-git-tag-version "${{ steps.version.outputs.version }}"
+          npm run build
+
+      - run: npm run test:local
+
+      - name: Commit, tag and push
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json es5.js light.js bottleneck.d.ts light.d.ts
+          git commit -m "chore(release): $VERSION"
+          git tag "$VERSION"
+          git push origin HEAD:main "refs/tags/$VERSION"
+
+      - name: Create GitHub release
+        run: gh release create "${{ steps.version.outputs.version }}" --verify-tag --generate-notes --title "${{ steps.version.outputs.version }}"
+
+  publish:
+    needs: create
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.create.outputs.tag }}

@@ -1050,7 +1050,9 @@ docker compose -f docker-compose.test.yml up -d --wait
 
 The full build regenerates the committed `es5.js`, `light.js` and `.d.ts` files; commit them together with your source changes, CI fails if they are out of date.
 
-Releases are published by the `Release` workflow when a GitHub release is published. Bump `version` in `package.json` in a PR first: the workflow fails if the release tag does not match it.
+To release, run the **Create release** workflow on `main` (Actions → Create release → Run workflow) and pick `patch`, `minor` or `major` (use `major` for breaking changes). It takes the latest release tag plus one, commits that version to `package.json` and the bundles on `main`, tags it, creates the GitHub release and publishes the package. Do not change `version` in pull requests.
+
+Publishing only happens for a GitHub release. A release created by hand also publishes, but only if its tag matches `package.json`, so prefer the workflow.
 
 All contributions are appreciated and will be considered.
 
