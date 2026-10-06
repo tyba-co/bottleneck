@@ -4,7 +4,28 @@ set -e
 
 PORTS="${REDIS_CLUSTER_PORTS:-30001 30002 30003 30004 30005 30006}"
 DATA_DIR="${REDIS_CLUSTER_DIR:-/data}"
+NODE_START_ATTEMPTS=100
 
+print_node_logs() {
+  for port in $PORTS; do
+    echo "--- node $port"
+    tail -n 30 "$DATA_DIR/$port.log" 2>/dev/null || true
+  done
+}
+
+wait_for_node() {
+  attempts=0
+  until redis-cli -p "$1" ping >/dev/null 2>&1; do
+    attempts=$((attempts + 1))
+    if [ "$attempts" -ge "$NODE_START_ATTEMPTS" ]; then
+      echo "Node $1 did not start"
+      return 1
+    fi
+    sleep 0.1
+  done
+}
+
+echo "Starting nodes $PORTS"
 for port in $PORTS; do
   mkdir -p "$DATA_DIR/$port"
   redis-server --port "$port" \
@@ -18,7 +39,10 @@ for port in $PORTS; do
 done
 
 for port in $PORTS; do
-  until redis-cli -p "$port" ping >/dev/null 2>&1; do sleep 0.1; done
+  wait_for_node "$port" || { print_node_logs; exit 1; }
 done
 
-redis-cli --cluster create $(for port in $PORTS; do printf '127.0.0.1:%s ' "$port"; done) --cluster-replicas 1 --cluster-yes
+echo "Creating the cluster"
+redis-cli --cluster create $(for port in $PORTS; do printf '127.0.0.1:%s ' "$port"; done) --cluster-replicas 1 --cluster-yes \
+  || { print_node_logs; exit 1; }
+echo "Cluster created"
