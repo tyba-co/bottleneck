@@ -6,6 +6,8 @@ var packagejson = require('../package.json')
 
 if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'ioredis') {
 
+  // Slow CI runners only ever add latency, so the tolerance widens upper bounds and never lower ones
+  var timingTolerance = Number(process.env.TIMING_TOLERANCE_MS || 0)
   var limiterKeys = function (limiter) {
     return Scripts.allKeys(limiter._store.originalId)
   }
@@ -532,7 +534,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'ioredis') {
         c.mustEqual(client_last_registered[1], '0')
         assert(client_last_seen[1] > Date.now() - 1000)
         var passed = Date.now() - parseFloat(client_last_registered[3])
-        assert(passed > 0 && passed < 20)
+        assert(passed > 0 && passed < 20 + timingTolerance)
 
         return c.wait(170)
       })
@@ -559,7 +561,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'ioredis') {
         c.mustEqual(client_last_registered[1], '0')
         assert(client_last_seen[1] > Date.now() - 1000)
         var passed = Date.now() - parseFloat(client_last_registered[3])
-        assert(passed > 170 && passed < 200)
+        assert(passed > 170 && passed < 200 + timingTolerance)
 
         c.mustEqual(numExpirations, 4)
       })

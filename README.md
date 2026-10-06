@@ -15,6 +15,7 @@ It supports **Clustering**: it can rate limit jobs across multiple Node.js insta
 
 <!-- toc -->
 
+- [About this fork](#about-this-fork)
 - [Install](#install)
 - [Quick Start](#quick-start)
   * [Gotchas & Common Mistakes](#gotchas--common-mistakes)
@@ -40,6 +41,28 @@ It supports **Clustering**: it can rate limit jobs across multiple Node.js insta
 - [Contributing](#contributing)
 
 <!-- tocstop -->
+
+## About this fork
+
+`@tyba-co/bottleneck` is Tyba's maintained fork of [SGrondin/bottleneck](https://github.com/SGrondin/bottleneck) (upstream stopped at 2.19.5). Differences from upstream:
+
+- The source is TypeScript (`src/*.ts`) instead of CoffeeScript.
+- Script errors are recognized on Redis 7+, which prefixes `error_reply` messages (`ERR OVERWEIGHT:...`).
+- `Group.clusterKeys()` scans every master on a Redis Cluster instead of a single node.
+- Supports Node 22 and 24, and is tested in CI against Redis 7 and a real Redis Cluster.
+
+It is published to GitHub Packages. Install it under the `bottleneck` name so `import Bottleneck from "bottleneck"` and the bundled typings keep working:
+
+```
+npm install --save bottleneck@npm:@tyba-co/bottleneck
+```
+
+with an `.npmrc` pointing the scope at GitHub Packages:
+
+```
+@tyba-co:registry=https://npm.pkg.github.com/
+//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
+```
 
 ## Install
 
@@ -905,6 +928,7 @@ console.log(limiter.clients());
 ### Additional Clustering information
 
 - Bottleneck is compatible with [Redis Clusters](https://redis.io/topics/cluster-tutorial), but you must use the `ioredis` datastore and the `clusterNodes` option.
+- On a Redis Cluster, the limiter `id` (or Group `id`) **must contain a hash tag**, e.g. `{my-limiter}:`, so that all of its keys land in the same slot. Without one, `ready()` rejects with a `CROSSSLOT` error.
 - Bottleneck is compatible with Redis Sentinel, but you must use the `ioredis` datastore.
 - Bottleneck's data is stored in Redis keys starting with `b_`. It also uses pubsub channels starting with `b_` It will not interfere with any other data stored on the server.
 - Bottleneck loads a few Lua scripts on the Redis server using the `SCRIPT LOAD` command. These scripts only take up a few Kb of memory. Running the `SCRIPT FLUSH` command will cause any connected limiters to experience critical errors until a new limiter connects to Redis and loads the scripts again.
@@ -1013,11 +1037,20 @@ This README is always in need of improvements. If wording can be clearer and sim
 
 Suggestions and bug reports are also welcome.
 
-To work on the Bottleneck code, simply clone the repo, makes your changes to the files located in `src/` only, then run `./scripts/build.sh && npm test` to ensure that everything is set up correctly.
+To work on the Bottleneck code, use the Node version in `.nvmrc`, make your changes to the files located in `src/` only, then run `npm ci && ./scripts/build.sh dev && npm test`.
 
-To speed up compilation time during development, run `./scripts/build.sh dev` instead. Make sure to build and test without `dev` before submitting a PR.
+The Redis suites need a standalone Redis on `127.0.0.1:6379` and a Redis Cluster on ports 30001-30006. Start both with Docker, then run every suite (local, ES5 bundle, light bundle, Redis, Redis Cluster) the way CI does:
 
-The tests must also pass in Clustering mode and using the ES5 bundle. You'll need a Redis server running locally (latency needs to be minimal to run the tests). If the server isn't using the default hostname and port, you can set those in the `.env` file. Then run `./scripts/build.sh && npm run test-all`.
+```
+docker compose -f docker-compose.test.yml up -d --wait
+./scripts/test_all.sh
+```
+
+The full build regenerates the committed `es5.js`, `light.js` and `.d.ts` files; commit them together with your source changes, CI fails if they are out of date.
+
+To release, run the **Create release** workflow on `main` (Actions → Create release → Run workflow) and pick `patch`, `minor` or `major` (use `major` for breaking changes). It takes the latest release tag plus one, commits that version to `package.json` and the bundles on `main`, tags it, creates the GitHub release and publishes the package. Do not change `version` in pull requests.
+
+Publishing only happens for a GitHub release. A release created by hand also publishes, but only if its tag matches `package.json`, so prefer the workflow.
 
 All contributions are appreciated and will be considered.
 

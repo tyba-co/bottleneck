@@ -168,10 +168,6 @@ class Bottleneck {
   private _store: LocalDatastore | RedisDatastore;
 
   constructor(options: any = {}, ...invalid: any[]) {
-    // Initialize static version if not set
-    if (!Bottleneck.version) {
-      Bottleneck.version = require("./version.json").version;
-    }
     this.version = Bottleneck.version;
 
     this._validateOptions(options, invalid);
@@ -557,12 +553,6 @@ class Bottleneck {
   }
 }
 
-// Set static version
-try {
-  Bottleneck.version = Bottleneck.prototype.version = require("./version.json").version;
-} catch (e) {
-  // Fallback if version.json doesn't exist
-  Bottleneck.version = Bottleneck.prototype.version = "2.19.6";
-}
+Bottleneck.version = Bottleneck.prototype.version = require("./version.json").version;
 
 export = Bottleneck;
