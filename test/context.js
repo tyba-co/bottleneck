@@ -1,4 +1,8 @@
 global.TEST = true
+if (process.env.DATASTORE === 'valkey-glide') {
+  // GLIDE logs a warning for every error reply, including the ones Bottleneck recovers from on purpose
+  require('@valkey/valkey-glide').Logger.setLoggerConfig('error')
+}
 var Bottleneck = require('./bottleneck')
 var assert = require('assert')
 
@@ -24,6 +28,17 @@ module.exports = function (options={}) {
           host: process.env.REDIS_HOST || '127.0.0.1',
           port: Number(process.env.REDIS_PORT || 6379)
         }
+      }
+    }
+  } else if (options.datastore == null && process.env.DATASTORE === 'valkey-glide') {
+    options.datastore = 'valkey-glide'
+    options.clearDatastore = true
+    if (options.clientOptions == null) {
+      options.clientOptions = {
+        addresses: [{
+          host: process.env.REDIS_HOST || '127.0.0.1',
+          port: Number(process.env.REDIS_PORT || 6379)
+        }]
       }
     }
   } else {

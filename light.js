@@ -1076,7 +1076,7 @@
 		default: RedisDatastore
 	});
 
-	var require$$5 = /*@__PURE__*/getAugmentedNamespace(RedisDatastore$1);
+	var require$$5$1 = /*@__PURE__*/getAugmentedNamespace(RedisDatastore$1);
 
 	var States_1;
 	var hasRequiredStates;
@@ -1205,6 +1205,15 @@
 
 	var require$$11 = /*@__PURE__*/getAugmentedNamespace(RedisConnection$1);
 
+	var GlideConnection = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+	var GlideConnection$1 = /*#__PURE__*/Object.freeze({
+		__proto__: null,
+		default: GlideConnection
+	});
+
+	var require$$12 = /*@__PURE__*/getAugmentedNamespace(GlideConnection$1);
+
 	var Scripts = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
 
 	var Scripts$1 = /*#__PURE__*/Object.freeze({
@@ -1212,7 +1221,7 @@
 		default: Scripts
 	});
 
-	var require$$4 = /*@__PURE__*/getAugmentedNamespace(Scripts$1);
+	var require$$5 = /*@__PURE__*/getAugmentedNamespace(Scripts$1);
 
 	var Group_1;
 	var hasRequiredGroup;
@@ -1224,7 +1233,8 @@
 		const parser = tslib_1.__importStar(requireParser());
 		const Events_1 = tslib_1.__importDefault(requireEvents());
 		const RedisConnection_1 = tslib_1.__importDefault(require$$11);
-		const Scripts = tslib_1.__importStar(require$$4);
+		const GlideConnection_1 = tslib_1.__importDefault(require$$12);
+		const Scripts = tslib_1.__importStar(require$$5);
 		class Group {
 		    constructor(limiterOptions = {}) {
 		        this.limiterOptions = limiterOptions;
@@ -1254,6 +1264,9 @@
 		        this.sharedConnection = this.connection != null;
 		        if (this.connection == null && this.limiterOptions.datastore === "redis") {
 		            this.connection = new RedisConnection_1.default({ ...this.limiterOptions, Events: this.Events });
+		        }
+		        else if (this.connection == null && this.limiterOptions.datastore === "valkey-glide") {
+		            this.connection = new GlideConnection_1.default({ ...this.limiterOptions, Events: this.Events });
 		        }
 		    }
 		    key(key = "") {
@@ -1382,7 +1395,7 @@
 	}
 
 	var version = "2.19.7";
-	var require$$13 = {
+	var require$$14 = {
 		version: version
 	};
 
@@ -1399,7 +1412,7 @@
 		const Queues = requireQueues();
 		const Job = requireJob();
 		const LocalDatastore = requireLocalDatastore();
-		const RedisDatastore = require$$5;
+		const RedisDatastore = require$$5$1;
 		const Events = requireEvents();
 		const States = requireStates();
 		const Sync = requireSync();
@@ -1437,6 +1450,7 @@
 		            heartbeatInterval: 5000,
 		            clientTimeout: 10000,
 		            Redis: null,
+		            Glide: null,
 		            clientOptions: {},
 		            clusterNodes: null,
 		            clearDatastore: false,
@@ -1514,7 +1528,7 @@
 		            throw new Bottleneck.BottleneckError('The "ioredis" datastore was removed in 3.0.0. Use datastore "redis" with node-redis v4, and "clusterNodes" for Redis Cluster.');
 		        }
 		        this._store =
-		            this.datastore === "redis" || this.connection != null
+		            this.datastore === "redis" || this.datastore === "valkey-glide" || this.connection != null
 		                ? (() => {
 		                    const storeInstanceOptions = parser.load(options, this.redisStoreDefaults, {});
 		                    return new RedisDatastore(this, storeOptions, storeInstanceOptions);
@@ -1809,8 +1823,9 @@
 		Bottleneck.BottleneckError = requireBottleneckError();
 		Bottleneck.Group = requireGroup();
 		Bottleneck.RedisConnection = require$$11;
+		Bottleneck.GlideConnection = require$$12;
 		Bottleneck.Batcher = requireBatcher();
-		Bottleneck.version = Bottleneck.prototype.version = require$$13.version;
+		Bottleneck.version = Bottleneck.prototype.version = require$$14.version;
 		Bottleneck_1 = Bottleneck;
 		
 		return Bottleneck_1;

@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         node: [22, 24]
-        suite: [local, es5, light, redis, cluster]
+        suite: [local, es5, light, redis, cluster, glide, glide-cluster]
     env:
       NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TIMING_TOLERANCE_MS: 250
@@ -36,8 +36,8 @@ jobs:
       - run: npm ci
 
       - name: Start Redis
-        if: matrix.suite == 'redis' || matrix.suite == 'cluster'
-        run: docker compose -f docker-compose.test.yml up -d --wait ${{ matrix.suite == 'cluster' && 'redis-cluster' || 'redis' }}
+        if: matrix.suite != 'local' && matrix.suite != 'es5' && matrix.suite != 'light'
+        run: docker compose -f docker-compose.test.yml up -d --wait ${{ endsWith(matrix.suite, 'cluster') && 'redis-cluster' || 'redis' }}
 
       - name: Build
         run: |
@@ -57,7 +57,7 @@ jobs:
         run: npm run test:${{ matrix.suite }}
 
       - name: Redis logs
-        if: failure() && (matrix.suite == 'redis' || matrix.suite == 'cluster')
+        if: failure() && matrix.suite != 'local' && matrix.suite != 'es5' && matrix.suite != 'light'
         run: docker compose -f docker-compose.test.yml logs
 
   result:

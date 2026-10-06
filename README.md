@@ -50,6 +50,7 @@ It supports **Clustering**: it can rate limit jobs across multiple Node.js insta
 - Script errors are recognized on Redis 7+, which prefixes `error_reply` messages (`ERR OVERWEIGHT:...`).
 - `Group.clusterKeys()` scans every master on a Redis Cluster instead of a single node.
 - Supports Node 22 and 24, and is tested in CI against Redis 7 and a real Redis Cluster.
+- **3.0.0:** the `valkey-glide` datastore runs on [valkey-glide](https://github.com/valkey-io/valkey-glide) 2.4+ (standalone or cluster). See [Using valkey-glide](#using-valkey-glide).
 - **3.0.0:** the `redis` datastore runs on node-redis v4 (with Redis Cluster via `clusterNodes`) and the `ioredis` datastore is removed. `clientOptions` now takes node-redis v4 options, e.g. `{ socket: { host, port } }` instead of `{ host, port }`. Limiters on 2.x and 3.x can share the same Redis keys during a rollout.
 
 It is published to GitHub Packages. Install it under the `bottleneck` name so `import Bottleneck from "bottleneck"` and the bundled typings keep working:
@@ -826,13 +827,34 @@ const limiter = new Bottleneck({
 });
 ```
 
+#### Using valkey-glide
+
+Set `datastore: "valkey-glide"` and pass the GLIDE configuration as `clientOptions`. With `clusterNodes`, Bottleneck uses `GlideClusterClient`; without it, `GlideClient`:
+```js
+const limiter = new Bottleneck({
+  id: "{my-super-app}:",
+  datastore: "valkey-glide",
+  clusterNodes: [{ host: process.env.REDIS_URL, port: 6379 }],
+  clientOptions: {
+    useTLS: true,
+    credentials: { password: process.env.REDIS_PASSWORD },
+    advancedConfiguration: { connectionTimeout: 2000 }
+  }
+});
+```
+- Bottleneck opens two GLIDE clients: one for commands (RESP2 by default, override with `clientOptions.protocol`) and one subscriber that always uses RESP3, because GLIDE only supports Pub/Sub over RESP3.
+- To reuse an existing `GlideClient`/`GlideClusterClient`, pass it as `client` to `new Bottleneck.GlideConnection({ client, clusterNodes, clientOptions })`. GLIDE clients cannot be duplicated, so the same addresses and options are still needed to create the subscriber.
+- `disconnect(flush)` ignores `flush`: GLIDE closes immediately and rejects pending requests.
+- Limiters on `redis` and `valkey-glide` can share the same id and keys, so an application can switch clients gradually.
+
 | Option | Default | Description |
 |--------|---------|-------------|
-| `datastore` | `"local"` | Where the limiter stores its internal state. The default (`"local"`) keeps the state in the limiter itself. Set it to `"redis"` to enable Clustering. `"ioredis"` was removed in 3.0.0 and throws. |
+| `datastore` | `"local"` | Where the limiter stores its internal state. The default (`"local"`) keeps the state in the limiter itself. Set it to `"redis"` (node-redis v4) or `"valkey-glide"` to enable Clustering. `"ioredis"` was removed in 3.0.0 and throws. |
 | `clearDatastore` | `false` | When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db. |
 | `clientOptions` | `{}` | node-redis v4 options, passed to `createClient(clientOptions)`, or as `defaults` to `createCluster` when `clusterNodes` is set. |
 | `clusterNodes` | `null` | When not null, the client is created with `createCluster({ rootNodes: clusterNodes, defaults: clientOptions })` instead of `createClient(clientOptions)`. |
 | `timeout` | `null` (no TTL) | The Redis TTL in milliseconds ([TTL](https://redis.io/commands/ttl)) for the keys created by the limiter. When `timeout` is set, the limiter's state will be automatically removed from Redis after `timeout` milliseconds of inactivity. |
+| `Glide` | `null` | Overrides the import/require of `@valkey/valkey-glide`. |
 | `Redis` | `null` | Overrides the import/require of the node-redis library. You shouldn't need to set this option unless your application is failing to start due to a failure to require/import the client library. |
 
 **Note: When using Groups**, the `timeout` option has a default of `300000` milliseconds and the generated limiters automatically receive an `id` with the pattern `${group.id}-${KEY}`.

@@ -11,7 +11,7 @@ describe('General', function () {
   })
 
   if (
-    process.env.DATASTORE !== 'redis' &&
+    process.env.DATASTORE !== 'redis' && process.env.DATASTORE !== 'valkey-glide' &&
     process.env.BUILD !== 'es5' && process.env.BUILD !== 'light'
   ) {
     it('Should not leak memory on instantiation', async function () {

@@ -4,7 +4,7 @@ var Scripts = require('../lib/Scripts.js')
 var assert = require('assert')
 var packagejson = require('../package.json')
 
-if (process.env.DATASTORE === 'redis') {
+if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide') {
 
   // Slow CI runners only ever add latency, so the tolerance widens upper bounds and never lower ones
   var timingTolerance = Number(process.env.TIMING_TOLERANCE_MS || 0)
@@ -17,8 +17,13 @@ if (process.env.DATASTORE === 'redis') {
   var deleteKeys = function (limiter) {
     return runCommand(limiter, 'del', limiterKeys(limiter))
   }
+  // valkey-glide returns HGETALL and WITHSCORES replies as [{ key, value }] records instead of a flat list
+  var flattenRecords = function (reply) {
+    if (!Array.isArray(reply) || reply.length === 0 || reply[0] == null || typeof reply[0] !== 'object' || !('key' in reply[0])) return reply
+    return reply.flatMap(function (record) { return [record.key, String(record.value)] })
+  }
   var runCommand = async function (limiter, command, args) {
-    var reply = await limiter._store.connection.__runCommand__([command, ...args])
+    var reply = flattenRecords(await limiter._store.connection.__runCommand__([command, ...args]))
     if (command !== 'hgetall') return reply
     var hash = {}
     for (var i = 0; i < reply.length; i += 2) hash[reply[i]] = reply[i + 1]
@@ -794,7 +799,9 @@ if (process.env.DATASTORE === 'redis') {
 
     it('Should safely handle connection failures', function () {
       c = makeTest({
-        clientOptions: { socket: { port: 1 } },
+        clientOptions: process.env.DATASTORE === 'valkey-glide'
+          ? { addresses: [{ host: '127.0.0.1', port: 1 }], advancedConfiguration: { connectionTimeout: 500 } }
+          : { socket: { port: 1 } },
         errorEventsExpected: true
       })
 

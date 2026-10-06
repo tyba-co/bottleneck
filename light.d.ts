@@ -58,7 +58,7 @@ declare module "bottleneck/light" {
           */
         readonly trackDoneStatus?: boolean | null;
         /**
-          * Where the limiter stores its internal state. The default (`local`) keeps the state in the limiter itself. Set it to `redis` to enable Clustering.
+          * Where the limiter stores its internal state. The default (`local`) keeps the state in the limiter itself. Set it to `redis` (node-redis v4) or `valkey-glide` to enable Clustering.
           */
         readonly datastore?: string | null;
         /**
@@ -79,10 +79,14 @@ declare module "bottleneck/light" {
           */
         readonly Redis?: any;
         /**
-          * Bottleneck connection object created from `new Bottleneck.RedisConnection`.
+          * Optional valkey-glide library from `require('@valkey/valkey-glide')`. If not, Bottleneck will attempt to require it at runtime.
+          */
+        readonly Glide?: any;
+        /**
+          * Bottleneck connection object created from `new Bottleneck.RedisConnection` or `new Bottleneck.GlideConnection`.
           * If using, `datastore`, `clientOptions` and `clusterNodes` will be ignored.
           */
-        readonly connection?: Bottleneck.RedisConnection | null;
+        readonly connection?: Bottleneck.RedisConnection | Bottleneck.GlideConnection | null;
         /**
           * When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db.
           */
@@ -184,6 +188,26 @@ declare module "bottleneck/light" {
         readonly Redis?: any;
     };
 
+    type GlideConnectionOptions = {
+        /**
+          * valkey-glide client configuration (`useTLS`, `credentials`, `addresses`, `advancedConfiguration`...).
+          * The command client defaults to RESP2; the pub/sub subscriber always uses RESP3, which GLIDE requires for Pub/Sub.
+          */
+        readonly clientOptions?: any;
+        /**
+          * Node addresses, e.g. `[{ host, port }]`. When not null, GlideClusterClient is used instead of GlideClient.
+          */
+        readonly clusterNodes?: any;
+        /**
+          * An existing GlideClient or GlideClusterClient. Bottleneck still creates the subscriber from `clientOptions` / `clusterNodes`, so pass the same addresses.
+          */
+        readonly client?: any;
+        /**
+          * Optional valkey-glide library from `require('@valkey/valkey-glide')`. If not, Bottleneck will attempt to require it at runtime.
+          */
+        readonly Glide?: any;
+    };
+
     type BatcherOptions = {
         /**
           * Maximum acceptable time (in milliseconds) a request can have to wait before being flushed to the `"batch"` event.
@@ -227,6 +251,35 @@ declare module "bottleneck/light" {
         disconnect(flush?: boolean): Promise<void>;
     }
 
+    class GlideConnection {
+        constructor(options?: Bottleneck.GlideConnectionOptions);
+
+        /**
+          * Register an event listener.
+          * @param name - The event name.
+          * @param fn - The callback function.
+          */
+        on(name: "error", fn: (error: any) => void): void;
+
+        /**
+          * Register an event listener for one event only.
+          * @param name - The event name.
+          * @param fn - The callback function.
+          */
+        once(name: "error", fn: (error: any) => void): void;
+
+        /**
+          * Waits until the connection is ready and returns the raw GLIDE clients.
+          */
+        ready(): Promise<ClientsList>;
+
+        /**
+          * Close the GLIDE clients.
+          * @param flush - Ignored: GLIDE closes immediately.
+          */
+        disconnect(flush?: boolean): Promise<void>;
+    }
+
     class Batcher {
         constructor(options?: Bottleneck.BatcherOptions);
 
@@ -259,7 +312,7 @@ declare module "bottleneck/light" {
 
         id: string;
         datastore: string;
-        connection?: Bottleneck.RedisConnection;
+        connection?: Bottleneck.RedisConnection | Bottleneck.GlideConnection;
 
         /**
           * Returns the limiter for the specified key.
@@ -368,7 +421,7 @@ class Bottleneck {
 
     id: string;
     datastore: string;
-    connection?: Bottleneck.RedisConnection;
+    connection?: Bottleneck.RedisConnection | Bottleneck.GlideConnection;
 
     /**
       * Returns a promise which will be resolved once the limiter is ready to accept jobs

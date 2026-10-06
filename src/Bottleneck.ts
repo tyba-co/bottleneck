@@ -57,6 +57,7 @@ interface RedisStoreDefaults {
   heartbeatInterval: number;
   clientTimeout: number;
   Redis: any;
+  Glide: any;
   clientOptions: any;
   clusterNodes: any;
   clearDatastore: boolean;
@@ -87,6 +88,7 @@ class Bottleneck {
   static BottleneckError = require("./BottleneckError");
   static Group = require("./Group");
   static RedisConnection = require("./RedisConnection");
+  static GlideConnection = require("./GlideConnection");
   static Batcher = require("./Batcher");
 
   // Instance properties
@@ -127,6 +129,7 @@ class Bottleneck {
     heartbeatInterval: 5000,
     clientTimeout: 10000,
     Redis: null,
+    Glide: null,
     clientOptions: {},
     clusterNodes: null,
     clearDatastore: false,
@@ -189,7 +192,7 @@ class Bottleneck {
     }
 
     this._store = 
-      this.datastore === "redis" || this.connection != null
+      this.datastore === "redis" || this.datastore === "valkey-glide" || this.connection != null
         ? (() => {
             const storeInstanceOptions = parser.load(options, this.redisStoreDefaults, {});
             return new RedisDatastore(this, storeOptions, storeInstanceOptions);
