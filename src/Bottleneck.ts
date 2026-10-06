@@ -87,7 +87,6 @@ class Bottleneck {
   static BottleneckError = require("./BottleneckError");
   static Group = require("./Group");
   static RedisConnection = require("./RedisConnection");
-  static IORedisConnection = require("./IORedisConnection");
   static Batcher = require("./Batcher");
 
   // Instance properties
@@ -183,8 +182,14 @@ class Bottleneck {
     this._registerLock = new Sync("register", this.Promise);
     const storeOptions = parser.load(options, this.storeDefaults, {});
 
+    if (this.datastore === "ioredis") {
+      throw new Bottleneck.BottleneckError(
+        'The "ioredis" datastore was removed in 3.0.0. Use datastore "redis" with node-redis v4, and "clusterNodes" for Redis Cluster.'
+      );
+    }
+
     this._store = 
-      this.datastore === "redis" || this.datastore === "ioredis" || this.connection != null
+      this.datastore === "redis" || this.connection != null
         ? (() => {
             const storeInstanceOptions = parser.load(options, this.redisStoreDefaults, {});
             return new RedisDatastore(this, storeOptions, storeInstanceOptions);

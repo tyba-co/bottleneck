@@ -15,23 +15,17 @@ module.exports = function (options={}) {
   var start
   var calls = []
 
-  // set options.datastore
-  var setRedisClientOptions = function (options) {
+  if (options.datastore == null && process.env.DATASTORE === 'redis') {
+    options.datastore = 'redis'
     options.clearDatastore = true
     if (options.clientOptions == null) {
       options.clientOptions = {
-        host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT,
+        socket: {
+          host: process.env.REDIS_HOST || '127.0.0.1',
+          port: Number(process.env.REDIS_PORT || 6379)
+        }
       }
     }
-  }
-
-  if (options.datastore == null && process.env.DATASTORE === 'redis') {
-    options.datastore = 'redis'
-    setRedisClientOptions(options)
-  } else if (options.datastore == null && process.env.DATASTORE === 'ioredis') {
-    options.datastore = 'ioredis'
-    setRedisClientOptions(options)
   } else {
     options.datastore = 'local'
   }

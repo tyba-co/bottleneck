@@ -1,7 +1,6 @@
 import * as parser from "./parser";
 import Events from "./Events";
 import RedisConnection from "./RedisConnection";
-import IORedisConnection from "./IORedisConnection";
 import * as Scripts from "./Scripts";
 
 interface LimiterOptions {
@@ -45,12 +44,8 @@ class Group {
     this._startAutoCleanup();
     this.sharedConnection = this.connection != null;
 
-    if (this.connection == null) {
-      if (this.limiterOptions.datastore === "redis") {
-        this.connection = new RedisConnection({ ...this.limiterOptions, Events: this.Events });
-      } else if (this.limiterOptions.datastore === "ioredis") {
-        this.connection = new IORedisConnection({ ...this.limiterOptions, Events: this.Events });
-      }
+    if (this.connection == null && this.limiterOptions.datastore === "redis") {
+      this.connection = new RedisConnection({ ...this.limiterOptions, Events: this.Events });
     }
   }
 

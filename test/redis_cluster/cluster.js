@@ -1,11 +1,11 @@
 var Bottleneck = require('../bottleneck')
 var assert = require('assert')
+var Redis = require('redis')
 
 var clusterNodes = (process.env.REDIS_CLUSTER_NODES || '127.0.0.1:30001,127.0.0.1:30002,127.0.0.1:30003')
   .split(',')
   .map(function (node) {
-    var [host, port] = node.split(':')
-    return { host: host, port: Number(port) }
+    return { url: `redis://${node}` }
   })
 
 var clusterOptions = function (options) {
@@ -215,6 +215,36 @@ describe('Redis Cluster', function () {
     assert.strictEqual(deleted, true)
     assert.deepStrictEqual(keysAfterDelete, ['b'])
     await group.disconnect(false)
+  })
+
+  it('Should run jobs through an injected cluster client', async function () {
+    // ARRANGE
+    var client = Redis.createCluster({ rootNodes: clusterNodes })
+    var connection = new Bottleneck.RedisConnection({ client: client })
+    var limiter = makeLimiter({ id: uniqueId('injected'), connection: connection, clearDatastore: true })
+
+    // ACT
+    var result = await limiter.schedule(function () { return Promise.resolve('ran') })
+
+    // ASSERT
+    assert.strictEqual(result, 'ran')
+    await limiter.disconnect()
+    await connection.disconnect()
+  })
+
+  it('Should store a 2.x schema version so deployed 2.x clients skip every migration', async function () {
+    // ARRANGE
+    var id = uniqueId('schema')
+    var limiter = makeLimiter({ id: id, maxConcurrent: 2, clearDatastore: true })
+
+    // ACT
+    await limiter.ready()
+
+    // ASSERT
+    var version = await runCommand(limiter, ['hget', `b_${id}_settings`, 'version'])
+    var [major, minor] = version.split('.').map(Number)
+    assert.strictEqual(major, 2)
+    assert(minor >= 19, `stored version ${version} would make 2.x clients re-run migrations`)
   })
 
   it('Should fail to start a limiter whose id has no hash tag', async function () {

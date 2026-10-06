@@ -168,10 +168,10 @@ let group = new Bottleneck.Group({
   minTime: 1000,
   highWater: 10,
   strategy: Bottleneck.strategy.LEAK,
-  datastore: "ioredis",
+  datastore: "redis",
   clearDatastore: true,
   clientOptions: {},
-  clusterNodes: []
+  clusterNodes: [{ url: "redis://127.0.0.1:30001" }]
 });
 
 group.on('created', (limiter, key) => {
@@ -262,8 +262,9 @@ const datastore: string = limiter.datastore;
 const channel: string = limiter.channel();
 
 const redisConnection = new Bottleneck.RedisConnection({
-  client: "NodeRedis client object",
-  clientOptions: {}
+  client: "node-redis client or cluster object",
+  clientOptions: {},
+  clusterNodes: [{ url: "redis://127.0.0.1:30001" }]
 })
 
 redisConnection.ready()
@@ -280,24 +281,8 @@ const limiterWithConn = new Bottleneck({
   connection: redisConnection
 })
 
-const ioredisConnection = new Bottleneck.IORedisConnection({
-  client: "ioredis client object",
-  clientOptions: {},
-  clusterNodes: []
-})
-
-ioredisConnection.ready()
-.then(function (ioredisConnectionClients) {
-  const client = ioredisConnectionClients.client;
-  const subscriber = ioredisConnectionClients.subscriber;
-})
-
-ioredisConnection.on("error", (err: Bottleneck.BottleneckError) => {
-  console.log(err.message)
-})
-
 const groupWithConn = new Bottleneck.Group({
-  connection: ioredisConnection
+  connection: redisConnection
 })
 
 const limiterWithConnFromGroup = new Bottleneck({
