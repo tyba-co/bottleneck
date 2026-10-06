@@ -6353,7 +6353,7 @@
 	    }, {
 	      key: "publish",
 	      value: function publish(message) {
-	        this._store.__publish__(message);
+	        return this._store.__publish__(message);
 	      }
 	    }, {
 	      key: "disconnect",

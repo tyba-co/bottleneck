@@ -978,6 +978,21 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
       }
     })
 
+    it('Should reject publish() and updateSettings() when Redis fails', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'redis-fails' })
+      await c.limiter.ready()
+      await c.limiter._store.connection.disconnect(false)
+
+      // ACT
+      var publishError = await c.limiter.publish('hello').then(function () { return null }, function (err) { return err })
+      var updateSettingsError = await c.limiter.updateSettings({ maxConcurrent: 1 }).then(function () { return null }, function (err) { return err })
+
+      // ASSERT
+      assert(publishError != null)
+      assert(updateSettingsError != null)
+    })
+
     describe('clearDatastore with running jobs', function () {
       var waitForRunning = async function (limiter, running) {
         while (await limiter.running() !== running) await c.wait(10)

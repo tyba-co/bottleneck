@@ -1564,7 +1564,7 @@
 		        return `b_${this.id}_${this._store.clientId}`;
 		    }
 		    publish(message) {
-		        this._store.__publish__(message);
+		        return this._store.__publish__(message);
 		    }
 		    disconnect(flush = true) {
 		        return this._store.__disconnect__(flush);

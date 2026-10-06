@@ -740,6 +740,19 @@ describe('General', function () {
   })
 
   describe('Pubsub', function () {
+    it('Should resolve publish() once the message is sent', async function () {
+      // ARRANGE
+      c = makeTest()
+      await c.limiter.ready()
+
+      // ACT
+      var published = c.limiter.publish('hello')
+
+      // ASSERT
+      assert(published instanceof Promise)
+      c.mustEqual(await published, undefined)
+    })
+
     it('Should pass strings', function (done) {
       c = makeTest({ maxConcurrent: 2 })
 

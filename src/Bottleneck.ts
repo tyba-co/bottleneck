@@ -237,8 +237,8 @@ class Bottleneck {
     return `b_${this.id}_${this._store.clientId}`;
   }
 
-  publish(message: any): void {
-    this._store.__publish__(message);
+  publish(message: any): Promise<void> {
+    return this._store.__publish__(message);
   }
 
   disconnect(flush: boolean = true): Promise<void> {

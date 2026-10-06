@@ -81,7 +81,8 @@ foo.then(function (result: string) {
 
 limiter.on("message", (msg) => console.log(msg));
 
-limiter.publish(JSON.stringify({ a: "abc", b: { c: 123 }}));
+const published: Promise<void> = limiter.publish(JSON.stringify({ a: "abc", b: { c: 123 }}));
+const updated: Promise<Bottleneck> = limiter.updateSettings({ maxConcurrent: 2 });
 
 function checkEventInfo(info: Bottleneck.EventInfo) {
   const numArgs: number = info.args.length;

@@ -547,10 +547,10 @@ class Bottleneck {
     removeAllListeners(name?: string): void;
 
     /**
-      * Changes the settings for future requests.
+      * Changes the settings for future requests. When Clustering, it resolves once the shared settings are stored and rejects if Redis fails.
       * @param options - The new settings.
       */
-    updateSettings(options?: Bottleneck.ConstructorOptions): Bottleneck;
+    updateSettings(options?: Bottleneck.ConstructorOptions): Promise<Bottleneck>;
 
     /**
       * Adds to the reservoir count and returns the new value.
