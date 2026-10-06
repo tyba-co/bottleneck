@@ -1325,10 +1325,11 @@
 		            this._startAutoCleanup();
 		        }
 		    }
-		    disconnect(flush = true) {
+		    async disconnect(flush = true) {
 		        var _a;
+		        await Promise.all(Object.values(this.instances).map((limiter) => limiter.disconnect(flush)));
 		        if (!this.sharedConnection) {
-		            (_a = this.connection) === null || _a === void 0 ? void 0 : _a.disconnect(flush);
+		            await ((_a = this.connection) === null || _a === void 0 ? void 0 : _a.disconnect(flush));
 		        }
 		    }
 		}

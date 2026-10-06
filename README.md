@@ -853,7 +853,7 @@ const limiter = new Bottleneck({
 | Option | Default | Description |
 |--------|---------|-------------|
 | `datastore` | `"local"` | Where the limiter stores its internal state. The default (`"local"`) keeps the state in the limiter itself. Set it to `"redis"` (node-redis v4) or `"valkey-glide"` to enable Clustering. `"ioredis"` was removed in 3.0.0 and throws. |
-| `clearDatastore` | `false` | When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db. |
+| `clearDatastore` | `false` | When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db: settings, counters and the clients that stopped responding. Clients seen within `clientTimeout` keep their running jobs, along with the spacing of the last job (capped at the new `minTime`), so other limiters never exceed the limits during the clear. |
 | `defaultExpiration` | `null` | The [`expiration`](#job-options) of every job scheduled without one. It is stored with the shared settings (change it with `updateSettings()`), and on every heartbeat, limiter startup and `updateSettings()` each running job registered without an `expiration` receives `now + defaultExpiration`, including jobs from crashed clients or older versions. Jobs that already have an `expiration` keep it. |
 | `clientOptions` | `{}` | node-redis v4 options, passed to `createClient(clientOptions)`, or as `defaults` to `createCluster` when `clusterNodes` is set. |
 | `clusterNodes` | `null` | When not null, the client is created with `createCluster({ rootNodes: clusterNodes, defaults: clientOptions })` instead of `createClient(clientOptions)`. |
@@ -878,7 +878,7 @@ Unfortunately, this is a side effect of having to disable inlining, which is nec
 
 ### Important considerations when Clustering
 
-The first limiter connecting to Redis will store its [constructor options](#constructor) on Redis and all subsequent limiters will be using those settings. You can alter the constructor options used by all the connected limiters by calling `updateSettings()`. The `clearDatastore` option instructs a new limiter to wipe any previous Bottleneck data (for that `id`), including previously stored settings.
+The first limiter connecting to Redis will store its [constructor options](#constructor) on Redis and all subsequent limiters will be using those settings. You can alter the constructor options used by all the connected limiters by calling `updateSettings()`. The `clearDatastore` option instructs a new limiter to wipe any previous Bottleneck data (for that `id`), including previously stored settings, except the jobs that responsive clients are still running. To change the settings of a running cluster, prefer `updateSettings()`.
 
 Queued jobs are **NOT** stored on Redis. They are local to each limiter. Exiting the Node.js process will lose those jobs. This is because Bottleneck has no way to propagate the JS code to run a job across a different Node.js process than the one it originated on. Bottleneck doesn't keep track of the queue contents of the limiters on a cluster for performance and reliability reasons. You can use something like [`BeeQueue`](https://github.com/bee-queue/bee-queue) in addition to Bottleneck to get around this limitation.
 
@@ -1007,9 +1007,11 @@ Use the `disconnect(flush)` method to close the Redis clients.
 limiter.disconnect();
 group.disconnect();
 ```
+Before closing, a limiter leaves the cluster: it unregisters its client and releases the weight of its jobs that are still running, since it can no longer report when they finish. A process that dies without disconnecting keeps that weight until the jobs expire (see `expiration` and `defaultExpiration`).
+
 Until it is disconnected, a limiter (or Group) that owns its connection keeps two clients open, one for commands and one for Pub/Sub, and runs a heartbeat script on Redis every `heartbeatInterval`. Create limiters once and reuse them: a limiter created for every call and never disconnected leaks both clients and its heartbeat for as long as the process lives, and its open clients keep Node.js from exiting on its own.
 
-If you created the Connection object manually, `limiter.disconnect()` and `group.disconnect()` only detach the limiter from it, so you need to call `connection.disconnect()` yourself, also when an error interrupts your code:
+If you created the Connection object manually, `limiter.disconnect()` and `group.disconnect()` leave the cluster but do not close it, so you need to call `connection.disconnect()` yourself, also when an error interrupts your code:
 ```js
 const connection = new Bottleneck.RedisConnection({ clientOptions: {/* ... */} });
 const limiter = new Bottleneck({ id: "{my-super-app}:", connection });
