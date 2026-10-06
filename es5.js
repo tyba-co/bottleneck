@@ -3981,6 +3981,7 @@
 	      };
 	      this.limiters = {};
 	      this.scripts = {};
+	      this.openedClients = [];
 	      this.terminated = false;
 	      parser.load(options, this.defaults, this);
 	      this.Glide = (_a = this.Glide) !== null && _a !== void 0 ? _a : eval("require")("@valkey/valkey-glide"); // Obfuscated or else Webpack/Angular will try to inline the optional valkey-glide module
@@ -4015,6 +4016,11 @@
 	          subscriber: subscriber
 	        };
 	      })["catch"](function (e) {
+	        // GLIDE never reconnects a client that failed to connect, so close the one that did connect instead of leaking it
+	        _this.terminated = true;
+	        _this.openedClients.forEach(function (client) {
+	          return client.close();
+	        });
 	        _this.Events.trigger("error", e);
 	        throw e;
 	      });
@@ -4036,9 +4042,11 @@
 	                return ClientClass.createClient(configuration);
 	              case 1:
 	                client = _context.v;
-	                // A disconnect() that ran while the client was being created could not close it
+	                // A disconnect() or failed connection that happened while the client was being created could not close it
 	                if (this.terminated) {
 	                  client.close();
+	                } else {
+	                  this.openedClients.push(client);
 	                }
 	                return _context.a(2, client);
 	            }

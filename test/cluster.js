@@ -498,11 +498,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
       })
       var clientId = c.limiter._store.clientId
       var limiter1 = new Bottleneck({ datastore: process.env.DATASTORE })
-      var limiter2 = new Bottleneck({
-          id: 'lost',
-          datastore: process.env.DATASTORE,
-          heartbeatInterval: 150
-        })
+      var limiter2
       var getData = function (limiter) {
         c.mustEqual(limiterKeys(limiter).length, 8) // Asserting, to remember to edit this test when keys change
         var [
@@ -539,7 +535,16 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         }
       }
 
-      return Promise.all([c.limiter.ready(), limiter1.ready(), limiter2.ready()])
+      return Promise.all([c.limiter.ready(), limiter1.ready()])
+      .then(function () {
+        // Created after c.limiter's clearDatastore init, which would otherwise wipe its registration
+        limiter2 = new Bottleneck({
+          id: 'lost',
+          datastore: process.env.DATASTORE,
+          heartbeatInterval: 150
+        })
+        return limiter2.ready()
+      })
       .then(function () {
         // No expiration, it should not be removed
         c.pNoErrVal(c.limiter.schedule({ weight: 1 }, c.slowPromise, 150, null, 1), 1),

@@ -24,6 +24,7 @@ jobs:
     env:
       NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TIMING_TOLERANCE_MS: 250
     outputs:
       tag: ${{ steps.version.outputs.version }}
     steps:
