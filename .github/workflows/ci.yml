@@ -37,7 +37,18 @@ jobs:
 
       - name: Start Redis
         if: matrix.suite != 'local' && matrix.suite != 'es5' && matrix.suite != 'light'
-        run: docker compose -f docker-compose.test.yml up -d --wait ${{ endsWith(matrix.suite, 'cluster') && 'redis-cluster' || 'redis' }}
+        env:
+          SERVICE: ${{ endsWith(matrix.suite, 'cluster') && 'redis-cluster' || 'redis' }}
+        # Startup takes seconds; a rare runner hang never recovers in place, so print what the nodes saw and start over once
+        run: |
+          for attempt in 1 2; do
+            docker compose -f docker-compose.test.yml up -d --wait "$SERVICE" && exit 0
+            echo "::warning::$SERVICE was not healthy (attempt $attempt)"
+            docker compose -f docker-compose.test.yml logs "$SERVICE"
+            docker compose -f docker-compose.test.yml exec -T "$SERVICE" sh -c 'tail -n 30 /data/*.log' || true
+            docker compose -f docker-compose.test.yml down -v
+          done
+          exit 1
 
       - name: Build
         run: |
