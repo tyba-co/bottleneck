@@ -3720,19 +3720,21 @@
 	          var _this8 = this;
 	          var flush = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 	          return /*#__PURE__*/_regenerator().m(function _callee10() {
-	            var _i, _Object$keys, k;
+	            var limiters;
 	            return _regenerator().w(function (_context10) {
 	              while (1) switch (_context10.n) {
 	                case 0:
-	                  for (_i = 0, _Object$keys = Object.keys(_this8.limiters); _i < _Object$keys.length; _i++) {
-	                    k = _Object$keys[_i];
-	                    clearInterval(_this8.limiters[k]._store.heartbeat);
-	                  }
+	                  limiters = Object.values(_this8.limiters);
 	                  _this8.limiters = {};
-	                  _this8.terminated = true;
 	                  _context10.n = 1;
-	                  return _this8.Promise.all([_this8._close(_this8.client, flush), _this8._close(_this8.subscriber, flush)]);
+	                  return _this8.Promise.all(limiters.map(function (limiter) {
+	                    return limiter._store.__leaveCluster__();
+	                  }));
 	                case 1:
+	                  _this8.terminated = true;
+	                  _context10.n = 2;
+	                  return _this8.Promise.all([_this8._close(_this8.client, flush), _this8._close(_this8.subscriber, flush)]);
+	                case 2:
 	                  return _context10.a(2);
 	              }
 	            }, _callee10);
@@ -3961,6 +3963,9 @@
 	    host: "127.0.0.1",
 	    port: 6379
 	  }];
+	  // GLIDE never reconnects a client whose first connection failed, so creating it is retried this many times
+	  var MAX_CONNECTION_RETRIES = 2;
+	  var CONNECTION_RETRY_DELAY_MS = 500;
 	  /**
 	   * Connection to Valkey/Redis or a cluster through valkey-glide (GlideClient / GlideClusterClient).
 	   */
@@ -4016,7 +4021,7 @@
 	          subscriber: subscriber
 	        };
 	      })["catch"](function (e) {
-	        // GLIDE never reconnects a client that failed to connect, so close the one that did connect instead of leaking it
+	        // The connection is unusable without both clients, so close the one that did connect instead of leaking it
 	        _this.terminated = true;
 	        _this.openedClients.forEach(function (client) {
 	          return client.close();
@@ -4039,7 +4044,7 @@
 	            while (1) switch (_context.n) {
 	              case 0:
 	                _context.n = 1;
-	                return ClientClass.createClient(configuration);
+	                return this._connectWithRetries(ClientClass, configuration, MAX_CONNECTION_RETRIES);
 	              case 1:
 	                client = _context.v;
 	                // A disconnect() or failed connection that happened while the client was being created could not close it
@@ -4051,6 +4056,54 @@
 	                return _context.a(2, client);
 	            }
 	          }, _callee, this);
+	        }));
+	      }
+	      /**
+	       * Creates a GLIDE client, retrying a failed first connection unless the connection was terminated meanwhile.
+	       * @param {any} ClientClass
+	       * @param {any} configuration
+	       * @param {number} retriesLeft
+	       * @returns {Promise<any>}
+	       */
+	    }, {
+	      key: "_connectWithRetries",
+	      value: function _connectWithRetries(ClientClass, configuration, retriesLeft) {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee2() {
+	          var _t;
+	          return _regenerator().w(function (_context2) {
+	            while (1) switch (_context2.p = _context2.n) {
+	              case 0:
+	                _context2.p = 0;
+	                _context2.n = 1;
+	                return ClientClass.createClient(configuration);
+	              case 1:
+	                return _context2.a(2, _context2.v);
+	              case 2:
+	                _context2.p = 2;
+	                _t = _context2.v;
+	                if (!(retriesLeft === 0 || this.terminated)) {
+	                  _context2.n = 3;
+	                  break;
+	                }
+	                throw _t;
+	              case 3:
+	                this.Events.trigger("debug", "Retrying the valkey-glide connection (".concat(retriesLeft, " left)"), {
+	                  error: _t
+	                });
+	                _context2.n = 4;
+	                return new this.Promise(function (resolve) {
+	                  return setTimeout(resolve, CONNECTION_RETRY_DELAY_MS);
+	                });
+	              case 4:
+	                if (!this.terminated) {
+	                  _context2.n = 5;
+	                  break;
+	                }
+	                throw _t;
+	              case 5:
+	                return _context2.a(2, this._connectWithRetries(ClientClass, configuration, retriesLeft - 1));
+	            }
+	          }, _callee2, this, [[0, 2]]);
 	        }));
 	      }
 	    }, {
@@ -4090,27 +4143,27 @@
 	    }, {
 	      key: "__publish__",
 	      value: function __publish__(channel, message) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee2() {
-	          return _regenerator().w(function (_context2) {
-	            while (1) switch (_context2.n) {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee3() {
+	          return _regenerator().w(function (_context3) {
+	            while (1) switch (_context3.n) {
 	              case 0:
-	                _context2.n = 1;
+	                _context3.n = 1;
 	                return this.client.publish(message, channel);
 	              case 1:
-	                return _context2.a(2);
+	                return _context3.a(2);
 	            }
-	          }, _callee2, this);
+	          }, _callee3, this);
 	        }));
 	      }
 	    }, {
 	      key: "__runCommand__",
 	      value: function __runCommand__(cmd) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee3() {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee4() {
 	          var args, route;
-	          return _regenerator().w(function (_context3) {
-	            while (1) switch (_context3.n) {
+	          return _regenerator().w(function (_context4) {
+	            while (1) switch (_context4.n) {
 	              case 0:
-	                _context3.n = 1;
+	                _context4.n = 1;
 	                return this.ready;
 	              case 1:
 	                args = cmd.map(String);
@@ -4120,11 +4173,11 @@
 	                    key: String(cmd[1])
 	                  }
 	                } : {};
-	                return _context3.a(2, this.client.customCommand(args, Object.assign(Object.assign({}, route), {
+	                return _context4.a(2, this.client.customCommand(args, Object.assign(Object.assign({}, route), {
 	                  decoder: this.Glide.Decoder.String
 	                })));
 	            }
-	          }, _callee3, this);
+	          }, _callee4, this);
 	        }));
 	      }
 	      /**
@@ -4135,12 +4188,12 @@
 	    }, {
 	      key: "__scanKeys__",
 	      value: function __scanKeys__(pattern) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee4() {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee5() {
 	          var keys, options, cursor, _yield$this$client$sc, _yield$this$client$sc2, next, found, _cursor, _yield$this$client$sc3, _yield$this$client$sc4, _next, _found;
-	          return _regenerator().w(function (_context4) {
-	            while (1) switch (_context4.n) {
+	          return _regenerator().w(function (_context5) {
+	            while (1) switch (_context5.n) {
 	              case 0:
-	                _context4.n = 1;
+	                _context5.n = 1;
 	                return this.ready;
 	              case 1:
 	                keys = [];
@@ -4150,36 +4203,36 @@
 	                  decoder: this.Glide.Decoder.String
 	                };
 	                if (!this._isClusterClient(this.client)) {
-	                  _context4.n = 5;
+	                  _context5.n = 5;
 	                  break;
 	                }
 	                cursor = new this.Glide.ClusterScanCursor();
 	              case 2:
 	                if (cursor.isFinished()) {
-	                  _context4.n = 4;
+	                  _context5.n = 4;
 	                  break;
 	                }
-	                _context4.n = 3;
+	                _context5.n = 3;
 	                return this.client.scan(cursor, options);
 	              case 3:
-	                _yield$this$client$sc = _context4.v;
+	                _yield$this$client$sc = _context5.v;
 	                _yield$this$client$sc2 = _slicedToArray(_yield$this$client$sc, 2);
 	                next = _yield$this$client$sc2[0];
 	                found = _yield$this$client$sc2[1];
 	                cursor = next;
 	                keys.push.apply(keys, _toConsumableArray(found));
-	                _context4.n = 2;
+	                _context5.n = 2;
 	                break;
 	              case 4:
-	                _context4.n = 9;
+	                _context5.n = 9;
 	                break;
 	              case 5:
 	                _cursor = "0";
 	              case 6:
-	                _context4.n = 7;
+	                _context5.n = 7;
 	                return this.client.scan(_cursor, options);
 	              case 7:
-	                _yield$this$client$sc3 = _context4.v;
+	                _yield$this$client$sc3 = _context5.v;
 	                _yield$this$client$sc4 = _slicedToArray(_yield$this$client$sc3, 2);
 	                _next = _yield$this$client$sc4[0];
 	                _found = _yield$this$client$sc4[1];
@@ -4187,59 +4240,59 @@
 	                keys.push.apply(keys, _toConsumableArray(_found));
 	              case 8:
 	                if (_cursor !== "0") {
-	                  _context4.n = 6;
+	                  _context5.n = 6;
 	                  break;
 	                }
 	              case 9:
-	                return _context4.a(2, keys);
+	                return _context5.a(2, keys);
 	            }
-	          }, _callee4, this);
+	          }, _callee5, this);
 	        }));
 	      }
 	    }, {
 	      key: "__addLimiter__",
 	      value: function __addLimiter__(instance) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee5() {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee6() {
 	          var channels, _i, _channels, channel;
-	          return _regenerator().w(function (_context5) {
-	            while (1) switch (_context5.n) {
+	          return _regenerator().w(function (_context6) {
+	            while (1) switch (_context6.n) {
 	              case 0:
 	                channels = [instance.channel(), instance.channel_client()];
 	                for (_i = 0, _channels = channels; _i < _channels.length; _i++) {
 	                  channel = _channels[_i];
 	                  this.limiters[channel] = instance;
 	                }
-	                _context5.n = 1;
+	                _context6.n = 1;
 	                return this.subscriber.subscribe(new Set(channels), SUBSCRIPTION_TIMEOUT_MS);
 	              case 1:
-	                return _context5.a(2, []);
+	                return _context6.a(2, []);
 	            }
-	          }, _callee5, this);
+	          }, _callee6, this);
 	        }));
 	      }
 	    }, {
 	      key: "__removeLimiter__",
 	      value: function __removeLimiter__(instance) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee6() {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee7() {
 	          var channels, _i2, _channels2, channel;
-	          return _regenerator().w(function (_context6) {
-	            while (1) switch (_context6.n) {
+	          return _regenerator().w(function (_context7) {
+	            while (1) switch (_context7.n) {
 	              case 0:
 	                channels = [instance.channel(), instance.channel_client()];
 	                if (this.terminated) {
-	                  _context6.n = 1;
+	                  _context7.n = 1;
 	                  break;
 	                }
-	                _context6.n = 1;
+	                _context7.n = 1;
 	                return this.subscriber.unsubscribe(new Set(channels), SUBSCRIPTION_TIMEOUT_MS);
 	              case 1:
 	                for (_i2 = 0, _channels2 = channels; _i2 < _channels2.length; _i2++) {
 	                  channel = _channels2[_i2];
 	                  delete this.limiters[channel];
 	                }
-	                return _context6.a(2, []);
+	                return _context7.a(2, []);
 	            }
-	          }, _callee6, this);
+	          }, _callee7, this);
 	        }));
 	      }
 	      /**
@@ -4252,28 +4305,30 @@
 	      value: function disconnect() {
 	        return tslib_1.__awaiter(this, arguments, void 0, function () {
 	          var _this2 = this;
-	          return /*#__PURE__*/_regenerator().m(function _callee7() {
-	            var _a, _b, _i3, _Object$keys, k, _i4, _Object$keys2, name;
-	            return _regenerator().w(function (_context7) {
-	              while (1) switch (_context7.n) {
+	          return /*#__PURE__*/_regenerator().m(function _callee8() {
+	            var _a, _b, limiters, _i3, _Object$keys, name;
+	            return _regenerator().w(function (_context8) {
+	              while (1) switch (_context8.n) {
 	                case 0:
-	                  for (_i3 = 0, _Object$keys = Object.keys(_this2.limiters); _i3 < _Object$keys.length; _i3++) {
-	                    k = _Object$keys[_i3];
-	                    clearInterval(_this2.limiters[k]._store.heartbeat);
-	                  }
+	                  limiters = Object.values(_this2.limiters);
 	                  _this2.limiters = {};
+	                  _context8.n = 1;
+	                  return _this2.Promise.all(limiters.map(function (limiter) {
+	                    return limiter._store.__leaveCluster__();
+	                  }));
+	                case 1:
 	                  _this2.terminated = true;
 	                  (_a = _this2.client) === null || _a === void 0 ? void 0 : _a.close();
 	                  (_b = _this2.subscriber) === null || _b === void 0 ? void 0 : _b.close();
-	                  for (_i4 = 0, _Object$keys2 = Object.keys(_this2.scripts); _i4 < _Object$keys2.length; _i4++) {
-	                    name = _Object$keys2[_i4];
+	                  for (_i3 = 0, _Object$keys = Object.keys(_this2.scripts); _i3 < _Object$keys.length; _i3++) {
+	                    name = _Object$keys[_i3];
 	                    _this2.scripts[name].release();
 	                  }
 	                  _this2.scripts = {};
-	                case 1:
-	                  return _context7.a(2);
+	                case 2:
+	                  return _context8.a(2);
 	              }
-	            }, _callee7);
+	            }, _callee8);
 	          })();
 	        });
 	      }
@@ -4673,13 +4728,8 @@
 	          return _regenerator().w(function (_context4) {
 	            while (1) switch (_context4.n) {
 	              case 0:
-	                if (!this.heartbeat) {
-	                  _context4.n = 1;
-	                  break;
-	                }
-	                clearInterval(this.heartbeat);
 	                _context4.n = 1;
-	                return this.unregisterClient();
+	                return this.__leaveCluster__();
 	              case 1:
 	                if (!this.sharedConnection) {
 	                  _context4.n = 3;
@@ -4700,31 +4750,40 @@
 	        }));
 	      }
 	      /**
-	       * Releases this client's jobs and removes it from the cluster. The heartbeat only runs once the client is registered.
+	       * Stops the heartbeat, releases this client's jobs and removes it from the cluster, since it can no longer free them.
+	       * Does nothing before the client registered (the heartbeat starts then) or once it has left.
 	       * @returns {Promise<void>}
 	       */
 	    }, {
-	      key: "unregisterClient",
-	      value: function unregisterClient() {
+	      key: "__leaveCluster__",
+	      value: function __leaveCluster__() {
 	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee5() {
 	          var _t3;
 	          return _regenerator().w(function (_context5) {
 	            while (1) switch (_context5.p = _context5.n) {
 	              case 0:
-	                _context5.p = 0;
-	                _context5.n = 1;
-	                return this.connection.__runScript__("unregister_client", this.originalId, this.prepareArray([Date.now(), this.clientId]));
+	                if (!(this.heartbeat == null)) {
+	                  _context5.n = 1;
+	                  break;
+	                }
+	                return _context5.a(2);
 	              case 1:
-	                _context5.n = 3;
-	                break;
-	              case 2:
+	                clearInterval(this.heartbeat);
+	                this.heartbeat = undefined;
 	                _context5.p = 2;
+	                _context5.n = 3;
+	                return this.connection.__runScript__("unregister_client", this.originalId, this.prepareArray([Date.now(), this.clientId]));
+	              case 3:
+	                _context5.n = 5;
+	                break;
+	              case 4:
+	                _context5.p = 4;
 	                _t3 = _context5.v;
 	                this.instance.Events.trigger("error", _t3);
-	              case 3:
+	              case 5:
 	                return _context5.a(2);
 	            }
-	          }, _callee5, this, [[0, 2]]);
+	          }, _callee5, this, [[2, 4]]);
 	        }));
 	      }
 	    }, {

@@ -27,20 +27,42 @@ if (process.env.DATASTORE === 'valkey-glide') {
       c.mustEqual(c.limiter.datastore, 'valkey-glide')
     })
 
-    it('Should close the client it opened when the other one fails to connect', async function () {
-      // ARRANGE
-      var openedClients = []
-      var GlideWithFailingSubscriber = Object.assign({}, Glide, {
+    var withFailingSubscriber = function (failedAttempts, openedClients, subscriberAttempts) {
+      return Object.assign({}, Glide, {
         GlideClient: {
           createClient: async function (configuration) {
-            if (configuration.pubsubSubscriptions != null) throw new Error('subscriber connection failed')
+            if (configuration.pubsubSubscriptions != null) {
+              subscriberAttempts.push(Date.now())
+              if (subscriberAttempts.length <= failedAttempts) throw new Error('subscriber connection failed')
+            }
             var client = await Glide.GlideClient.createClient(configuration)
             openedClients.push(client)
             return client
           }
         }
       })
-      c = makeTest({ Glide: GlideWithFailingSubscriber, errorEventsExpected: true })
+    }
+
+    it('Should retry a failed connection', async function () {
+      // ARRANGE
+      var openedClients = []
+      var subscriberAttempts = []
+      c = makeTest({ Glide: withFailingSubscriber(2, openedClients, subscriberAttempts) })
+
+      // ACT
+      await c.limiter.ready()
+
+      // ASSERT
+      c.mustEqual(subscriberAttempts.length, 3)
+      assert(subscriberAttempts[2] - subscriberAttempts[0] >= 2 * 500 - 10)
+      c.mustEqual(await c.limiter.schedule(function () { return Promise.resolve('ran') }), 'ran')
+    })
+
+    it('Should give up after 2 retries and close the client that connected', async function () {
+      // ARRANGE
+      var openedClients = []
+      var subscriberAttempts = []
+      c = makeTest({ Glide: withFailingSubscriber(Infinity, openedClients, subscriberAttempts), errorEventsExpected: true })
 
       // ACT
       var error = await c.limiter.ready().then(function () { return null }, function (err) { return err })
@@ -48,6 +70,7 @@ if (process.env.DATASTORE === 'valkey-glide') {
 
       // ASSERT
       c.mustEqual(error.message, 'subscriber connection failed')
+      c.mustEqual(subscriberAttempts.length, 3)
       c.mustEqual(openedClients.length, 1)
       var requestError = await openedClients[0].get('key').then(function () { return null }, function (err) { return err })
       assert(requestError instanceof Glide.ClosingError)

@@ -22,9 +22,17 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
     if (!Array.isArray(reply) || reply.length === 0 || reply[0] == null || typeof reply[0] !== 'object' || !('key' in reply[0])) return reply
     return reply.flatMap(function (record) { return [record.key, String(record.value)] })
   }
-  // Closes the connection without unregistering, like a process that dies
+  // A crashed client stays responsive for clientTimeout, so tests that crash one use a fresh id on every run
+  var uniqueId = function (name) {
+    return name + '-' + Date.now()
+  }
+  // Disconnects without leaving the cluster, like a process that dies
   var crash = function (limiter) {
-    return limiter._store.connection.disconnect(false)
+    limiter._store.__leaveCluster__ = function () {
+      clearInterval(limiter._store.heartbeat)
+      return Promise.resolve()
+    }
+    return limiter.disconnect(false)
   }
   var runCommand = async function (limiter, command, args) {
     var reply = flattenRecords(await limiter._store.connection.__runCommand__([command, ...args]))
@@ -492,8 +500,9 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
     })
 
     it('Should remove track job data and remove lost jobs', function () {
+      var id = uniqueId('lost')
       c = makeTest({
-        id: 'lost',
+        id: id,
         errorEventsExpected: true
       })
       var clientId = c.limiter._store.clientId
@@ -539,7 +548,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
       .then(function () {
         // Created after c.limiter's clearDatastore init, which would otherwise wipe its registration
         limiter2 = new Bottleneck({
-          id: 'lost',
+          id: id,
           datastore: process.env.DATASTORE,
           heartbeatInterval: 150
         })
@@ -586,7 +595,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         c.mustEqual(client_last_registered[1], '0')
         assert(client_last_seen[1] > Date.now() - 1000)
         var passed = Date.now() - parseFloat(client_last_registered[3])
-        assert(passed > 0 && passed < 20 + timingTolerance)
+        assert(passed > 0 && passed < 20 + timingTolerance, 'passed ' + passed + 'ms')
 
         return c.wait(170)
       })
@@ -613,7 +622,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         c.mustEqual(client_last_registered[1], '0')
         assert(client_last_seen[1] > Date.now() - 1000)
         var passed = Date.now() - parseFloat(client_last_registered[3])
-        assert(passed > 170 && passed < 200 + timingTolerance)
+        assert(passed > 170 && passed < 200 + timingTolerance, 'passed ' + passed + 'ms')
 
         c.mustEqual(numExpirations, 4)
       })
@@ -862,9 +871,10 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
 
       it('Should free the capacity held by a crashed client after defaultExpiration', async function () {
         // ARRANGE
-        c = makeTest({ id: 'default-expiration-crash', maxConcurrent: 1, defaultExpiration: 300, heartbeatInterval: 50 })
+        var id = uniqueId('default-expiration-crash')
+        c = makeTest({ id: id, maxConcurrent: 1, defaultExpiration: 300, heartbeatInterval: 50 })
         await c.limiter.ready()
-        var crashedLimiter = new Bottleneck({ id: 'default-expiration-crash', datastore: process.env.DATASTORE })
+        var crashedLimiter = new Bottleneck({ id: id, datastore: process.env.DATASTORE })
         crashedLimiter.schedule(function () { return new Promise(function () {}) })
         await waitForRunning(c.limiter, 1)
         await crash(crashedLimiter)
@@ -949,6 +959,25 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
       c.mustEqual(await c.limiter.schedule(function () { return Promise.resolve('ran') }), 'ran')
     })
 
+    it('Should make every limiter on a connection leave the cluster when the connection is disconnected', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'shared-connection-owner' })
+      var limiter2 = new Bottleneck({ id: 'shared-connection-guest', connection: c.limiter.connection })
+      var observer = new Bottleneck({ id: 'shared-connection-guest', datastore: process.env.DATASTORE })
+      await Promise.all([c.limiter.ready(), limiter2.ready(), observer.ready()])
+      var client_last_seen_key = limiterKeys(limiter2)[7]
+
+      try {
+        // ACT
+        await c.limiter.disconnect(false)
+
+        // ASSERT
+        c.mustEqual(await runCommand(observer, 'zscore', [client_last_seen_key, limiter2._store.clientId]), null)
+      } finally {
+        await observer.disconnect(false)
+      }
+    })
+
     describe('clearDatastore with running jobs', function () {
       var waitForRunning = async function (limiter, running) {
         while (await limiter.running() !== running) await c.wait(10)
@@ -1003,14 +1032,15 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
 
       it('Should drop the jobs of clients that stopped responding', async function () {
         // ARRANGE
-        c = makeTest({ id: 'clear-dead-jobs', maxConcurrent: 1 })
+        var id = uniqueId('clear-dead-jobs')
+        c = makeTest({ id: id, maxConcurrent: 1 })
         await c.limiter.ready()
-        var crashedLimiter = new Bottleneck({ id: 'clear-dead-jobs', datastore: process.env.DATASTORE })
+        var crashedLimiter = new Bottleneck({ id: id, datastore: process.env.DATASTORE })
         crashedLimiter.schedule(function () { return new Promise(function () {}) })
         await waitForRunning(c.limiter, 1)
         await crash(crashedLimiter)
         await c.wait(150)
-        var limiter2 = new Bottleneck({ id: 'clear-dead-jobs', datastore: process.env.DATASTORE, maxConcurrent: 1, clearDatastore: true, clientTimeout: 100 })
+        var limiter2 = new Bottleneck({ id: id, datastore: process.env.DATASTORE, maxConcurrent: 1, clearDatastore: true, clientTimeout: 100 })
 
         try {
           // ACT

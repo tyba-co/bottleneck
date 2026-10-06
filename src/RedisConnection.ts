@@ -203,10 +203,9 @@ class RedisConnection {
   }
 
   async disconnect(flush: boolean = true): Promise<void> {
-    for (const k of Object.keys(this.limiters)) {
-      clearInterval(this.limiters[k]._store.heartbeat);
-    }
+    const limiters = Object.values(this.limiters);
     this.limiters = {};
+    await this.Promise.all(limiters.map((limiter) => limiter._store.__leaveCluster__()));
     this.terminated = true;
 
     await this.Promise.all([this._close(this.client, flush), this._close(this.subscriber, flush)]);
