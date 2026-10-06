@@ -11,7 +11,7 @@ describe('General', function () {
   })
 
   if (
-    process.env.DATASTORE !== 'redis' && process.env.DATASTORE !== 'ioredis' &&
+    process.env.DATASTORE !== 'redis' &&
     process.env.BUILD !== 'es5' && process.env.BUILD !== 'light'
   ) {
     it('Should not leak memory on instantiation', async function () {

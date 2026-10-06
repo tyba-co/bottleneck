@@ -1,7 +1,10 @@
 import * as parser from "./parser";
 import BottleneckError = require("./BottleneckError");
 import RedisConnection = require("./RedisConnection");
-import IORedisConnection = require("./IORedisConnection");
+
+// Written to Redis instead of the package version: init.lua migrates by the minor digit of the stored version, so a
+// "3.x" value would make already-deployed 2.x clients re-run every 2.x migration on live keys.
+const DATASTORE_SCHEMA_VERSION = "2.19.6";
 
 interface StoreOptions {
   maxConcurrent?: number;
@@ -56,7 +59,7 @@ class RedisDatastore {
   public heartbeatInterval!: number;
   public clientTimeout!: number;
   public clearDatastore?: boolean;
-  public connection!: RedisConnection | IORedisConnection;
+  public connection!: RedisConnection;
   public ready: Promise<any>;
   public heartbeat?: NodeJS.Timeout;
   private capacityPriorityCounters: { [counter: string]: NodeJS.Timeout } = {};
@@ -73,24 +76,13 @@ class RedisDatastore {
     this.clients = {};
     this.sharedConnection = storeInstanceOptions.connection != null;
 
-    this.connection = storeInstanceOptions.connection ?? (
-      this.instance.datastore === "redis" 
-        ? new RedisConnection({ 
-            Redis: this.Redis, 
-            clientOptions: this.clientOptions, 
-            Promise: this.Promise, 
-            Events: this.instance.Events as any
-          })
-        : this.instance.datastore === "ioredis" 
-          ? new IORedisConnection({ 
-              Redis: this.Redis, 
-              clientOptions: this.clientOptions, 
-              clusterNodes: this.clusterNodes, 
-              Promise: this.Promise, 
-              Events: this.instance.Events as any
-            })
-          : (() => { throw new Error("Invalid datastore"); })()
-    );
+    this.connection = storeInstanceOptions.connection ?? new RedisConnection({
+      Redis: this.Redis,
+      clientOptions: this.clientOptions,
+      clusterNodes: this.clusterNodes,
+      Promise: this.Promise,
+      Events: this.instance.Events as any
+    });
 
     this.instance.connection = this.connection;
     this.instance.datastore = this.connection.datastore;
@@ -118,7 +110,7 @@ class RedisDatastore {
 
   async __publish__(message: any): Promise<void> {
     const { client } = await this.ready;
-    client.publish(this.instance.channel(), `message:${message.toString()}`);
+    await client.publish(this.instance.channel(), `message:${message.toString()}`);
   }
 
   async onMessage(channel: string, message: string): Promise<void> {
@@ -180,17 +172,9 @@ class RedisDatastore {
       await this.ready;
     }
     
-    return new this.Promise((resolve, reject) => {
-      const all_args = [Date.now(), this.clientId, ...args];
-      this.instance.Events.trigger("debug", `Calling Redis script: ${name}.lua`, all_args);
-      const arr = this.connection.__scriptArgs__(name, this.originalId, all_args, (err: any, replies: any) => {
-        if (err != null) {
-          return reject(err);
-        }
-        return resolve(replies);
-      });
-      this.connection.__scriptFn__(name)(...arr);
-    }).catch((e: any) => {
+    const all_args = [Date.now(), this.clientId, ...args];
+    this.instance.Events.trigger("debug", `Calling Redis script: ${name}.lua`, all_args);
+    return this.connection.__runScript__(name, this.originalId, this.prepareArray(all_args)).catch((e: any) => {
       if (e.message.match(/^(.*\s)?SETTINGS_KEY_NOT_FOUND$/) != null) {
         if (name === "heartbeat") {
           return this.Promise.resolve();
@@ -223,11 +207,11 @@ class RedisDatastore {
     const args = this.prepareObject({
       ...this.storeOptions,
       id: this.originalId,
-      version: this.instance.version,
+      version: DATASTORE_SCHEMA_VERSION,
       groupTimeout: this.timeout,
       clientTimeout: this.clientTimeout
     });
-    args.unshift(clear ? "1" : "0", this.instance.version);
+    args.unshift(clear ? "1" : "0", DATASTORE_SCHEMA_VERSION);
     return args;
   }
 

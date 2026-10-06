@@ -65,25 +65,23 @@ namespace Bottleneck {
           */
         readonly Promise?: any;
         /**
-          * This object is passed directly to the redis client library you've selected.
+          * node-redis v4 options: passed to `createClient(clientOptions)`, or as `defaults` to `createCluster` when `clusterNodes` is set.
           */
         readonly clientOptions?: any;
         /**
-          * **ioredis only.** When `clusterNodes` is not null, the client will be instantiated by calling `new Redis.Cluster(clusterNodes, clientOptions)`.
+          * When not null, the client is created with `createCluster({ rootNodes: clusterNodes, defaults: clientOptions })`.
+          * On Redis Cluster the limiter `id` must contain a hash tag, e.g. `{my-limiter}:`.
           */
         readonly clusterNodes?: any;
         /**
-          * An existing Bottleneck.RedisConnection or Bottleneck.IORedisConnection object to use.
-          * If using, `datastore`, `clientOptions` and `clusterNodes` will be ignored.
-          */
-        /**
-          * Optional Redis/IORedis library from `require('ioredis')` or equivalent. If not, Bottleneck will attempt to require Redis/IORedis at runtime.
+          * Optional node-redis v4 library from `require('redis')`. If not, Bottleneck will attempt to require it at runtime.
           */
         readonly Redis?: any;
         /**
-          * Bottleneck connection object created from `new Bottleneck.RedisConnection` or `new Bottleneck.IORedisConnection`.
+          * Bottleneck connection object created from `new Bottleneck.RedisConnection`.
+          * If using, `datastore`, `clientOptions` and `clusterNodes` will be ignored.
           */
-        readonly connection?: Bottleneck.RedisConnection | Bottleneck.IORedisConnection | null;
+        readonly connection?: Bottleneck.RedisConnection | null;
         /**
           * When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db.
           */
@@ -168,34 +166,19 @@ namespace Bottleneck {
 
     type RedisConnectionOptions = {
         /**
-          * This object is passed directly to NodeRedis' createClient() method.
+          * node-redis v4 options: passed to `createClient(clientOptions)`, or as `defaults` to `createCluster` when `clusterNodes` is set.
           */
         readonly clientOptions?: any;
         /**
-          * An existing NodeRedis client to use. If using, `clientOptions` will be ignored.
-          */
-        readonly client?: any;
-        /**
-          * Optional Redis library from `require('redis')` or equivalent. If not, Bottleneck will attempt to require Redis at runtime.
-          */
-        readonly Redis?: any;
-    };
-
-    type IORedisConnectionOptions = {
-        /**
-          * This object is passed directly to ioredis' constructor method.
-          */
-        readonly clientOptions?: any;
-        /**
-          * When `clusterNodes` is not null, the client will be instantiated by calling `new Redis.Cluster(clusterNodes, clientOptions)`.
+          * When not null, the client is created with `createCluster({ rootNodes: clusterNodes, defaults: clientOptions })`.
           */
         readonly clusterNodes?: any;
         /**
-          * An existing ioredis client to use. If using, `clientOptions` and `clusterNodes` will be ignored.
+          * An existing node-redis v4 client or cluster, connected or not. If using, `clientOptions` and `clusterNodes` will be ignored.
           */
         readonly client?: any;
         /**
-          * Optional IORedis library from `require('ioredis')` or equivalent. If not, Bottleneck will attempt to require IORedis at runtime.
+          * Optional node-redis v4 library from `require('redis')`. If not, Bottleneck will attempt to require it at runtime.
           */
         readonly Redis?: any;
     };
@@ -243,35 +226,6 @@ namespace Bottleneck {
         disconnect(flush?: boolean): Promise<void>;
     }
 
-    class IORedisConnection {
-        constructor(options?: Bottleneck.IORedisConnectionOptions);
-
-        /**
-          * Register an event listener.
-          * @param name - The event name.
-          * @param fn - The callback function.
-          */
-        on(name: "error", fn: (error: any) => void): void;
-
-        /**
-          * Register an event listener for one event only.
-          * @param name - The event name.
-          * @param fn - The callback function.
-          */
-        once(name: "error", fn: (error: any) => void): void;
-
-        /**
-          * Waits until the connection is ready and returns the raw ioredis clients.
-          */
-        ready(): Promise<ClientsList>;
-
-        /**
-          * Close the redis clients.
-          * @param flush - Write transient data before closing.
-          */
-        disconnect(flush?: boolean): Promise<void>;
-    }
-
     class Batcher {
         constructor(options?: Bottleneck.BatcherOptions);
 
@@ -304,7 +258,7 @@ namespace Bottleneck {
 
         id: string;
         datastore: string;
-        connection?: Bottleneck.RedisConnection | Bottleneck.IORedisConnection;
+        connection?: Bottleneck.RedisConnection;
 
         /**
           * Returns the limiter for the specified key.
@@ -413,7 +367,7 @@ class Bottleneck {
 
     id: string;
     datastore: string;
-    connection?: Bottleneck.RedisConnection | Bottleneck.IORedisConnection;
+    connection?: Bottleneck.RedisConnection;
 
     /**
       * Returns a promise which will be resolved once the limiter is ready to accept jobs

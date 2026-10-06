@@ -50,6 +50,7 @@ It supports **Clustering**: it can rate limit jobs across multiple Node.js insta
 - Script errors are recognized on Redis 7+, which prefixes `error_reply` messages (`ERR OVERWEIGHT:...`).
 - `Group.clusterKeys()` scans every master on a Redis Cluster instead of a single node.
 - Supports Node 22 and 24, and is tested in CI against Redis 7 and a real Redis Cluster.
+- **3.0.0:** the `redis` datastore runs on node-redis v4 (with Redis Cluster via `clusterNodes`) and the `ioredis` datastore is removed. `clientOptions` now takes node-redis v4 options, e.g. `{ socket: { host, port } }` instead of `{ host, port }`. Limiters on 2.x and 3.x can share the same Redis keys during a rollout.
 
 It is published to GitHub Packages. Install it under the `bottleneck` name so `import Bottleneck from "bottleneck"` and the bundled typings keep working:
 
@@ -793,13 +794,9 @@ Bottleneck will attempt to spread load evenly across limiters.
 
 ### Enabling Clustering
 
-First, add `redis` or `ioredis` to your application's dependencies:
+First, add [node-redis](https://github.com/redis/node-redis) v4 to your application's dependencies:
 ```bash
-# NodeRedis (https://github.com/NodeRedis/node_redis)
-npm install --save redis
-
-# or ioredis (https://github.com/luin/ioredis)
-npm install --save ioredis
+npm install --save redis@4
 ```
 Then create a limiter or a Group:
 ```js
@@ -810,38 +807,44 @@ const limiter = new Bottleneck({
   id: "my-super-app" // All limiters with the same id will be clustered together
 
   /* Clustering options */
-  datastore: "redis", // or "ioredis"
+  datastore: "redis",
   clearDatastore: false,
   clientOptions: {
-    host: "127.0.0.1",
-    port: 6379
-
-    // Redis client options
-    // Using NodeRedis? See https://github.com/NodeRedis/node_redis#options-object-properties
-    // Using ioredis? See https://github.com/luin/ioredis/blob/master/API.md#new-redisport-host-options
+    // node-redis v4 createClient options, see https://github.com/redis/node-redis/blob/master/docs/client-configuration.md
+    socket: { host: "127.0.0.1", port: 6379 }
   }
+});
+```
+
+On a Redis Cluster, pass the root nodes in `clusterNodes` and give the limiter an `id` with a hash tag:
+```js
+const limiter = new Bottleneck({
+  id: "{my-super-app}:",
+  datastore: "redis",
+  clusterNodes: [{ url: "redis://127.0.0.1:30001" }],
+  clientOptions: { password: process.env.REDIS_PASSWORD } // used as createCluster `defaults`
 });
 ```
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `datastore` | `"local"` | Where the limiter stores its internal state. The default (`"local"`) keeps the state in the limiter itself. Set it to `"redis"` or `"ioredis"` to enable Clustering. |
+| `datastore` | `"local"` | Where the limiter stores its internal state. The default (`"local"`) keeps the state in the limiter itself. Set it to `"redis"` to enable Clustering. `"ioredis"` was removed in 3.0.0 and throws. |
 | `clearDatastore` | `false` | When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db. |
-| `clientOptions` | `{}` | This object is passed directly to the redis client library you've selected. |
-| `clusterNodes` | `null` | **ioredis only.** When `clusterNodes` is not null, the client will be instantiated by calling `new Redis.Cluster(clusterNodes, clientOptions)` instead of `new Redis(clientOptions)`. |
+| `clientOptions` | `{}` | node-redis v4 options, passed to `createClient(clientOptions)`, or as `defaults` to `createCluster` when `clusterNodes` is set. |
+| `clusterNodes` | `null` | When not null, the client is created with `createCluster({ rootNodes: clusterNodes, defaults: clientOptions })` instead of `createClient(clientOptions)`. |
 | `timeout` | `null` (no TTL) | The Redis TTL in milliseconds ([TTL](https://redis.io/commands/ttl)) for the keys created by the limiter. When `timeout` is set, the limiter's state will be automatically removed from Redis after `timeout` milliseconds of inactivity. |
-| `Redis` | `null` | Overrides the import/require of the redis/ioredis library. You shouldn't need to set this option unless your application is failing to start due to a failure to require/import the client library. |
+| `Redis` | `null` | Overrides the import/require of the node-redis library. You shouldn't need to set this option unless your application is failing to start due to a failure to require/import the client library. |
 
 **Note: When using Groups**, the `timeout` option has a default of `300000` milliseconds and the generated limiters automatically receive an `id` with the pattern `${group.id}-${KEY}`.
 
-**Note:** If you are seeing a runtime error due to the `require()` function not being able to load `redis`/`ioredis`, then directly pass the module as the `Redis` option. Example:
+**Note:** If you are seeing a runtime error due to the `require()` function not being able to load `redis`, then directly pass the module as the `Redis` option. Example:
 ```js
-import Redis from "ioredis"
+import * as Redis from "redis"
 
 const limiter = new Bottleneck({
   id: "my-super-app",
-  datastore: "ioredis",
-  clientOptions: { host: '12.34.56.78', port: 6379 },
+  datastore: "redis",
+  clientOptions: { socket: { host: '12.34.56.78', port: 6379 } },
   Redis
 });
 ```
@@ -874,7 +877,7 @@ It is **strongly recommended** to [set up an `"error"` listener](#events) on all
 
 ### Clustering Methods
 
-The `ready()`, `publish()` and `clients()` methods also exist when using the `local` datastore, for code compatibility reasons: code written for `redis`/`ioredis` won't break with `local`.
+The `ready()`, `publish()` and `clients()` methods also exist when using the `local` datastore, for code compatibility reasons: code written for `redis` won't break with `local`.
 
 #### ready()
 
@@ -927,22 +930,21 @@ console.log(limiter.clients());
 
 ### Additional Clustering information
 
-- Bottleneck is compatible with [Redis Clusters](https://redis.io/topics/cluster-tutorial), but you must use the `ioredis` datastore and the `clusterNodes` option.
+- Bottleneck is compatible with [Redis Clusters](https://redis.io/topics/cluster-tutorial) through the `clusterNodes` option (or a `createCluster` client passed to `Bottleneck.RedisConnection`).
 - On a Redis Cluster, the limiter `id` (or Group `id`) **must contain a hash tag**, e.g. `{my-limiter}:`, so that all of its keys land in the same slot. Without one, `ready()` rejects with a `CROSSSLOT` error.
-- Bottleneck is compatible with Redis Sentinel, but you must use the `ioredis` datastore.
 - Bottleneck's data is stored in Redis keys starting with `b_`. It also uses pubsub channels starting with `b_` It will not interfere with any other data stored on the server.
 - Bottleneck loads a few Lua scripts on the Redis server using the `SCRIPT LOAD` command. These scripts only take up a few Kb of memory. Running the `SCRIPT FLUSH` command will cause any connected limiters to experience critical errors until a new limiter connects to Redis and loads the scripts again.
 - The Lua scripts are highly optimized and designed to use as few resources as possible.
 
 ### Managing Redis Connections
 
-Bottleneck needs to create 2 Redis Clients to function, one for normal operations and one for pubsub subscriptions. These 2 clients are kept in a `Bottleneck.RedisConnection` (NodeRedis) or a `Bottleneck.IORedisConnection` (ioredis) object, referred to as the Connection object.
+Bottleneck needs to create 2 Redis Clients to function, one for normal operations and one for pubsub subscriptions. These 2 clients are kept in a `Bottleneck.RedisConnection` object, referred to as the Connection object.
 
 By default, every Group and every standalone limiter (a limiter not created by a Group) will create their own Connection object, but it is possible to manually control this behavior. In this example, every Group and limiter is sharing the same Connection object and therefore the same 2 clients:
 ```js
 const connection = new Bottleneck.RedisConnection({
-  clientOptions: {/* NodeRedis/ioredis options */}
-  // ioredis also accepts `clusterNodes` here
+  clientOptions: {/* node-redis v4 options */}
+  // `clusterNodes` is accepted here too
 });
 
 
@@ -957,10 +959,10 @@ When a Connection object is created manually, the connectivity `"error"` events 
 ```js
 connection.on("error", (err) => { /* handle connectivity errors here */ });
 ```
-If you already have a NodeRedis/ioredis client, you can ask Bottleneck to reuse it, although currently the Connection object will still create a second client for pubsub operations:
+If you already have a node-redis v4 client or cluster, connected or not, you can ask Bottleneck to reuse it, although the Connection object will still create a second client for pubsub operations:
 ```js
-import Redis from "redis";
-const client = new Redis.createClient({/* options */});
+import { createClient } from "redis";
+const client = createClient({/* options */}); // or createCluster({ rootNodes: [...] })
 
 const connection = new Bottleneck.RedisConnection({
   // `clientOptions` and `clusterNodes` will be ignored since we're passing a raw client

@@ -3087,453 +3087,6 @@
 	      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
 	    }, _typeof(o);
 	  }
-	  function _toConsumableArray(r) {
-	    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
-	  }
-	  function _nonIterableSpread() {
-	    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	  }
-	  function _iterableToArray(r) {
-	    if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-	  }
-	  function _arrayWithoutHoles(r) {
-	    if (Array.isArray(r)) return _arrayLikeToArray(r);
-	  }
-	  function _slicedToArray(r, e) {
-	    return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
-	  }
-	  function _nonIterableRest() {
-	    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	  }
-	  function _unsupportedIterableToArray(r, a) {
-	    if (r) {
-	      if ("string" == typeof r) return _arrayLikeToArray(r, a);
-	      var t = {}.toString.call(r).slice(8, -1);
-	      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
-	    }
-	  }
-	  function _arrayLikeToArray(r, a) {
-	    (null == a || a > r.length) && (a = r.length);
-	    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-	    return n;
-	  }
-	  function _iterableToArrayLimit(r, l) {
-	    var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-	    if (null != t) {
-	      var e,
-	        n,
-	        i,
-	        u,
-	        a = [],
-	        f = true,
-	        o = false;
-	      try {
-	        if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
-	      } catch (r) {
-	        o = true, n = r;
-	      } finally {
-	        try {
-	          if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
-	        } finally {
-	          if (o) throw n;
-	        }
-	      }
-	      return a;
-	    }
-	  }
-	  function _arrayWithHoles(r) {
-	    if (Array.isArray(r)) return r;
-	  }
-	  function _regenerator() {
-	    /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */var e,
-	      t,
-	      r = "function" == typeof Symbol ? Symbol : {},
-	      n = r.iterator || "@@iterator",
-	      o = r.toStringTag || "@@toStringTag";
-	    function i(r, n, o, i) {
-	      var c = n && n.prototype instanceof Generator ? n : Generator,
-	        u = Object.create(c.prototype);
-	      return _regeneratorDefine2(u, "_invoke", function (r, n, o) {
-	        var i,
-	          c,
-	          u,
-	          f = 0,
-	          p = o || [],
-	          y = false,
-	          G = {
-	            p: 0,
-	            n: 0,
-	            v: e,
-	            a: d,
-	            f: d.bind(e, 4),
-	            d: function d(t, r) {
-	              return i = t, c = 0, u = e, G.n = r, a;
-	            }
-	          };
-	        function d(r, n) {
-	          for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) {
-	            var o,
-	              i = p[t],
-	              d = G.p,
-	              l = i[2];
-	            r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0));
-	          }
-	          if (o || r > 1) return a;
-	          throw y = true, n;
-	        }
-	        return function (o, p, l) {
-	          if (f > 1) throw TypeError("Generator is already running");
-	          for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) {
-	            i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u);
-	            try {
-	              if (f = 2, i) {
-	                if (c || (o = "next"), t = i[o]) {
-	                  if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object");
-	                  if (!t.done) return t;
-	                  u = t.value, c < 2 && (c = 0);
-	                } else 1 === c && (t = i["return"]) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1);
-	                i = e;
-	              } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break;
-	            } catch (t) {
-	              i = e, c = 1, u = t;
-	            } finally {
-	              f = 1;
-	            }
-	          }
-	          return {
-	            value: t,
-	            done: y
-	          };
-	        };
-	      }(r, o, i), true), u;
-	    }
-	    var a = {};
-	    function Generator() {}
-	    function GeneratorFunction() {}
-	    function GeneratorFunctionPrototype() {}
-	    t = Object.getPrototypeOf;
-	    var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () {
-	        return this;
-	      }), t),
-	      u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c);
-	    function f(e) {
-	      return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e;
-	    }
-	    return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () {
-	      return this;
-	    }), _regeneratorDefine2(u, "toString", function () {
-	      return "[object Generator]";
-	    }), (_regenerator = function _regenerator() {
-	      return {
-	        w: i,
-	        m: f
-	      };
-	    })();
-	  }
-	  function _regeneratorDefine2(e, r, n, t) {
-	    var i = Object.defineProperty;
-	    try {
-	      i({}, "", {});
-	    } catch (e) {
-	      i = 0;
-	    }
-	    _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) {
-	      function o(r, n) {
-	        _regeneratorDefine2(e, r, function (e) {
-	          return this._invoke(r, n, e);
-	        });
-	      }
-	      r ? i ? i(e, r, {
-	        value: n,
-	        enumerable: !t,
-	        configurable: !t,
-	        writable: !t
-	      }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2));
-	    }, _regeneratorDefine2(e, r, n, t);
-	  }
-	  function _classCallCheck(a, n) {
-	    if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
-	  }
-	  function _defineProperties(e, r) {
-	    for (var t = 0; t < r.length; t++) {
-	      var o = r[t];
-	      o.enumerable = o.enumerable || false, o.configurable = true, "value" in o && (o.writable = true), Object.defineProperty(e, _toPropertyKey(o.key), o);
-	    }
-	  }
-	  function _createClass(e, r, t) {
-	    return r && _defineProperties(e.prototype, r), Object.defineProperty(e, "prototype", {
-	      writable: false
-	    }), e;
-	  }
-	  function _toPropertyKey(t) {
-	    var i = _toPrimitive(t, "string");
-	    return "symbol" == _typeof(i) ? i : i + "";
-	  }
-	  function _toPrimitive(t, r) {
-	    if ("object" != _typeof(t) || !t) return t;
-	    var e = t[Symbol.toPrimitive];
-	    if (void 0 !== e) {
-	      var i = e.call(t, r);
-	      if ("object" != _typeof(i)) return i;
-	      throw new TypeError("@@toPrimitive must return a primitive value.");
-	    }
-	    return (String )(t);
-	  }
-	  var tslib_1 = require$$0$1;
-	  var parser = tslib_1.__importStar(requireParser());
-	  var Events = requireEvents();
-	  var Scripts = tslib_1.__importStar(requireScripts());
-	  var RedisConnection = /*#__PURE__*/function () {
-	    function RedisConnection() {
-	      var _this = this;
-	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      _classCallCheck(this, RedisConnection);
-	      var _a, _b, _c;
-	      this.datastore = "redis";
-	      this.defaults = {
-	        Redis: null,
-	        clientOptions: {},
-	        client: null,
-	        Promise: Promise,
-	        Events: null
-	      };
-	      this.limiters = {};
-	      this.shas = {};
-	      this.terminated = false;
-	      parser.load(options, this.defaults, this);
-	      this.Redis = (_a = this.Redis) !== null && _a !== void 0 ? _a : eval("require")("redis"); // Obfuscated or else Webpack/Angular will try to inline the optional redis module
-	      this.Events = (_b = this.Events) !== null && _b !== void 0 ? _b : new Events(this);
-	      this.client = (_c = this.client) !== null && _c !== void 0 ? _c : this.Redis.createClient(this.defaults.clientOptions);
-	      this.subscriber = this.client.duplicate();
-	      this.ready = Promise.all([this._setup(this.client, false), this._setup(this.subscriber, true)]).then(function () {
-	        return _this._loadScripts();
-	      }).then(function () {
-	        return {
-	          client: _this.client,
-	          subscriber: _this.subscriber
-	        };
-	      });
-	    }
-	    return _createClass(RedisConnection, [{
-	      key: "_setup",
-	      value: function _setup(client, sub) {
-	        var _this2 = this;
-	        client.setMaxListeners(0);
-	        return new this.Promise(function (resolve, reject) {
-	          client.on("error", function (e) {
-	            return _this2.Events.trigger("error", e);
-	          });
-	          if (sub) {
-	            client.on("message", function (channel, message) {
-	              var _a;
-	              (_a = _this2.limiters[channel]) === null || _a === void 0 ? void 0 : _a._store.onMessage(channel, message);
-	            });
-	          }
-	          if (client.ready) {
-	            resolve();
-	          } else {
-	            client.once("ready", resolve);
-	          }
-	        });
-	      }
-	    }, {
-	      key: "_loadScript",
-	      value: function _loadScript(name) {
-	        var _this3 = this;
-	        return new this.Promise(function (resolve, reject) {
-	          var payload = Scripts.payload(name);
-	          _this3.client.multi([["script", "load", payload]]).exec(function (err, replies) {
-	            if (err != null) {
-	              return reject(err);
-	            }
-	            _this3.shas[name] = replies[0];
-	            resolve(replies[0]);
-	          });
-	        });
-	      }
-	    }, {
-	      key: "_loadScripts",
-	      value: function _loadScripts() {
-	        var _this4 = this;
-	        return Promise.all(Scripts.names.map(function (k) {
-	          return _this4._loadScript(k);
-	        }));
-	      }
-	    }, {
-	      key: "__runCommand__",
-	      value: function __runCommand__(cmd) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee() {
-	          var _this5 = this;
-	          return _regenerator().w(function (_context) {
-	            while (1) switch (_context.n) {
-	              case 0:
-	                _context.n = 1;
-	                return this.ready;
-	              case 1:
-	                return _context.a(2, new this.Promise(function (resolve, reject) {
-	                  _this5.client.multi([cmd]).exec_atomic(function (err, replies) {
-	                    if (err != null) {
-	                      reject(err);
-	                    } else {
-	                      resolve(replies[0]);
-	                    }
-	                  });
-	                }));
-	            }
-	          }, _callee, this);
-	        }));
-	      }
-	      /**
-	       * @param {string} pattern
-	       * @returns {Promise<string[]>}
-	       */
-	    }, {
-	      key: "__scanKeys__",
-	      value: function __scanKeys__(pattern) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee2() {
-	          var keys, cursor, _yield$this$__runComm, _yield$this$__runComm2, next, found;
-	          return _regenerator().w(function (_context2) {
-	            while (1) switch (_context2.n) {
-	              case 0:
-	                keys = [];
-	                cursor = "0";
-	              case 1:
-	                _context2.n = 2;
-	                return this.__runCommand__(["scan", cursor, "match", pattern, "count", 10000]);
-	              case 2:
-	                _yield$this$__runComm = _context2.v;
-	                _yield$this$__runComm2 = _slicedToArray(_yield$this$__runComm, 2);
-	                next = _yield$this$__runComm2[0];
-	                found = _yield$this$__runComm2[1];
-	                cursor = next;
-	                keys.push.apply(keys, _toConsumableArray(found));
-	              case 3:
-	                if (cursor !== "0") {
-	                  _context2.n = 1;
-	                  break;
-	                }
-	              case 4:
-	                return _context2.a(2, keys);
-	            }
-	          }, _callee2, this);
-	        }));
-	      }
-	    }, {
-	      key: "__addLimiter__",
-	      value: function __addLimiter__(instance) {
-	        var _this6 = this;
-	        return Promise.all([instance.channel(), instance.channel_client()].map(function (channel) {
-	          return new _this6.Promise(function (resolve, reject) {
-	            var _handler = function handler(chan) {
-	              if (chan === channel) {
-	                _this6.subscriber.removeListener("subscribe", _handler);
-	                _this6.limiters[channel] = instance;
-	                resolve();
-	              }
-	            };
-	            _this6.subscriber.on("subscribe", _handler);
-	            _this6.subscriber.subscribe(channel);
-	          });
-	        }));
-	      }
-	    }, {
-	      key: "__removeLimiter__",
-	      value: function __removeLimiter__(instance) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee4() {
-	          var _this7 = this;
-	          return _regenerator().w(function (_context4) {
-	            while (1) switch (_context4.n) {
-	              case 0:
-	                return _context4.a(2, Promise.all([instance.channel(), instance.channel_client()].map(function (channel) {
-	                  return tslib_1.__awaiter(_this7, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee3() {
-	                    var _this8 = this;
-	                    return _regenerator().w(function (_context3) {
-	                      while (1) switch (_context3.n) {
-	                        case 0:
-	                          if (this.terminated) {
-	                            _context3.n = 1;
-	                            break;
-	                          }
-	                          _context3.n = 1;
-	                          return new this.Promise(function (resolve, reject) {
-	                            _this8.subscriber.unsubscribe(channel, function (err, chan) {
-	                              if (err != null) {
-	                                return reject(err);
-	                              }
-	                              if (chan === channel) {
-	                                return resolve();
-	                              }
-	                            });
-	                          });
-	                        case 1:
-	                          delete this.limiters[channel];
-	                        case 2:
-	                          return _context3.a(2);
-	                      }
-	                    }, _callee3, this);
-	                  }));
-	                })));
-	            }
-	          }, _callee4);
-	        }));
-	      }
-	    }, {
-	      key: "__scriptArgs__",
-	      value: function __scriptArgs__(name, id, args, cb) {
-	        var keys = Scripts.keys(name, id);
-	        return [this.shas[name], keys.length].concat(_toConsumableArray(keys), _toConsumableArray(args), [cb]);
-	      }
-	    }, {
-	      key: "__scriptFn__",
-	      value: function __scriptFn__(name) {
-	        return this.client.evalsha.bind(this.client);
-	      }
-	    }, {
-	      key: "disconnect",
-	      value: function disconnect() {
-	        var flush = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
-	        for (var _i = 0, _Object$keys = Object.keys(this.limiters); _i < _Object$keys.length; _i++) {
-	          var k = _Object$keys[_i];
-	          clearInterval(this.limiters[k]._store.heartbeat);
-	        }
-	        this.limiters = {};
-	        this.terminated = true;
-	        this.client.end(flush);
-	        this.subscriber.end(flush);
-	        return this.Promise.resolve();
-	      }
-	    }]);
-	  }();
-	  RedisConnection_1 = RedisConnection;
-	  return RedisConnection_1;
-	}
-
-	var IORedisConnection_1;
-	var hasRequiredIORedisConnection;
-	function requireIORedisConnection() {
-	  if (hasRequiredIORedisConnection) return IORedisConnection_1;
-	  hasRequiredIORedisConnection = 1;
-	  function _typeof(o) {
-	    "@babel/helpers - typeof";
-
-	    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-	      return typeof o;
-	    } : function (o) {
-	      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-	    }, _typeof(o);
-	  }
-	  function _toConsumableArray(r) {
-	    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
-	  }
-	  function _nonIterableSpread() {
-	    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	  }
-	  function _iterableToArray(r) {
-	    if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-	  }
-	  function _arrayWithoutHoles(r) {
-	    if (Array.isArray(r)) return _arrayLikeToArray(r);
-	  }
 	  function _createForOfIteratorHelper(r, e) {
 	    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	    if (!t) {
@@ -3582,6 +3135,30 @@
 	      }
 	    };
 	  }
+	  function _toConsumableArray(r) {
+	    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
+	  }
+	  function _nonIterableSpread() {
+	    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	  }
+	  function _unsupportedIterableToArray(r, a) {
+	    if (r) {
+	      if ("string" == typeof r) return _arrayLikeToArray(r, a);
+	      var t = {}.toString.call(r).slice(8, -1);
+	      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+	    }
+	  }
+	  function _iterableToArray(r) {
+	    if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+	  }
+	  function _arrayWithoutHoles(r) {
+	    if (Array.isArray(r)) return _arrayLikeToArray(r);
+	  }
+	  function _arrayLikeToArray(r, a) {
+	    (null == a || a > r.length) && (a = r.length);
+	    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	    return n;
+	  }
 	  function _regenerator() {
 	    /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */var e,
 	      t,
@@ -3689,54 +3266,6 @@
 	      }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2));
 	    }, _regeneratorDefine2(e, r, n, t);
 	  }
-	  function _slicedToArray(r, e) {
-	    return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
-	  }
-	  function _nonIterableRest() {
-	    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	  }
-	  function _unsupportedIterableToArray(r, a) {
-	    if (r) {
-	      if ("string" == typeof r) return _arrayLikeToArray(r, a);
-	      var t = {}.toString.call(r).slice(8, -1);
-	      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
-	    }
-	  }
-	  function _arrayLikeToArray(r, a) {
-	    (null == a || a > r.length) && (a = r.length);
-	    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-	    return n;
-	  }
-	  function _iterableToArrayLimit(r, l) {
-	    var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-	    if (null != t) {
-	      var e,
-	        n,
-	        i,
-	        u,
-	        a = [],
-	        f = true,
-	        o = false;
-	      try {
-	        if (i = (t = t.call(r)).next, 0 === l) {
-	          if (Object(t) !== t) return;
-	          f = !1;
-	        } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
-	      } catch (r) {
-	        o = true, n = r;
-	      } finally {
-	        try {
-	          if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
-	        } finally {
-	          if (o) throw n;
-	        }
-	      }
-	      return a;
-	    }
-	  }
-	  function _arrayWithHoles(r) {
-	    if (Array.isArray(r)) return r;
-	  }
 	  function _classCallCheck(a, n) {
 	    if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
 	  }
@@ -3769,13 +3298,16 @@
 	  var parser = tslib_1.__importStar(requireParser());
 	  var Events = requireEvents();
 	  var Scripts = tslib_1.__importStar(requireScripts());
-	  var IORedisConnection = /*#__PURE__*/function () {
-	    function IORedisConnection() {
+	  /**
+	   * Connection to Redis or Redis Cluster through node-redis v4.
+	   */
+	  var RedisConnection = /*#__PURE__*/function () {
+	    function RedisConnection() {
 	      var _this = this;
 	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      _classCallCheck(this, IORedisConnection);
+	      _classCallCheck(this, RedisConnection);
 	      var _a, _b, _c;
-	      this.datastore = "ioredis";
+	      this.datastore = "redis";
 	      this.defaults = {
 	        Redis: null,
 	        clientOptions: {},
@@ -3785,81 +3317,177 @@
 	        Events: null
 	      };
 	      this.limiters = {};
+	      this.shas = {};
 	      this.terminated = false;
+	      this.connectAttempts = new Map();
 	      parser.load(options, this.defaults, this);
-	      this.Redis = (_a = this.Redis) !== null && _a !== void 0 ? _a : eval("require")("ioredis"); // Obfuscated or else Webpack/Angular will try to inline the optional ioredis module
+	      this.Redis = (_a = this.Redis) !== null && _a !== void 0 ? _a : eval("require")("redis"); // Obfuscated or else Webpack/Angular will try to inline the optional redis module
 	      this.Events = (_b = this.Events) !== null && _b !== void 0 ? _b : new Events(this);
-	      if (this.clusterNodes != null) {
-	        this.client = new this.Redis.Cluster(this.clusterNodes, this.clientOptions);
-	        this.subscriber = new this.Redis.Cluster(this.clusterNodes, this.clientOptions);
-	      } else if (this.client != null && !this.client.duplicate) {
-	        this.subscriber = new this.Redis.Cluster(this.client.startupNodes, this.client.options);
-	      } else {
-	        this.client = (_c = this.client) !== null && _c !== void 0 ? _c : new this.Redis(this.clientOptions);
-	        this.subscriber = this.client.duplicate();
-	      }
-	      this.ready = Promise.all([this._setup(this.client, false), this._setup(this.subscriber, true)]).then(function () {
-	        _this._loadScripts();
+	      this.client = (_c = this.client) !== null && _c !== void 0 ? _c : this.clusterNodes != null ? this.Redis.createCluster({
+	        rootNodes: this.clusterNodes,
+	        defaults: this.clientOptions
+	      }) : this.Redis.createClient(this.clientOptions);
+	      this.subscriber = this.client.duplicate();
+	      this.ready = this.Promise.all([this._connect(this.client), this._connect(this.subscriber)]).then(function () {
+	        return _this._loadScripts();
+	      }).then(function () {
 	        return {
 	          client: _this.client,
 	          subscriber: _this.subscriber
 	        };
 	      });
 	    }
-	    return _createClass(IORedisConnection, [{
-	      key: "_setup",
-	      value: function _setup(client, sub) {
-	        var _this2 = this;
-	        client.setMaxListeners(0);
-	        return new this.Promise(function (resolve, reject) {
-	          client.on("error", function (e) {
-	            return _this2.Events.trigger("error", e);
-	          });
-	          if (sub) {
-	            client.on("message", function (channel, message) {
-	              var _a;
-	              (_a = _this2.limiters[channel]) === null || _a === void 0 ? void 0 : _a._store.onMessage(channel, message);
-	            });
-	          }
-	          if (client.status === "ready") {
+	    return _createClass(RedisConnection, [{
+	      key: "_isCluster",
+	      value: function _isCluster() {
+	        return typeof this.client.nodeClient === "function";
+	      }
+	    }, {
+	      key: "_connect",
+	      value: function _connect(client) {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee() {
+	          var _this2 = this;
+	          var connectAttempt;
+	          return _regenerator().w(function (_context) {
+	            while (1) switch (_context.p = _context.n) {
+	              case 0:
+	                client.on("error", function (e) {
+	                  return _this2.Events.trigger("error", e);
+	                });
+	                if (!client.isOpen) {
+	                  _context.n = 1;
+	                  break;
+	                }
+	                return _context.a(2);
+	              case 1:
+	                connectAttempt = client.connect();
+	                this.connectAttempts.set(client, connectAttempt);
+	                _context.p = 2;
+	                _context.n = 3;
+	                return connectAttempt;
+	              case 3:
+	                _context.p = 3;
+	                this.connectAttempts["delete"](client);
+	                return _context.f(3);
+	              case 4:
+	                return _context.a(2);
+	            }
+	          }, _callee, this, [[2,, 3, 4]]);
+	        }));
+	      }
+	      /**
+	       * node-redis 4 cannot abort a socket that is still being created: closing the client meanwhile leaves that socket
+	       * open once it connects, so wait until the attempt connects or fails first.
+	       * @param {any} client
+	       * @returns {Promise<void>}
+	       */
+	    }, {
+	      key: "_connectAttemptSettled",
+	      value: function _connectAttemptSettled(client) {
+	        var connectAttempt = this.connectAttempts.get(client);
+	        if (connectAttempt == null) {
+	          return this.Promise.resolve();
+	        }
+	        return new this.Promise(function (resolve) {
+	          var _settle = function settle() {
+	            client.off("error", _settle);
 	            resolve();
-	          } else {
-	            client.once("ready", resolve);
-	          }
+	          };
+	          client.once("error", _settle);
+	          connectAttempt.then(_settle, _settle);
 	        });
+	      }
+	      /**
+	       * @param {string[]} args
+	       * @param {string} [firstKey] routes the command to the slot owner on Redis Cluster; any node when omitted
+	       * @returns {Promise<any>}
+	       */
+	    }, {
+	      key: "_sendCommand",
+	      value: function _sendCommand(args, firstKey) {
+	        return this._isCluster() ? this.client.sendCommand(firstKey, false, args) : this.client.sendCommand(args);
 	      }
 	    }, {
 	      key: "_loadScripts",
 	      value: function _loadScripts() {
-	        var _this3 = this;
-	        Scripts.names.forEach(function (name) {
-	          _this3.client.defineCommand(name, {
-	            lua: Scripts.payload(name)
-	          });
-	        });
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee3() {
+	          var _this3 = this;
+	          return _regenerator().w(function (_context3) {
+	            while (1) switch (_context3.n) {
+	              case 0:
+	                _context3.n = 1;
+	                return this.Promise.all(Scripts.names.map(function (name) {
+	                  return tslib_1.__awaiter(_this3, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee2() {
+	                    return _regenerator().w(function (_context2) {
+	                      while (1) switch (_context2.n) {
+	                        case 0:
+	                          _context2.n = 1;
+	                          return this._sendCommand(["SCRIPT", "LOAD", Scripts.payload(name)]);
+	                        case 1:
+	                          this.shas[name] = _context2.v;
+	                        case 2:
+	                          return _context2.a(2);
+	                      }
+	                    }, _callee2, this);
+	                  }));
+	                }));
+	              case 1:
+	                return _context3.a(2);
+	            }
+	          }, _callee3, this);
+	        }));
+	      }
+	      /**
+	       * Runs a Bottleneck Lua script. On Redis Cluster the script is only loaded on one node up front,
+	       * so the first call on every other node falls back from EVALSHA to EVAL, which caches it there.
+	       * Goes through sendCommand because node-redis 4 evalSha/eval route a cluster call by the SHA instead of the first key.
+	       * @param {string} name
+	       * @param {string} id
+	       * @param {string[]} args
+	       * @returns {Promise<any>}
+	       */
+	    }, {
+	      key: "__runScript__",
+	      value: function __runScript__(name, id, args) {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee4() {
+	          var keys, keysAndArgs, _t;
+	          return _regenerator().w(function (_context4) {
+	            while (1) switch (_context4.p = _context4.n) {
+	              case 0:
+	                keys = Scripts.keys(name, id);
+	                keysAndArgs = [String(keys.length)].concat(_toConsumableArray(keys), _toConsumableArray(args));
+	                _context4.p = 1;
+	                _context4.n = 2;
+	                return this._sendCommand(["EVALSHA", this.shas[name]].concat(_toConsumableArray(keysAndArgs)), keys[0]);
+	              case 2:
+	                return _context4.a(2, _context4.v);
+	              case 3:
+	                _context4.p = 3;
+	                _t = _context4.v;
+	                if (/^NOSCRIPT/.test(_t === null || _t === void 0 ? void 0 : _t.message)) {
+	                  _context4.n = 4;
+	                  break;
+	                }
+	                throw _t;
+	              case 4:
+	                return _context4.a(2, this._sendCommand(["EVAL", Scripts.payload(name)].concat(_toConsumableArray(keysAndArgs)), keys[0]));
+	            }
+	          }, _callee4, this, [[1, 3]]);
+	        }));
 	      }
 	    }, {
 	      key: "__runCommand__",
 	      value: function __runCommand__(cmd) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee() {
-	          var _yield$this$client$pi, _yield$this$client$pi2, _yield$this$client$pi3, deleted;
-	          return _regenerator().w(function (_context) {
-	            while (1) switch (_context.n) {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee5() {
+	          return _regenerator().w(function (_context5) {
+	            while (1) switch (_context5.n) {
 	              case 0:
-	                _context.n = 1;
+	                _context5.n = 1;
 	                return this.ready;
 	              case 1:
-	                _context.n = 2;
-	                return this.client.pipeline([cmd]).exec();
-	              case 2:
-	                _yield$this$client$pi = _context.v;
-	                _yield$this$client$pi2 = _slicedToArray(_yield$this$client$pi, 1);
-	                _yield$this$client$pi3 = _slicedToArray(_yield$this$client$pi2[0], 2);
-	                _yield$this$client$pi3[0];
-	                deleted = _yield$this$client$pi3[1];
-	                return _context.a(2, deleted);
+	                return _context5.a(2, this._sendCommand(cmd.map(String), cmd[1] != null ? String(cmd[1]) : undefined));
 	            }
-	          }, _callee, this);
+	          }, _callee5, this);
 	        }));
 	      }
 	      /**
@@ -3870,143 +3498,222 @@
 	    }, {
 	      key: "__scanKeys__",
 	      value: function __scanKeys__(pattern) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee2() {
-	          var nodes, keys, _iterator, _step, node, cursor, _yield$node$scan, _yield$node$scan2, next, found, _t;
-	          return _regenerator().w(function (_context2) {
-	            while (1) switch (_context2.p = _context2.n) {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee6() {
+	          var _this4 = this;
+	          var _a, e_1, _b, _c, nodes, keys, _iterator, _step, node, _d, _e, _f, key, _t2, _t3, _t4;
+	          return _regenerator().w(function (_context6) {
+	            while (1) switch (_context6.p = _context6.n) {
 	              case 0:
-	                _context2.n = 1;
+	                _context6.n = 1;
 	                return this.ready;
 	              case 1:
-	                nodes = typeof this.client.nodes === "function" ? this.client.nodes("master") : [this.client];
+	                if (!this._isCluster()) {
+	                  _context6.n = 3;
+	                  break;
+	                }
+	                _context6.n = 2;
+	                return this.Promise.all(this.client.masters.map(function (master) {
+	                  return _this4.client.nodeClient(master);
+	                }));
+	              case 2:
+	                _t2 = _context6.v;
+	                _context6.n = 4;
+	                break;
+	              case 3:
+	                _t2 = [this.client];
+	              case 4:
+	                nodes = _t2;
 	                keys = [];
 	                _iterator = _createForOfIteratorHelper(nodes);
-	                _context2.p = 2;
+	                _context6.p = 5;
 	                _iterator.s();
-	              case 3:
+	              case 6:
 	                if ((_step = _iterator.n()).done) {
-	                  _context2.n = 8;
+	                  _context6.n = 19;
 	                  break;
 	                }
 	                node = _step.value;
-	                cursor = "0";
-	              case 4:
-	                _context2.n = 5;
-	                return node.scan(cursor, "MATCH", pattern, "COUNT", 10000);
-	              case 5:
-	                _yield$node$scan = _context2.v;
-	                _yield$node$scan2 = _slicedToArray(_yield$node$scan, 2);
-	                next = _yield$node$scan2[0];
-	                found = _yield$node$scan2[1];
-	                cursor = next;
-	                keys.push.apply(keys, _toConsumableArray(found));
-	              case 6:
-	                if (cursor !== "0") {
-	                  _context2.n = 4;
+	                _context6.p = 7;
+	                _d = true, _e = (e_1 = void 0, tslib_1.__asyncValues(node.scanIterator({
+	                  MATCH: pattern,
+	                  COUNT: 10000
+	                })));
+	              case 8:
+	                _context6.n = 9;
+	                return _e.next();
+	              case 9:
+	                _f = _context6.v;
+	                _a = _f.done;
+	                if (_a) {
+	                  _context6.n = 11;
 	                  break;
 	                }
-	              case 7:
-	                _context2.n = 3;
-	                break;
-	              case 8:
-	                _context2.n = 10;
-	                break;
-	              case 9:
-	                _context2.p = 9;
-	                _t = _context2.v;
-	                _iterator.e(_t);
+	                _c = _f.value;
+	                _d = false;
+	                key = _c;
+	                keys.push(key);
 	              case 10:
-	                _context2.p = 10;
-	                _iterator.f();
-	                return _context2.f(10);
+	                _d = true;
+	                _context6.n = 8;
+	                break;
 	              case 11:
-	                return _context2.a(2, keys);
+	                _context6.n = 13;
+	                break;
+	              case 12:
+	                _context6.p = 12;
+	                _t3 = _context6.v;
+	                e_1 = {
+	                  error: _t3
+	                };
+	              case 13:
+	                _context6.p = 13;
+	                _context6.p = 14;
+	                if (!(!_d && !_a && (_b = _e["return"]))) {
+	                  _context6.n = 15;
+	                  break;
+	                }
+	                _context6.n = 15;
+	                return _b.call(_e);
+	              case 15:
+	                _context6.p = 15;
+	                if (!e_1) {
+	                  _context6.n = 16;
+	                  break;
+	                }
+	                throw e_1.error;
+	              case 16:
+	                return _context6.f(15);
+	              case 17:
+	                return _context6.f(13);
+	              case 18:
+	                _context6.n = 6;
+	                break;
+	              case 19:
+	                _context6.n = 21;
+	                break;
+	              case 20:
+	                _context6.p = 20;
+	                _t4 = _context6.v;
+	                _iterator.e(_t4);
+	              case 21:
+	                _context6.p = 21;
+	                _iterator.f();
+	                return _context6.f(21);
+	              case 22:
+	                return _context6.a(2, keys);
 	            }
-	          }, _callee2, this, [[2, 9, 10, 11]]);
+	          }, _callee6, this, [[14,, 15, 17], [7, 12, 13, 18], [5, 20, 21, 22]]);
 	        }));
 	      }
 	    }, {
 	      key: "__addLimiter__",
 	      value: function __addLimiter__(instance) {
-	        var _this4 = this;
-	        return Promise.all([instance.channel(), instance.channel_client()].map(function (channel) {
-	          return new _this4.Promise(function (resolve, reject) {
-	            _this4.subscriber.subscribe(channel, function () {
-	              _this4.limiters[channel] = instance;
-	              resolve();
-	            });
-	          });
+	        var _this5 = this;
+	        return this.Promise.all([instance.channel(), instance.channel_client()].map(function (channel) {
+	          return tslib_1.__awaiter(_this5, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee7() {
+	            var _this6 = this;
+	            return _regenerator().w(function (_context7) {
+	              while (1) switch (_context7.n) {
+	                case 0:
+	                  _context7.n = 1;
+	                  return this.subscriber.subscribe(channel, function (message) {
+	                    var _a;
+	                    (_a = _this6.limiters[channel]) === null || _a === void 0 ? void 0 : _a._store.onMessage(channel, message);
+	                  });
+	                case 1:
+	                  this.limiters[channel] = instance;
+	                case 2:
+	                  return _context7.a(2);
+	              }
+	            }, _callee7, this);
+	          }));
 	        }));
 	      }
 	    }, {
 	      key: "__removeLimiter__",
 	      value: function __removeLimiter__(instance) {
-	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee3() {
-	          var channels, _i, _channels, channel;
-	          return _regenerator().w(function (_context3) {
-	            while (1) switch (_context3.n) {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee9() {
+	          var _this7 = this;
+	          return _regenerator().w(function (_context9) {
+	            while (1) switch (_context9.n) {
 	              case 0:
-	                channels = [instance.channel(), instance.channel_client()];
-	                _i = 0, _channels = channels;
-	              case 1:
-	                if (!(_i < _channels.length)) {
-	                  _context3.n = 4;
-	                  break;
-	                }
-	                channel = _channels[_i];
-	                if (this.terminated) {
-	                  _context3.n = 2;
-	                  break;
-	                }
-	                _context3.n = 2;
-	                return this.subscriber.unsubscribe(channel);
-	              case 2:
-	                delete this.limiters[channel];
-	              case 3:
-	                _i++;
-	                _context3.n = 1;
-	                break;
-	              case 4:
-	                return _context3.a(2);
+	                return _context9.a(2, this.Promise.all([instance.channel(), instance.channel_client()].map(function (channel) {
+	                  return tslib_1.__awaiter(_this7, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee8() {
+	                    return _regenerator().w(function (_context8) {
+	                      while (1) switch (_context8.n) {
+	                        case 0:
+	                          if (this.terminated) {
+	                            _context8.n = 1;
+	                            break;
+	                          }
+	                          _context8.n = 1;
+	                          return this.subscriber.unsubscribe(channel);
+	                        case 1:
+	                          delete this.limiters[channel];
+	                        case 2:
+	                          return _context8.a(2);
+	                      }
+	                    }, _callee8, this);
+	                  }));
+	                })));
 	            }
-	          }, _callee3, this);
+	          }, _callee9, this);
 	        }));
 	      }
 	    }, {
-	      key: "__scriptArgs__",
-	      value: function __scriptArgs__(name, id, args, cb) {
-	        var keys = Scripts.keys(name, id);
-	        return [keys.length].concat(_toConsumableArray(keys), _toConsumableArray(args), [cb]);
-	      }
-	    }, {
-	      key: "__scriptFn__",
-	      value: function __scriptFn__(name) {
-	        return this.client[name].bind(this.client);
+	      key: "_close",
+	      value: function _close(client, flush) {
+	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee0() {
+	          return _regenerator().w(function (_context0) {
+	            while (1) switch (_context0.n) {
+	              case 0:
+	                _context0.n = 1;
+	                return this._connectAttemptSettled(client);
+	              case 1:
+	                if (client.isOpen) {
+	                  _context0.n = 2;
+	                  break;
+	                }
+	                return _context0.a(2);
+	              case 2:
+	                _context0.n = 3;
+	                return flush && client.isReady !== false ? client.quit() : client.disconnect();
+	              case 3:
+	                return _context0.a(2);
+	            }
+	          }, _callee0, this);
+	        }));
 	      }
 	    }, {
 	      key: "disconnect",
 	      value: function disconnect() {
-	        var flush = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
-	        for (var _i2 = 0, _Object$keys = Object.keys(this.limiters); _i2 < _Object$keys.length; _i2++) {
-	          var k = _Object$keys[_i2];
-	          clearInterval(this.limiters[k]._store.heartbeat);
-	        }
-	        this.limiters = {};
-	        this.terminated = true;
-	        if (flush) {
-	          return Promise.all([this.client.quit(), this.subscriber.quit()]).then(function () {
-	            return undefined;
-	          });
-	        } else {
-	          this.client.disconnect();
-	          this.subscriber.disconnect();
-	          return this.Promise.resolve();
-	        }
+	        return tslib_1.__awaiter(this, arguments, void 0, function () {
+	          var _this8 = this;
+	          var flush = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+	          return /*#__PURE__*/_regenerator().m(function _callee1() {
+	            var _i, _Object$keys, k;
+	            return _regenerator().w(function (_context1) {
+	              while (1) switch (_context1.n) {
+	                case 0:
+	                  for (_i = 0, _Object$keys = Object.keys(_this8.limiters); _i < _Object$keys.length; _i++) {
+	                    k = _Object$keys[_i];
+	                    clearInterval(_this8.limiters[k]._store.heartbeat);
+	                  }
+	                  _this8.limiters = {};
+	                  _this8.terminated = true;
+	                  _context1.n = 1;
+	                  return _this8.Promise.all([_this8._close(_this8.client, flush), _this8._close(_this8.subscriber, flush)]);
+	                case 1:
+	                  return _context1.a(2);
+	              }
+	            }, _callee1);
+	          })();
+	        });
 	      }
 	    }]);
 	  }();
-	  IORedisConnection_1 = IORedisConnection;
-	  return IORedisConnection_1;
+	  RedisConnection_1 = RedisConnection;
+	  return RedisConnection_1;
 	}
 
 	var RedisDatastore_1;
@@ -4222,7 +3929,9 @@
 	  var parser = tslib_1.__importStar(requireParser());
 	  var BottleneckError = requireBottleneckError();
 	  var RedisConnection = requireRedisConnection();
-	  var IORedisConnection = requireIORedisConnection();
+	  // Written to Redis instead of the package version: init.lua migrates by the minor digit of the stored version, so a
+	  // "3.x" value would make already-deployed 2.x clients re-run every 2.x migration on live keys.
+	  var DATASTORE_SCHEMA_VERSION = "2.19.6";
 	  var RedisDatastore = /*#__PURE__*/function () {
 	    function RedisDatastore(instance, storeOptions, storeInstanceOptions) {
 	      var _this = this;
@@ -4236,20 +3945,13 @@
 	      parser.load(storeInstanceOptions, storeInstanceOptions, this);
 	      this.clients = {};
 	      this.sharedConnection = storeInstanceOptions.connection != null;
-	      this.connection = (_a = storeInstanceOptions.connection) !== null && _a !== void 0 ? _a : this.instance.datastore === "redis" ? new RedisConnection({
-	        Redis: this.Redis,
-	        clientOptions: this.clientOptions,
-	        Promise: this.Promise,
-	        Events: this.instance.Events
-	      }) : this.instance.datastore === "ioredis" ? new IORedisConnection({
+	      this.connection = (_a = storeInstanceOptions.connection) !== null && _a !== void 0 ? _a : new RedisConnection({
 	        Redis: this.Redis,
 	        clientOptions: this.clientOptions,
 	        clusterNodes: this.clusterNodes,
 	        Promise: this.Promise,
 	        Events: this.instance.Events
-	      }) : function () {
-	        throw new Error("Invalid datastore");
-	      }();
+	      });
 	      this.instance.connection = this.connection;
 	      this.instance.datastore = this.connection.datastore;
 	      this.ready = this.connection.ready.then(function (clients) {
@@ -4284,7 +3986,8 @@
 	              case 1:
 	                _yield$this$ready = _context.v;
 	                client = _yield$this$ready.client;
-	                client.publish(this.instance.channel(), "message:".concat(message.toString()));
+	                _context.n = 2;
+	                return client.publish(this.instance.channel(), "message:".concat(message.toString()));
 	              case 2:
 	                return _context.a(2);
 	            }
@@ -4414,6 +4117,7 @@
 	      value: function runScript(name, args) {
 	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee4() {
 	          var _this3 = this;
+	          var all_args;
 	          return _regenerator().w(function (_context4) {
 	            while (1) switch (_context4.n) {
 	              case 0:
@@ -4424,17 +4128,9 @@
 	                _context4.n = 1;
 	                return this.ready;
 	              case 1:
-	                return _context4.a(2, new this.Promise(function (resolve, reject) {
-	                  var all_args = [Date.now(), _this3.clientId].concat(_toConsumableArray(args));
-	                  _this3.instance.Events.trigger("debug", "Calling Redis script: ".concat(name, ".lua"), all_args);
-	                  var arr = _this3.connection.__scriptArgs__(name, _this3.originalId, all_args, function (err, replies) {
-	                    if (err != null) {
-	                      return reject(err);
-	                    }
-	                    return resolve(replies);
-	                  });
-	                  _this3.connection.__scriptFn__(name).apply(void 0, _toConsumableArray(arr));
-	                })["catch"](function (e) {
+	                all_args = [Date.now(), this.clientId].concat(_toConsumableArray(args));
+	                this.instance.Events.trigger("debug", "Calling Redis script: ".concat(name, ".lua"), all_args);
+	                return _context4.a(2, this.connection.__runScript__(name, this.originalId, this.prepareArray(all_args))["catch"](function (e) {
 	                  if (e.message.match(/^(.*\s)?SETTINGS_KEY_NOT_FOUND$/) != null) {
 	                    if (name === "heartbeat") {
 	                      return _this3.Promise.resolve();
@@ -4479,11 +4175,11 @@
 	      value: function prepareInitSettings(clear) {
 	        var args = this.prepareObject(Object.assign(Object.assign({}, this.storeOptions), {
 	          id: this.originalId,
-	          version: this.instance.version,
+	          version: DATASTORE_SCHEMA_VERSION,
 	          groupTimeout: this.timeout,
 	          clientTimeout: this.clientTimeout
 	        }));
-	        args.unshift(clear ? "1" : "0", this.instance.version);
+	        args.unshift(clear ? "1" : "0", DATASTORE_SCHEMA_VERSION);
 	        return args;
 	      }
 	    }, {
@@ -5242,7 +4938,6 @@
 	  var parser = tslib_1.__importStar(requireParser());
 	  var Events_1 = tslib_1.__importDefault(requireEvents());
 	  var RedisConnection_1 = tslib_1.__importDefault(requireRedisConnection());
-	  var IORedisConnection_1 = tslib_1.__importDefault(requireIORedisConnection());
 	  var Scripts = tslib_1.__importStar(requireScripts());
 	  var Group = /*#__PURE__*/function () {
 	    function Group() {
@@ -5299,16 +4994,10 @@
 	      this.Bottleneck = requireBottleneck();
 	      this._startAutoCleanup();
 	      this.sharedConnection = this.connection != null;
-	      if (this.connection == null) {
-	        if (this.limiterOptions.datastore === "redis") {
-	          this.connection = new RedisConnection_1["default"](Object.assign(Object.assign({}, this.limiterOptions), {
-	            Events: this.Events
-	          }));
-	        } else if (this.limiterOptions.datastore === "ioredis") {
-	          this.connection = new IORedisConnection_1["default"](Object.assign(Object.assign({}, this.limiterOptions), {
-	            Events: this.Events
-	          }));
-	        }
+	      if (this.connection == null && this.limiterOptions.datastore === "redis") {
+	        this.connection = new RedisConnection_1["default"](Object.assign(Object.assign({}, this.limiterOptions), {
+	          Events: this.Events
+	        }));
 	      }
 	    }
 	    return _createClass(Group, [{
@@ -5548,8 +5237,8 @@
 	  return Batcher_1;
 	}
 
-	var version = "2.19.7";
-	var require$$14 = {
+	var version = "3.0.0";
+	var require$$13 = {
 		version: version
 	};
 
@@ -5912,7 +5601,10 @@
 	      this._submitLock = new Sync("submit", this.Promise);
 	      this._registerLock = new Sync("register", this.Promise);
 	      var storeOptions = parser.load(options, this.storeDefaults, {});
-	      this._store = this.datastore === "redis" || this.datastore === "ioredis" || this.connection != null ? function () {
+	      if (this.datastore === "ioredis") {
+	        throw new Bottleneck.BottleneckError('The "ioredis" datastore was removed in 3.0.0. Use datastore "redis" with node-redis v4, and "clusterNodes" for Redis Cluster.');
+	      }
+	      this._store = this.datastore === "redis" || this.connection != null ? function () {
 	        var storeInstanceOptions = parser.load(options, _this.redisStoreDefaults, {});
 	        return new RedisDatastore(_this, storeOptions, storeInstanceOptions);
 	      }() : this.datastore === "local" ? function () {
@@ -6420,9 +6112,8 @@
 	  Bottleneck.BottleneckError = requireBottleneckError();
 	  Bottleneck.Group = requireGroup();
 	  Bottleneck.RedisConnection = requireRedisConnection();
-	  Bottleneck.IORedisConnection = requireIORedisConnection();
 	  Bottleneck.Batcher = requireBatcher();
-	  Bottleneck.version = Bottleneck.prototype.version = require$$14.version;
+	  Bottleneck.version = Bottleneck.prototype.version = require$$13.version;
 	  Bottleneck_1 = Bottleneck;
 	  return Bottleneck_1;
 	}

@@ -4,7 +4,7 @@ var Scripts = require('../lib/Scripts.js')
 var assert = require('assert')
 var packagejson = require('../package.json')
 
-if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'ioredis') {
+if (process.env.DATASTORE === 'redis') {
 
   var limiterKeys = function (limiter) {
     return Scripts.allKeys(limiter._store.originalId)
@@ -15,13 +15,12 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'ioredis') {
   var deleteKeys = function (limiter) {
     return runCommand(limiter, 'del', limiterKeys(limiter))
   }
-  var runCommand = function (limiter, command, args) {
-    return new Promise(function (resolve, reject) {
-      limiter._store.clients.client[command](...args, function (err, data) {
-        if (err != null) return reject(err)
-        return resolve(data)
-      })
-    })
+  var runCommand = async function (limiter, command, args) {
+    var reply = await limiter._store.connection.__runCommand__([command, ...args])
+    if (command !== 'hgetall') return reply
+    var hash = {}
+    for (var i = 0; i < reply.length; i += 2) hash[reply[i]] = reply[i + 1]
+    return hash
   }
 
   describe('Cluster-only', function () {
@@ -755,7 +754,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'ioredis') {
 
     it('Should safely handle connection failures', function () {
       c = makeTest({
-        clientOptions: { port: 1 },
+        clientOptions: { socket: { port: 1 } },
         errorEventsExpected: true
       })
 

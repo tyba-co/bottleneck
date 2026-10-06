@@ -11,14 +11,22 @@ if (process.env.DATASTORE === 'redis') {
       return c.limiter.disconnect(false)
     })
 
-    it('Should accept node_redis lib override', function () {
+    it('Should accept node_redis lib override', async function () {
       c = makeTest({
         maxConcurrent: 2,
-        Redis,
-        clientOptions: {}
+        Redis
       })
 
       c.mustEqual(c.limiter.datastore, 'redis')
+      await c.limiter.ready()
+    })
+
+    it('Should reject the removed ioredis datastore', function () {
+      c = makeTest()
+
+      assert.throws(function () {
+        new Bottleneck({ datastore: 'ioredis' })
+      }, /The "ioredis" datastore was removed in 3\.0\.0/)
     })
 
     it('Should accept existing connections', function () {
@@ -43,7 +51,7 @@ if (process.env.DATASTORE === 'redis') {
         })
         .then(function () {
         // Shared connections should not be disconnected by the limiter
-          c.mustEqual(c.limiter.clients().client.ready, true)
+          c.mustEqual(c.limiter.clients().client.isReady, true)
           return connection.disconnect()
         })
     })
@@ -74,21 +82,36 @@ if (process.env.DATASTORE === 'redis') {
         })
         .then(function () {
         // Shared connections should not be disconnected by the limiter
-          c.mustEqual(c.limiter.clients().client.ready, true)
+          c.mustEqual(c.limiter.clients().client.isReady, true)
           return connection.disconnect()
         })
+    })
+
+    it('Should accept an already connected redis client', async function () {
+      var client = Redis.createClient()
+      await client.connect()
+      var connection = new Bottleneck.RedisConnection({ client })
+      c = makeTest({ connection })
+
+      var result = await c.limiter.schedule(function () { return Promise.resolve('ran') })
+
+      c.mustEqual(result, 'ran')
+      await c.limiter.disconnect()
+      await connection.disconnect()
     })
 
     it('Should trigger error events on the shared connection', function (done) {
       var connection = new Bottleneck.RedisConnection({
         clientOptions: {
-          port: 1
+          socket: { port: 1 }
         }
       })
+      var finished = false
       connection.on('error', function (err) {
+        if (finished) return
+        finished = true
         c.mustEqual(c.limiter.datastore, 'redis')
-        connection.disconnect()
-        done()
+        connection.disconnect().then(function () { done() }, done)
       })
 
       c = makeTest({ connection })
