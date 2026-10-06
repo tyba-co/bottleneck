@@ -599,7 +599,10 @@ describe('General', function () {
       return c.last()
       .then(function (results) {
         c.checkDuration(400)
-        c.checkResultsOrder([[1], [2], [3], [4], [5]])
+        // Jobs 3, 4 and 5 start together once job 2 frees its weight; with Redis their start order follows round trips
+        var order = results.calls.map(function (call) { return call.result[0] })
+        c.mustEqual(order.slice(0, 2), [1, 2])
+        c.mustEqual(order.slice(2).sort(), [3, 4, 5])
       })
     })
 
