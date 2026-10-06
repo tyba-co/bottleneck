@@ -11,49 +11,11 @@ if (process.env.DATASTORE === 'ioredis') {
       return c.limiter.disconnect(false)
     })
 
-    it('Should accept ioredis lib override', function () {
-      c = makeTest({
-        maxConcurrent: 2,
-        Redis,
-        clientOptions: {},
-        clusterNodes: [{
-          host: process.env.REDIS_HOST,
-          port: process.env.REDIS_PORT
-        }]
-      })
+    it('Should accept ioredis lib override', async function () {
+      c = makeTest({ maxConcurrent: 2, Redis })
 
       c.mustEqual(c.limiter.datastore, 'ioredis')
-    })
-
-    it('Should connect in Redis Cluster mode', function () {
-      c = makeTest({
-        maxConcurrent: 2,
-        clientOptions: {},
-        clusterNodes: [{
-          host: process.env.REDIS_HOST,
-          port: process.env.REDIS_PORT
-        }]
-      })
-
-      c.mustEqual(c.limiter.datastore, 'ioredis')
-      assert(c.limiter._store.connection.client.nodes().length >= 0)
-    })
-
-    it('Should connect in Redis Cluster mode with premade client', function () {
-      var client = new Redis.Cluster('')
-      var connection = new Bottleneck.IORedisConnection({ client })
-      c = makeTest({
-        maxConcurrent: 2,
-        clientOptions: {},
-        clusterNodes: [{
-          host: process.env.REDIS_HOST,
-          port: process.env.REDIS_PORT
-        }]
-      })
-
-      c.mustEqual(c.limiter.datastore, 'ioredis')
-      assert(c.limiter._store.connection.client.nodes().length >= 0)
-      connection.disconnect(false)
+      await c.limiter.ready()
     })
 
     it('Should accept existing connections', function () {

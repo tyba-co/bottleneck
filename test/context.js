@@ -43,9 +43,10 @@ module.exports = function (options={}) {
       console.log('(CONTEXT) ERROR EVENT', err)
     })
   }
+  // Tests that disconnect before the limiter is ready make ready() reject; unhandled, it would fail an unrelated later test
   limiter.ready().then(function (client) {
     start = Date.now()
-  })
+  }, function () {})
   var getResults = function () {
     return {
       elapsed: Date.now() - start,
@@ -130,7 +131,8 @@ module.exports = function (options={}) {
     checkDuration: function (shouldBe, minBound = 10) {
       var results = getResults()
       var min = shouldBe - minBound
-      var max = shouldBe + 50
+      // Slow CI runners only ever add latency, so the tolerance widens the upper bound and never the lower one
+      var max = shouldBe + 50 + Number(process.env.TIMING_TOLERANCE_MS || 0)
       if (!(results.callsDuration > min && results.callsDuration < max)) {
         console.error('Duration not around ' + shouldBe + '. Was ' + results.callsDuration)
       }

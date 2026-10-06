@@ -1,0 +1,4 @@
+{
+  "ignore": ["test/context.js", "test/bottleneck.js"],
+  "timeout": 10000
+}

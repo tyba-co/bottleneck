@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.suite }} (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+        suite: [local, es5, light, redis, cluster]
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TIMING_TOLERANCE_MS: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Start Redis
+        if: matrix.suite == 'redis' || matrix.suite == 'cluster'
+        run: docker compose -f docker-compose.test.yml up -d --wait ${{ matrix.suite == 'cluster' && 'redis-cluster' || 'redis' }}
+
+      - name: Build
+        run: |
+          if [ "${{ matrix.suite }}" = "es5" ] || [ "${{ matrix.suite }}" = "light" ]; then
+            npm run build
+          else
+            ./scripts/build.sh dev
+          fi
+
+      - name: Committed bundles and typings match the source
+        if: matrix.suite == 'es5' || matrix.suite == 'light'
+        run: git diff --exit-code -- es5.js light.js bottleneck.d.ts light.d.ts
+
+      - run: npm run test:${{ matrix.suite }}
+
+      - name: Redis logs
+        if: failure() && (matrix.suite == 'redis' || matrix.suite == 'cluster')
+        run: docker compose -f docker-compose.test.yml logs

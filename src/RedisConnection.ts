@@ -101,6 +101,21 @@ class RedisConnection {
     });
   }
 
+  /**
+   * @param {string} pattern
+   * @returns {Promise<string[]>}
+   */
+  async __scanKeys__(pattern: string): Promise<string[]> {
+    const keys: string[] = [];
+    let cursor = "0";
+    do {
+      const [next, found] = await this.__runCommand__(["scan", cursor, "match", pattern, "count", 10000]);
+      cursor = next;
+      keys.push(...found);
+    } while (cursor !== "0");
+    return keys;
+  }
+
   __addLimiter__(instance: any): Promise<void[]> {
     return Promise.all([instance.channel(), instance.channel_client()].map(channel =>
       new this.Promise<void>((resolve, reject) => {

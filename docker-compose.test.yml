@@ -1,0 +1,26 @@
+x-redis-image: &redis-image ${REDIS_IMAGE:-redis:7.2}
+
+services:
+  redis:
+    image: *redis-image
+    command: redis-server --save "" --appendonly no
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 2s
+      retries: 30
+
+  redis-cluster:
+    image: *redis-image
+    command: sh -c "/scripts/start.sh && exec tail -f /dev/null"
+    volumes:
+      - ./scripts/redis-cluster:/scripts:ro
+    ports:
+      - "30001-30006:30001-30006"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -p 30001 cluster info | grep -q cluster_state:ok"]
+      interval: 1s
+      timeout: 2s
+      retries: 60

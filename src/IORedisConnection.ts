@@ -95,6 +95,26 @@ class IORedisConnection {
     return deleted;
   }
 
+  /**
+   * Scans every master, since on Redis Cluster a SCAN only covers the node that receives it
+   * @param {string} pattern
+   * @returns {Promise<string[]>}
+   */
+  async __scanKeys__(pattern: string): Promise<string[]> {
+    await this.ready;
+    const nodes = typeof this.client.nodes === "function" ? this.client.nodes("master") : [this.client];
+    const keys: string[] = [];
+    for (const node of nodes) {
+      let cursor = "0";
+      do {
+        const [next, found] = await node.scan(cursor, "MATCH", pattern, "COUNT", 10000);
+        cursor = next;
+        keys.push(...found);
+      } while (cursor !== "0");
+    }
+    return keys;
+  }
+
   __addLimiter__(instance: any): Promise<void[]> {
     return Promise.all([instance.channel(), instance.channel_client()].map(channel =>
       new this.Promise<void>((resolve, reject) => {

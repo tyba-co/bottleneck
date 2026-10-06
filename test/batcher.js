@@ -2,6 +2,11 @@ var makeTest = require('./context')
 var Bottleneck = require('./bottleneck')
 var assert = require('assert')
 
+// A timer can fire ~1ms before Date.now() reaches its deadline, so a flush due at 50ms may read as 49ms
+var timeSlot = function (elapsed) {
+  return Math.floor((elapsed + 5) / 50)
+}
+
 describe('Batcher', function () {
   var c
 
@@ -30,21 +35,10 @@ describe('Batcher', function () {
       batcher.add(5).then((x) => c.limiter.schedule(c.promise, null, Date.now() - t0, 5))
     ])
     .then(function (data) {
-      // Check that we have the right values, but be more flexible with timing
-      var mappedData = data.map((([t, x]) => [Math.floor(t / 50), x]))
-      
-      // Verify we have all the expected values
-      c.mustEqual(mappedData.map(([t, x]) => x).sort(), [1, 2, 3, 4, 5])
-      
-      // Verify batching behavior - first 3 should be in earlier time slots than last 2
-      var values = mappedData.map(([t, x]) => ({ time: t, value: x }))
-      var firstThree = values.filter(v => [1, 2, 3].includes(v.value))
-      var lastTwo = values.filter(v => [4, 5].includes(v.value))
-      
-      // All first three should have time slots <= all last two time slots
-      var maxFirstTime = Math.max(...firstThree.map(v => v.time))
-      var minLastTime = Math.min(...lastTwo.map(v => v.time))
-      assert(maxFirstTime <= minLastTime, 'Batching timing should respect order')
+      c.mustEqual(
+        data.map((([t, x]) => [timeSlot(t), x])),
+        [[0, 1], [0, 2], [0, 3], [1, 4], [1, 5]]
+      )
 
       return c.last()
     })
@@ -72,7 +66,7 @@ describe('Batcher', function () {
     ])
     .then(function (data) {
       c.mustEqual(
-        data.map((([t, x]) => [Math.floor(t / 50), x])),
+        data.map((([t, x]) => [timeSlot(t), x])),
         [[1, 1], [1, 2]]
       )
 
@@ -83,7 +77,7 @@ describe('Batcher', function () {
     })
     .then(function (data) {
       c.mustEqual(
-        data.map((([t, x]) => [Math.floor(t / 50), x])),
+        data.map((([t, x]) => [timeSlot(t), x])),
         [[2, 3], [2, 4]]
       )
 
@@ -141,21 +135,31 @@ describe('Batcher', function () {
       batcher.add(2).then((x) => c.limiter.schedule(c.promise, null, Date.now() - t0, 2))
     ])
     .then(function (data) {
-      // The mapped times can vary depending on execution speed, focus on batch results instead
+      c.mustEqual(
+        data.map((([t, x]) => [timeSlot(t), x])),
+        [[1, 1], [1, 2]]
+      )
+
+      var promises = []
+      promises.push(batcher.add(3).then((x) => c.limiter.schedule(c.promise, null, Date.now() - t0, 3)))
+
       return c.wait(10)
       .then(function () {
-        return Promise.all([
-          batcher.add(3).then((x) => c.limiter.schedule(c.promise, null, Date.now() - t0, 3)),
-          batcher.add(4).then((x) => c.limiter.schedule(c.promise, null, Date.now() - t0, 4))
-        ])
+        promises.push(batcher.add(4).then((x) => c.limiter.schedule(c.promise, null, Date.now() - t0, 4)))
+
+        return Promise.all(promises)
       })
     })
     .then(function (data) {
-      // The mapped times can vary depending on execution speed, focus on batch results instead
+      c.mustEqual(
+        data.map((([t, x]) => [timeSlot(t), x])),
+        [[2, 3], [2, 4]]
+      )
+
       return c.last()
     })
     .then(function (results) {
-      c.checkDuration(120, 30)
+      c.checkDuration(120, 20)
       c.mustEqual(batches, [[1, 2], [3, 4]])
     })
   })
@@ -185,7 +189,7 @@ describe('Batcher', function () {
     })
     .then(function (data) {
       c.mustEqual(
-        data.map((([t, x]) => [Math.floor(t / 50), x])),
+        data.map((([t, x]) => [timeSlot(t), x])),
         [[0, 1], [0, 2], [0, 3]]
       )
 
@@ -196,7 +200,7 @@ describe('Batcher', function () {
     })
     .then(function (data) {
       c.mustEqual(
-        data.map((([t, x]) => [Math.floor(t / 50), x])),
+        data.map((([t, x]) => [timeSlot(t), x])),
         [[1, 4], [1, 5]]
       )
 

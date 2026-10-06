@@ -92,28 +92,10 @@ class Group {
     if (this.connection == null) {
       return this.Promise.resolve(this.keys());
     }
-    const keys: string[] = [];
-    let cursor: number | null = null;
     const start = `b_${this.id}-`.length;
     const end = "_settings".length;
-    
-    do {
-      const result: any = await this.connection.__runCommand__([
-        "scan", 
-        cursor ?? 0, 
-        "match", 
-        `b_${this.id}-*_settings`, 
-        "count", 
-        10000
-      ]);
-      const [next, found]: [any, any] = result;
-      cursor = ~~next;
-      for (const k of found) {
-        keys.push(k.slice(start, -end));
-      }
-    } while (cursor !== 0);
-    
-    return keys;
+    const settingsKeys: string[] = await this.connection.__scanKeys__(`b_${this.id}-*_settings`);
+    return settingsKeys.map(k => k.slice(start, -end));
   }
 
   private _startAutoCleanup(): void {

@@ -4,8 +4,16 @@
   "description": "Distributed task scheduler and rate limiter",
   "main": "lib/index.js",
   "typings": "bottleneck.d.ts",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "test": "mocha test",
+    "test": "mocha \"test/*.js\"",
+    "test:local": "mocha \"test/*.js\"",
+    "test:redis": "DATASTORE=ioredis mocha \"test/*.js\"",
+    "test:cluster": "DATASTORE=ioredis mocha \"test/redis_cluster/*.js\"",
+    "test:es5": "BUILD=es5 mocha \"test/*.js\"",
+    "test:light": "BUILD=light mocha \"test/*.js\"",
     "build": "./scripts/build.sh",
     "test-all": "./scripts/test_all.sh",
     "compile": "npx tsc",
@@ -43,12 +51,11 @@
     "@babel/cli": "^7.28.3",
     "@babel/core": "^7.5.0",
     "@babel/preset-env": "^7.5.0",
-    "@types/node": "^10.17.60",
-    "assert": "^1.5.0",
+    "@types/node": "^22.20.5",
     "ejs-cli": "github:SGrondin/ejs-cli#master",
     "ioredis": "^4.11.1",
     "jest-leak-detector": "^30.1.0",
-    "mocha": "^6.1.4",
+    "mocha": "^11.8.0",
     "redis": "^2.8.0",
     "regenerator-runtime": "^0.12.1",
     "rollup": "^0.66.6",
@@ -56,7 +63,7 @@
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-json": "^3.1.0",
     "rollup-plugin-node-resolve": "^3.4.0",
-    "typescript": "^4.9.5"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "tslib": "^2.8.1"
