@@ -102,10 +102,18 @@ else
       redis.call('hset', settings_key, 'version', '2.18.0')
     end
 
+    -- 3.0.0
+    if is_older_than(3, 0, 0) then
+      redis.call('hsetnx', settings_key, 'defaultExpiration', '')
+      redis.call('hset', settings_key, 'version', '3.0.0')
+    end
+
   end
 
   process_tick(now, false)
 end
+
+apply_default_expiration(now)
 
 local groupTimeout = tonumber(redis.call('hget', settings_key, 'groupTimeout'))
 refresh_expiration(0, 0, groupTimeout)

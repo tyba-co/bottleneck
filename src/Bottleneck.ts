@@ -29,6 +29,7 @@ interface StoreDefaults {
   reservoirIncreaseInterval: number | null;
   reservoirIncreaseAmount: number | null;
   reservoirIncreaseMaximum: number | null;
+  defaultExpiration: number | null;
 }
 
 interface StoreOptions {
@@ -43,6 +44,7 @@ interface StoreOptions {
   reservoirIncreaseInterval?: number | null;
   reservoirIncreaseAmount?: number | null;
   reservoirIncreaseMaximum?: number | null;
+  defaultExpiration?: number | null;
 }
 
 interface LocalStoreDefaults {
@@ -114,7 +116,8 @@ class Bottleneck {
     reservoirRefreshAmount: null,
     reservoirIncreaseInterval: null,
     reservoirIncreaseAmount: null,
-    reservoirIncreaseMaximum: null
+    reservoirIncreaseMaximum: null,
+    defaultExpiration: null
   };
 
   private localStoreDefaults: LocalStoreDefaults = {
@@ -486,17 +489,22 @@ class Bottleneck {
     }
   }
 
+  private _getJobDefaults(): JobDefaults {
+    return { ...this.jobDefaults, expiration: this._store.storeOptions.defaultExpiration ?? this.jobDefaults.expiration };
+  }
+
   submit(...args: any[]): Promise<any> {
     let fn: (...args: any[]) => any, options: any, cb: (...args: any[]) => any;
+    const jobDefaults = this._getJobDefaults();
     
     if (typeof args[0] === "function") {
       [fn, ...args] = args;
       cb = args.pop();
-      options = parser.load({}, this.jobDefaults);
+      options = parser.load({}, jobDefaults);
     } else {
       [options, fn, ...args] = args;
       cb = args.pop();
-      options = parser.load(options, this.jobDefaults);
+      options = parser.load(options, jobDefaults);
     }
 
     const task = (...taskArgs: any[]) => {
@@ -511,7 +519,7 @@ class Bottleneck {
       });
     };
 
-    const job = new Job(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
+    const job = new Job(task, args, options, jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
     job.promise
       .then((args: any) => cb?.(...args))
       .catch((args: any) => {
@@ -534,7 +542,7 @@ class Bottleneck {
       [options, task, ...args] = args;
     }
     
-    const job = new Job(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise as any);
+    const job = new Job(task, args, options, this._getJobDefaults(), this.rejectOnDrop, this.Events, this._states, this.Promise as any);
     this._receive(job);
     return job.promise;
   }

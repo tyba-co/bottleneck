@@ -29,7 +29,8 @@ let limiter = new Bottleneck({
   reservoirRefreshAmount: 10,
   reservoirIncreaseInterval: 1000 * 60,
   reservoirIncreaseAmount: 2,
-  reservoirIncreaseMaximum: 15
+  reservoirIncreaseMaximum: 15,
+  defaultExpiration: 300000
 });
 
 limiter.ready().then(() => { console.log('Ready') });

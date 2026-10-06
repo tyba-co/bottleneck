@@ -704,6 +704,39 @@ describe('General', function () {
         c.mustEqual(done, 2)
       })
     })
+
+    it('Should use defaultExpiration for jobs scheduled without an expiration', async function () {
+      // ARRANGE
+      c = makeTest({ maxConcurrent: 2, defaultExpiration: 50 })
+
+      // ACT
+      var withoutExpiration = c.limiter.schedule(c.slowPromise, 100, null, 1).then(function () {
+        throw new Error('Should have timed out.')
+      }, function (err) {
+        return err.message
+      })
+      var withExpiration = c.limiter.schedule({ expiration: 200 }, c.slowPromise, 100, null, 2)
+
+      // ASSERT
+      c.mustEqual(await withoutExpiration, 'This job timed out after 50 ms.')
+      c.mustEqual(await withExpiration, [2])
+    })
+
+    it('Should use the defaultExpiration set by updateSettings', async function () {
+      // ARRANGE
+      c = makeTest({ maxConcurrent: 1 })
+      await c.limiter.updateSettings({ defaultExpiration: 50 })
+
+      // ACT
+      var message = await c.limiter.schedule(c.slowPromise, 100, null, 1).then(function () {
+        throw new Error('Should have timed out.')
+      }, function (err) {
+        return err.message
+      })
+
+      // ASSERT
+      c.mustEqual(message, 'This job timed out after 50 ms.')
+    })
   })
 
   describe('Pubsub', function () {
