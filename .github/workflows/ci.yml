@@ -51,7 +51,10 @@ jobs:
         if: matrix.suite == 'es5' || matrix.suite == 'light'
         run: git diff --exit-code -- es5.js light.js bottleneck.d.ts light.d.ts
 
-      - run: npm run test:${{ matrix.suite }}
+      - name: Test
+        # A suite takes under a minute; a connection left open keeps mocha alive, so fail fast instead of at the job timeout
+        timeout-minutes: 4
+        run: npm run test:${{ matrix.suite }}
 
       - name: Redis logs
         if: failure() && (matrix.suite == 'redis' || matrix.suite == 'cluster')

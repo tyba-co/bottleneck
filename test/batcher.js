@@ -14,8 +14,10 @@ describe('Batcher', function () {
     return c.limiter.disconnect(false)
   })
 
-  it('Should batch by time and size', function () {
+  it('Should batch by time and size', async function () {
     c = makeTest()
+    // Timings are measured from ready(); with Redis it resolves after a round trip, so start the batcher after it
+    await c.limiter.ready()
     var batcher = new Bottleneck.Batcher({
       maxTime: 50,
       maxSize: 3
@@ -48,8 +50,9 @@ describe('Batcher', function () {
     })
   })
 
-  it('Should batch by time', function () {
+  it('Should batch by time', async function () {
     c = makeTest()
+    await c.limiter.ready()
     var batcher = new Bottleneck.Batcher({
       maxTime: 50
     })
@@ -89,8 +92,9 @@ describe('Batcher', function () {
     })
   })
 
-  it('Should batch by size', function () {
+  it('Should batch by size', async function () {
     c = makeTest()
+    await c.limiter.ready()
     var batcher = new Bottleneck.Batcher({
       maxSize: 2
     })
@@ -117,8 +121,9 @@ describe('Batcher', function () {
     })
   })
 
-  it('Should stagger flushes', function () {
+  it('Should stagger flushes', async function () {
     c = makeTest()
+    await c.limiter.ready()
     var batcher = new Bottleneck.Batcher({
       maxTime: 50,
       maxSize: 3
@@ -164,8 +169,9 @@ describe('Batcher', function () {
     })
   })
 
-  it('Should force then stagger flushes', function () {
+  it('Should force then stagger flushes', async function () {
     c = makeTest()
+    await c.limiter.ready()
     var batcher = new Bottleneck.Batcher({
       maxTime: 50,
       maxSize: 3
