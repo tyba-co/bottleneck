@@ -2,8 +2,63 @@ local clear = tonumber(ARGV[num_static_argv + 1])
 local limiter_version = ARGV[num_static_argv + 2]
 local num_local_argv = num_static_argv + 2
 
+local new_settings = {}
+for i = num_local_argv + 1, #ARGV, 2 do
+  new_settings[ARGV[i]] = ARGV[i + 1]
+end
+
+local get_responsive_clients = function (seen_since)
+  local responsive = {}
+  for _, responsive_client in ipairs(redis.call('zrangebyscore', client_last_seen_key, seen_since, '+inf')) do
+    responsive[responsive_client] = true
+  end
+  return responsive
+end
+
+local keep_only_running_jobs_of = function (responsive)
+  local clients_running_jobs = {}
+  local job_clients = redis.call('hgetall', job_clients_key)
+  for i = 1, #job_clients, 2 do
+    local index = job_clients[i]
+    local job_client = job_clients[i + 1]
+    if responsive[job_client] then
+      clients_running_jobs[job_client] = true
+    else
+      redis.call('hdel', job_weights_key, index)
+      redis.call('hdel', job_clients_key, index)
+      redis.call('zrem', job_expirations_key, index)
+    end
+  end
+
+  -- Clients without running jobs register again, with their current queue, on their next call
+  for _, registered_client in ipairs(redis.call('zrange', client_last_seen_key, 0, -1)) do
+    if not clients_running_jobs[registered_client] then
+      redis.call('zrem', client_running_key, registered_client)
+      redis.call('hdel', client_num_queued_key, registered_client)
+      redis.call('zrem', client_last_registered_key, registered_client)
+      redis.call('zrem', client_last_seen_key, registered_client)
+    end
+  end
+end
+
+local get_running_weight = function ()
+  local running = 0
+  for _, weight in ipairs(redis.call('hvals', job_weights_key)) do
+    running = running + tonumber(weight)
+  end
+  return running
+end
+
+local kept_next_request = nil
+
 if clear == 1 then
-  redis.call('del', unpack(KEYS))
+  -- Responsive clients keep their running jobs and the spacing of the last job, so a clear never lets them exceed the limits
+  local responsive = get_responsive_clients(now - tonumber(new_settings['clientTimeout']))
+  if next(responsive) ~= nil then
+    kept_next_request = tonumber(redis.call('hget', settings_key, 'nextRequest'))
+  end
+  redis.call('del', settings_key)
+  keep_only_running_jobs_of(responsive)
 end
 
 if redis.call('exists', settings_key) == 0 then
@@ -14,12 +69,17 @@ if redis.call('exists', settings_key) == 0 then
     table.insert(args, ARGV[i])
   end
 
+  local next_request = now
+  if kept_next_request ~= nil then
+    next_request = math.max(now, math.min(kept_next_request, now + tonumber(new_settings['minTime'])))
+  end
+
   redis.call(unpack(args))
   redis.call('hmset', settings_key,
-    'nextRequest', now,
+    'nextRequest', next_request,
     'lastReservoirRefresh', now,
     'lastReservoirIncrease', now,
-    'running', 0,
+    'running', get_running_weight(),
     'done', 0,
     'unblockTime', 0,
     'capacityPriorityCounter', 0

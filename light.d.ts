@@ -88,7 +88,7 @@ declare module "bottleneck/light" {
           */
         readonly connection?: Bottleneck.RedisConnection | Bottleneck.GlideConnection | null;
         /**
-          * When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db.
+          * When set to `true`, on initial startup, the limiter will wipe any existing Bottleneck state data on the Redis db, except the jobs still running on clients seen within `clientTimeout`.
           */
         readonly clearDatastore?: boolean | null;
         /**
@@ -362,7 +362,7 @@ declare module "bottleneck/light" {
         deleteKey(str: string): Promise<boolean>;
 
         /**
-          * Disconnects the underlying redis clients, unless the Group was created with the `connection` option.
+          * Disconnects every limiter of the Group (see `Bottleneck.disconnect()`), then the underlying redis clients, unless the Group was created with the `connection` option.
           * @param flush - Write transient data before closing.
           */
         disconnect(flush?: boolean): Promise<void>;
@@ -444,7 +444,7 @@ class Bottleneck {
     channel(): string;
 
     /**
-      * Disconnects the underlying redis clients, unless the limiter was created with the `connection` option.
+      * Unregisters the limiter from the cluster, releasing the weight of its running jobs, then disconnects the underlying redis clients, unless the limiter was created with the `connection` option.
       * @param flush - Write transient data before closing.
       */
     disconnect(flush?: boolean): Promise<void>;

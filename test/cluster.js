@@ -22,6 +22,10 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
     if (!Array.isArray(reply) || reply.length === 0 || reply[0] == null || typeof reply[0] !== 'object' || !('key' in reply[0])) return reply
     return reply.flatMap(function (record) { return [record.key, String(record.value)] })
   }
+  // Closes the connection without unregistering, like a process that dies
+  var crash = function (limiter) {
+    return limiter._store.connection.disconnect(false)
+  }
   var runCommand = async function (limiter, command, args) {
     var reply = flattenRecords(await limiter._store.connection.__runCommand__([command, ...args]))
     if (command !== 'hgetall') return reply
@@ -120,6 +124,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
     it('Should allow passing a Group\'s connection to a new limiter', function () {
       c = makeTest()
       var group = new Bottleneck.Group({
+        id: 'group-connection-to-limiter',
         minTime: 50,
         datastore: process.env.DATASTORE,
         clearDatastore: true
@@ -551,9 +556,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         return c.limiter._drainAll()
       })
       .then(function () {
-        return c.limiter.disconnect(false)
-      })
-      .then(function () {
+        return crash(c.limiter)
       })
       .then(function () {
         return getData(c.limiter)
@@ -859,7 +862,7 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         var crashedLimiter = new Bottleneck({ id: 'default-expiration-crash', datastore: process.env.DATASTORE })
         crashedLimiter.schedule(function () { return new Promise(function () {}) })
         await waitForRunning(c.limiter, 1)
-        await crashedLimiter.disconnect(false)
+        await crash(crashedLimiter)
         var crashedAt = Date.now()
 
         // ACT
@@ -920,6 +923,119 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
         c.checkResultsOrder([[1], [2]])
         c.checkDuration(200)
       })
+    })
+
+    it('Should release the jobs and the registration of a limiter that disconnects', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'disconnect-releases', maxConcurrent: 1 })
+      await c.limiter.ready()
+      var limiter2 = new Bottleneck({ id: 'disconnect-releases', datastore: process.env.DATASTORE })
+      await limiter2.ready()
+      limiter2.schedule(function () { return new Promise(function () {}) })
+      while (await c.limiter.running() !== 1) await c.wait(10)
+      var client_last_seen_key = limiterKeys(c.limiter)[7]
+
+      // ACT
+      await limiter2.disconnect(false)
+
+      // ASSERT
+      c.mustEqual(await c.limiter.running(), 0)
+      c.mustEqual(await runCommand(c.limiter, 'zscore', [client_last_seen_key, limiter2._store.clientId]), null)
+      c.mustEqual(await c.limiter.schedule(function () { return Promise.resolve('ran') }), 'ran')
+    })
+
+    describe('clearDatastore with running jobs', function () {
+      var waitForRunning = async function (limiter, running) {
+        while (await limiter.running() !== running) await c.wait(10)
+      }
+
+      it('Should keep the jobs that responsive clients are running', async function () {
+        // ARRANGE
+        c = makeTest({ id: 'clear-live-jobs', maxConcurrent: 1 })
+        await c.limiter.ready()
+        var runningJobEnd
+        var runningJob = c.limiter.schedule(function () {
+          return c.wait(300).then(function () { runningJobEnd = Date.now() })
+        })
+        await waitForRunning(c.limiter, 1)
+        var limiter2 = new Bottleneck({ id: 'clear-live-jobs', datastore: process.env.DATASTORE, maxConcurrent: 1, clearDatastore: true })
+
+        try {
+          // ACT
+          await limiter2.ready()
+          var runningAfterClear = await limiter2.running()
+          var clearedJobStart = await limiter2.schedule(function () { return Date.now() })
+
+          // ASSERT
+          c.mustEqual(runningAfterClear, 1)
+          await runningJob
+          assert(clearedJobStart >= runningJobEnd, 'started ' + (runningJobEnd - clearedJobStart) + 'ms before the running job ended')
+          c.mustEqual(await limiter2.running(), 0)
+        } finally {
+          await limiter2.disconnect(false)
+        }
+      })
+
+      it('Should keep spacing jobs by minTime', async function () {
+        // ARRANGE
+        c = makeTest({ id: 'clear-min-time', minTime: 500 })
+        await c.limiter.ready()
+        var firstJobStart = await c.limiter.schedule(function () { return Date.now() })
+        var limiter2 = new Bottleneck({ id: 'clear-min-time', datastore: process.env.DATASTORE, minTime: 500, clearDatastore: true })
+
+        try {
+          // ACT
+          await limiter2.ready()
+          var secondJobStart = await limiter2.schedule(function () { return Date.now() })
+
+          // ASSERT
+          var gap = secondJobStart - firstJobStart
+          assert(gap >= 490 && gap < 500 + 100 + timingTolerance, 'gap was ' + gap + 'ms')
+        } finally {
+          await limiter2.disconnect(false)
+        }
+      })
+
+      it('Should drop the jobs of clients that stopped responding', async function () {
+        // ARRANGE
+        c = makeTest({ id: 'clear-dead-jobs', maxConcurrent: 1 })
+        await c.limiter.ready()
+        var crashedLimiter = new Bottleneck({ id: 'clear-dead-jobs', datastore: process.env.DATASTORE })
+        crashedLimiter.schedule(function () { return new Promise(function () {}) })
+        await waitForRunning(c.limiter, 1)
+        await crash(crashedLimiter)
+        await c.wait(150)
+        var limiter2 = new Bottleneck({ id: 'clear-dead-jobs', datastore: process.env.DATASTORE, maxConcurrent: 1, clearDatastore: true, clientTimeout: 100 })
+
+        try {
+          // ACT
+          await limiter2.ready()
+
+          // ASSERT
+          c.mustEqual(await limiter2.running(), 0)
+          c.mustEqual(await limiter2.schedule(function () { return Promise.resolve('ran') }), 'ran')
+        } finally {
+          await limiter2.disconnect(false)
+        }
+      })
+    })
+
+    it('Should keep counting the running jobs when the settings key is lost', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'lost-settings-running', maxConcurrent: 1 })
+      await c.limiter.ready()
+      var settings_key = limiterKeys(c.limiter)[0]
+      var runningJob = c.limiter.schedule(c.slowPromise, 300, null, 1)
+      while (await c.limiter.running() !== 1) await c.wait(10)
+
+      // ACT
+      await runCommand(c.limiter, 'del', [settings_key])
+      var runningAfterRecovery = await c.limiter.running()
+      await runningJob
+
+      // ASSERT
+      c.mustEqual(runningAfterRecovery, 1)
+      c.mustEqual(await c.limiter.running(), 0)
     })
 
     it('Should safely handle connection failures', function () {

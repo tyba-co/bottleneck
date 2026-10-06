@@ -70,6 +70,12 @@ const templates: { [name: string]: ScriptTemplate } = {
     refresh_expiration: false,
     code: lua["register_client.lua"]
   },
+  unregister_client: {
+    keys: allKeys,
+    headers: ["process_tick"],
+    refresh_expiration: false,
+    code: lua["unregister_client.lua"]
+  },
   blacklist_client: {
     keys: allKeys,
     headers: ["validate_keys", "validate_client"],

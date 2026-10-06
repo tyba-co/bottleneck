@@ -126,9 +126,10 @@ class Group {
     }
   }
 
-  disconnect(flush: boolean = true): void {
+  async disconnect(flush: boolean = true): Promise<void> {
+    await Promise.all(Object.values(this.instances).map((limiter: any) => limiter.disconnect(flush)));
     if (!this.sharedConnection) {
-      this.connection?.disconnect(flush);
+      await this.connection?.disconnect(flush);
     }
   }
 }
