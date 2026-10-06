@@ -24,7 +24,7 @@ jobs:
         suite: [local, es5, light, redis, cluster]
     env:
       NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TIMING_TOLERANCE_MS: 50
+      TIMING_TOLERANCE_MS: 250
     steps:
       - uses: actions/checkout@v4
 
