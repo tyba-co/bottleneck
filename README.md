@@ -847,6 +847,7 @@ const limiter = new Bottleneck({
 - Bottleneck opens two GLIDE clients: one for commands (RESP2 by default, override with `clientOptions.protocol`) and one subscriber that always uses RESP3, because GLIDE only supports Pub/Sub over RESP3.
 - To reuse an existing `GlideClient`/`GlideClusterClient`, pass it as `client` to `new Bottleneck.GlideConnection({ client, clusterNodes, clientOptions })`. GLIDE clients cannot be duplicated, so the same addresses and options are still needed to create the subscriber.
 - `disconnect(flush)` ignores `flush`: GLIDE closes immediately and rejects pending requests.
+- GLIDE does not reconnect a client that failed to connect. If either client fails, `ready()` rejects, Bottleneck closes the one that did connect, and the limiter cannot be used anymore: create a new one to retry.
 - Limiters on `redis` and `valkey-glide` can share the same id and keys, so an application can switch clients gradually.
 
 | Option | Default | Description |
