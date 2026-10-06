@@ -590,13 +590,19 @@ describe('General', function () {
     it('Should support custom job weights', function () {
       c = makeTest({maxConcurrent: 2})
 
-      c.pNoErrVal(c.limiter.schedule({ weight: 1 }, c.slowPromise, 100, null, 1), 1)
-      c.pNoErrVal(c.limiter.schedule({ weight: 2 }, c.slowPromise, 200, null, 2), 2)
-      c.pNoErrVal(c.limiter.schedule({ weight: 1 }, c.slowPromise, 100, null, 3), 3)
-      c.pNoErrVal(c.limiter.schedule({ weight: 1 }, c.slowPromise, 100, null, 4), 4)
-      c.pNoErrVal(c.limiter.schedule({ weight: 0 }, c.slowPromise, 100, null, 5), 5)
+      var jobs = [
+        c.pNoErrVal(c.limiter.schedule({ weight: 1 }, c.slowPromise, 100, null, 1), 1),
+        c.pNoErrVal(c.limiter.schedule({ weight: 2 }, c.slowPromise, 200, null, 2), 2),
+        c.pNoErrVal(c.limiter.schedule({ weight: 1 }, c.slowPromise, 100, null, 3), 3),
+        c.pNoErrVal(c.limiter.schedule({ weight: 1 }, c.slowPromise, 100, null, 4), 4),
+        c.pNoErrVal(c.limiter.schedule({ weight: 0 }, c.slowPromise, 100, null, 5), 5)
+      ]
 
-      return c.last()
+      // c.last() only waits for one slot, which job 3 frees while jobs 4 and 5 may still be running on Redis
+      return Promise.all(jobs)
+      .then(function () {
+        return c.last({ weight: 0 })
+      })
       .then(function (results) {
         c.checkDuration(400)
         // Jobs 3, 4 and 5 start together once job 2 frees its weight; with Redis their start order follows round trips

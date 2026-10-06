@@ -307,6 +307,44 @@ if (process.env.DATASTORE === 'redis') {
       })
     })
 
+    it('Should not migrate settings written by a newer major version', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'migrate-newer-major' })
+      var settings_key = limiterKeys(c.limiter)[0]
+      await c.limiter.ready()
+      await runCommand(c.limiter, 'hset', [settings_key, 'version', '3.0.0'])
+      var limiter2 = new Bottleneck({ id: 'migrate-newer-major', datastore: process.env.DATASTORE })
+
+      try {
+        // ACT
+        await limiter2.ready()
+
+        // ASSERT
+        c.mustEqual(await runCommand(c.limiter, 'hget', [settings_key, 'version']), '3.0.0')
+      } finally {
+        await limiter2.disconnect(false)
+      }
+    })
+
+    it('Should migrate settings written by an older minor version', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'migrate-older-minor' })
+      var settings_key = limiterKeys(c.limiter)[0]
+      await c.limiter.ready()
+      await runCommand(c.limiter, 'hset', [settings_key, 'version', '2.16.0'])
+      var limiter2 = new Bottleneck({ id: 'migrate-older-minor', datastore: process.env.DATASTORE })
+
+      try {
+        // ACT
+        await limiter2.ready()
+
+        // ASSERT
+        c.mustEqual(await runCommand(c.limiter, 'hget', [settings_key, 'version']), '2.18.0')
+      } finally {
+        await limiter2.disconnect(false)
+      }
+    })
+
     it('Should keep track of each client\'s queue length', async function () {
       c = makeTest({
         id: 'queues',

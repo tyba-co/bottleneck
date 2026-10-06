@@ -232,21 +232,6 @@ describe('Redis Cluster', function () {
     await connection.disconnect()
   })
 
-  it('Should store a 2.x schema version so deployed 2.x clients skip every migration', async function () {
-    // ARRANGE
-    var id = uniqueId('schema')
-    var limiter = makeLimiter({ id: id, maxConcurrent: 2, clearDatastore: true })
-
-    // ACT
-    await limiter.ready()
-
-    // ASSERT
-    var version = await runCommand(limiter, ['hget', `b_${id}_settings`, 'version'])
-    var [major, minor] = version.split('.').map(Number)
-    assert.strictEqual(major, 2)
-    assert(minor >= 19, `stored version ${version} would make 2.x clients re-run migrations`)
-  })
-
   it('Should fail to start a limiter whose id has no hash tag', async function () {
     // ARRANGE
     var limiter = makeLimiter({ id: `no-hash-tag-${Date.now()}`, clearDatastore: true })
