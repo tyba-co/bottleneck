@@ -5,7 +5,7 @@ set -e
 
 npm run build
 
-for suite in local es5 light redis cluster; do
+for suite in local es5 light redis cluster glide glide-cluster; do
   echo "[T] $suite"
   npm run -s "test:$suite"
 done

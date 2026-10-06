@@ -1,12 +1,22 @@
 var Bottleneck = require('../bottleneck')
 var assert = require('assert')
-var Redis = require('redis')
+
+var isGlide = process.env.DATASTORE === 'valkey-glide'
+var Client = isGlide ? require('@valkey/valkey-glide') : require('redis')
+if (isGlide) Client.Logger.setLoggerConfig('error')
 
 var clusterNodes = (process.env.REDIS_CLUSTER_NODES || '127.0.0.1:30001,127.0.0.1:30002,127.0.0.1:30003')
   .split(',')
   .map(function (node) {
-    return { url: `redis://${node}` }
+    var [host, port] = node.split(':')
+    return isGlide ? { host: host, port: Number(port) } : { url: `redis://${node}` }
   })
+
+var createClusterClient = function () {
+  return isGlide
+    ? Client.GlideClusterClient.createClient({ addresses: clusterNodes, protocol: Client.ProtocolVersion.RESP2 })
+    : Client.createCluster({ rootNodes: clusterNodes })
+}
 
 var clusterOptions = function (options) {
   return Object.assign({
@@ -219,8 +229,10 @@ describe('Redis Cluster', function () {
 
   it('Should run jobs through an injected cluster client', async function () {
     // ARRANGE
-    var client = Redis.createCluster({ rootNodes: clusterNodes })
-    var connection = new Bottleneck.RedisConnection({ client: client })
+    var client = await createClusterClient()
+    var connection = isGlide
+      ? new Bottleneck.GlideConnection({ client: client, clusterNodes: clusterNodes })
+      : new Bottleneck.RedisConnection({ client: client })
     var limiter = makeLimiter({ id: uniqueId('injected'), connection: connection, clearDatastore: true })
 
     // ACT
@@ -241,6 +253,6 @@ describe('Redis Cluster', function () {
 
     // ASSERT
     assert(error != null, 'ready() should reject on a cluster when the keys span several slots')
-    assert.match(error.message, /CROSSSLOT/)
+    assert.match(error.message, /CROSS ?SLOT/i)
   })
 })

@@ -12,6 +12,7 @@ const missing = `export default () => console.log('You must import the full vers
 const exclude = [
   'RedisDatastore.js',
   'RedisConnection.js',
+  'GlideConnection.js',
   'Scripts.js'
 ];
 

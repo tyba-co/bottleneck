@@ -281,6 +281,22 @@ const limiterWithConn = new Bottleneck({
   connection: redisConnection
 })
 
+const glideConnection = new Bottleneck.GlideConnection({
+  clientOptions: { useTLS: true, credentials: { password: "secret" } },
+  clusterNodes: [{ host: "127.0.0.1", port: 30001 }]
+})
+
+glideConnection.on("error", (err) => {
+  console.log(err.message)
+})
+
+const limiterWithGlide = new Bottleneck({
+  id: "{glide}:",
+  datastore: "valkey-glide",
+  clusterNodes: [{ host: "127.0.0.1", port: 30001 }],
+  connection: glideConnection
+})
+
 const groupWithConn = new Bottleneck.Group({
   connection: redisConnection
 })

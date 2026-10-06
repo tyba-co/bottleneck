@@ -142,6 +142,15 @@ class RedisConnection {
     }
   }
 
+  /**
+   * @param {string} channel
+   * @param {string} message
+   * @returns {Promise<void>}
+   */
+  async __publish__(channel: string, message: string): Promise<void> {
+    await this.client.publish(channel, message);
+  }
+
   async __runCommand__(cmd: any[]): Promise<any> {
     await this.ready;
     return this._sendCommand(cmd.map(String), cmd[1] != null ? String(cmd[1]) : undefined);

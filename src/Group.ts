@@ -1,6 +1,7 @@
 import * as parser from "./parser";
 import Events from "./Events";
 import RedisConnection from "./RedisConnection";
+import GlideConnection from "./GlideConnection";
 import * as Scripts from "./Scripts";
 
 interface LimiterOptions {
@@ -46,6 +47,8 @@ class Group {
 
     if (this.connection == null && this.limiterOptions.datastore === "redis") {
       this.connection = new RedisConnection({ ...this.limiterOptions, Events: this.Events });
+    } else if (this.connection == null && this.limiterOptions.datastore === "valkey-glide") {
+      this.connection = new GlideConnection({ ...this.limiterOptions, Events: this.Events });
     }
   }
 

@@ -1,6 +1,7 @@
 import * as parser from "./parser";
 import BottleneckError = require("./BottleneckError");
 import RedisConnection = require("./RedisConnection");
+import GlideConnection = require("./GlideConnection");
 
 interface StoreOptions {
   maxConcurrent?: number;
@@ -18,6 +19,7 @@ interface StoreOptions {
 
 interface StoreInstanceOptions {
   Redis?: any;
+  Glide?: any;
   clientOptions?: any;
   clusterNodes?: any;
   Promise: PromiseConstructor;
@@ -48,6 +50,7 @@ class RedisDatastore {
   public clientId: string;
   public clients: any;
   public Redis?: any;
+  public Glide?: any;
   public clientOptions?: any;
   public clusterNodes?: any;
   public Promise!: PromiseConstructor;
@@ -55,7 +58,7 @@ class RedisDatastore {
   public heartbeatInterval!: number;
   public clientTimeout!: number;
   public clearDatastore?: boolean;
-  public connection!: RedisConnection;
+  public connection!: RedisConnection | GlideConnection;
   public ready: Promise<any>;
   public heartbeat?: NodeJS.Timeout;
   private capacityPriorityCounters: { [counter: string]: NodeJS.Timeout } = {};
@@ -72,13 +75,17 @@ class RedisDatastore {
     this.clients = {};
     this.sharedConnection = storeInstanceOptions.connection != null;
 
-    this.connection = storeInstanceOptions.connection ?? new RedisConnection({
-      Redis: this.Redis,
+    const connectionOptions = {
       clientOptions: this.clientOptions,
       clusterNodes: this.clusterNodes,
       Promise: this.Promise,
       Events: this.instance.Events as any
-    });
+    };
+    this.connection = storeInstanceOptions.connection ?? (
+      this.instance.datastore === "valkey-glide"
+        ? new GlideConnection({ ...connectionOptions, Glide: this.Glide })
+        : new RedisConnection({ ...connectionOptions, Redis: this.Redis })
+    );
 
     this.instance.connection = this.connection;
     this.instance.datastore = this.connection.datastore;
@@ -105,8 +112,8 @@ class RedisDatastore {
   }
 
   async __publish__(message: any): Promise<void> {
-    const { client } = await this.ready;
-    await client.publish(this.instance.channel(), `message:${message.toString()}`);
+    await this.ready;
+    await this.connection.__publish__(this.instance.channel(), `message:${message.toString()}`);
   }
 
   async onMessage(channel: string, message: string): Promise<void> {
@@ -123,8 +130,8 @@ class RedisDatastore {
         if (priorityClient === this.clientId) {
           const drained = await this.instance._drainAll(capacity);
           const newCapacity = capacity != null ? capacity - (drained || 0) : "";
-          await this.clients.client.publish(
-            this.instance.channel(), 
+          await this.connection.__publish__(
+            this.instance.channel(),
             `capacity-priority:${newCapacity}::${counter}`
           );
         } else if (priorityClient === "") {
