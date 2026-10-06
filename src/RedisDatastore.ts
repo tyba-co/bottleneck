@@ -2,10 +2,6 @@ import * as parser from "./parser";
 import BottleneckError = require("./BottleneckError");
 import RedisConnection = require("./RedisConnection");
 
-// Written to Redis instead of the package version: init.lua migrates by the minor digit of the stored version, so a
-// "3.x" value would make already-deployed 2.x clients re-run every 2.x migration on live keys.
-const DATASTORE_SCHEMA_VERSION = "2.19.6";
-
 interface StoreOptions {
   maxConcurrent?: number;
   minTime: number;
@@ -207,11 +203,11 @@ class RedisDatastore {
     const args = this.prepareObject({
       ...this.storeOptions,
       id: this.originalId,
-      version: DATASTORE_SCHEMA_VERSION,
+      version: this.instance.version,
       groupTimeout: this.timeout,
       clientTimeout: this.clientTimeout
     });
-    args.unshift(clear ? "1" : "0", DATASTORE_SCHEMA_VERSION);
+    args.unshift(clear ? "1" : "0", this.instance.version);
     return args;
   }
 

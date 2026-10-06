@@ -35,13 +35,21 @@ else
   local current_version = settings[2]
 
   if current_version ~= limiter_version then
-    local version_digits = {}
-    for k, v in string.gmatch(current_version, "([^.]+)") do
-      table.insert(version_digits, tonumber(k))
+    local current_major, current_minor, current_patch = string.match(current_version, '^(%d+)%.(%d+)%.(%d+)')
+    local current = { tonumber(current_major), tonumber(current_minor), tonumber(current_patch) }
+
+    local is_older_than = function (major, minor, patch)
+      local target = { major, minor, patch }
+      for i = 1, 3 do
+        if current[i] ~= target[i] then
+          return current[i] < target[i]
+        end
+      end
+      return false
     end
 
     -- 2.10.0
-    if version_digits[2] < 10 then
+    if is_older_than(2, 10, 0) then
       redis.call('hsetnx', settings_key, 'reservoirRefreshInterval', '')
       redis.call('hsetnx', settings_key, 'reservoirRefreshAmount', '')
       redis.call('hsetnx', settings_key, 'lastReservoirRefresh', '')
@@ -50,7 +58,7 @@ else
     end
 
     -- 2.11.1
-    if version_digits[2] < 11 or (version_digits[2] == 11 and version_digits[3] < 1) then
+    if is_older_than(2, 11, 1) then
       if redis.call('hstrlen', settings_key, 'lastReservoirRefresh') == 0 then
         redis.call('hmset', settings_key,
           'lastReservoirRefresh', now,
@@ -60,7 +68,7 @@ else
     end
 
     -- 2.14.0
-    if version_digits[2] < 14 then
+    if is_older_than(2, 14, 0) then
       local old_running_key = 'b_'..id..'_running'
       local old_executing_key = 'b_'..id..'_executing'
 
@@ -74,19 +82,19 @@ else
     end
 
     -- 2.15.2
-    if version_digits[2] < 15 or (version_digits[2] == 15 and version_digits[3] < 2) then
+    if is_older_than(2, 15, 2) then
       redis.call('hsetnx', settings_key, 'capacityPriorityCounter', 0)
       redis.call('hset', settings_key, 'version', '2.15.2')
     end
 
     -- 2.17.0
-    if version_digits[2] < 17 then
+    if is_older_than(2, 17, 0) then
       redis.call('hsetnx', settings_key, 'clientTimeout', 10000)
       redis.call('hset', settings_key, 'version', '2.17.0')
     end
 
     -- 2.18.0
-    if version_digits[2] < 18 then
+    if is_older_than(2, 18, 0) then
       redis.call('hsetnx', settings_key, 'reservoirIncreaseInterval', '')
       redis.call('hsetnx', settings_key, 'reservoirIncreaseAmount', '')
       redis.call('hsetnx', settings_key, 'reservoirIncreaseMaximum', '')
