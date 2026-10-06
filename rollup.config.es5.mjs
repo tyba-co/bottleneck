@@ -1,7 +1,7 @@
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import babel from '@rollup/plugin-babel';
+import babel, { getBabelOutputPlugin } from '@rollup/plugin-babel';
 
 const bannerLines = [
   'This file contains the full Bottleneck library (MIT) compiled to ES5.',
@@ -20,7 +20,16 @@ export default {
     sourcemap: false,
     globals: {},
     format: 'umd',
-    banner
+    banner,
+    // The bundled tslib helpers and rollup's own helpers are not ES5, so the whole bundle is transpiled once more
+    plugins: [
+      getBabelOutputPlugin({
+        allowAllFormats: true,
+        babelrc: false,
+        configFile: false,
+        presets: [['@babel/preset-env', { modules: false }]]
+      })
+    ]
   },
   external: [],
   plugins: [

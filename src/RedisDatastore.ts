@@ -110,6 +110,8 @@ class RedisDatastore {
         
         return this.clients;
       });
+    // Whoever awaits ready still gets the rejection; a limiter disconnected before it is ready must not crash the process
+    this.ready.catch(() => {});
   }
 
   async __publish__(message: any): Promise<void> {
@@ -217,8 +219,8 @@ class RedisDatastore {
 
   prepareObject(obj: { [key: string]: any }): string[] {
     const arr: string[] = [];
-    for (const [k, v] of Object.entries(obj)) {
-      arr.push(k, v != null ? v.toString() : "");
+    for (const k of Object.keys(obj)) {
+      arr.push(k, obj[k] != null ? obj[k].toString() : "");
     }
     return arr;
   }

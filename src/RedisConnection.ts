@@ -50,7 +50,11 @@ class RedisConnection {
   constructor(options: RedisConnectionOptions = {}) {
     parser.load(options, this.defaults, this);
     this.Redis = this.Redis ?? eval("require")("redis"); // Obfuscated or else Webpack/Angular will try to inline the optional redis module
-    this.Events = this.Events ?? new Events(this);
+    if (this.Events == null) {
+      this.Events = new Events(this);
+    } else {
+      this.Events.shareListenersWith(this);
+    }
 
     this.client = this.client ?? (
       this.clusterNodes != null
@@ -62,6 +66,8 @@ class RedisConnection {
     this.ready = this.Promise.all([this._connect(this.client), this._connect(this.subscriber)])
       .then(() => this._loadScripts())
       .then(() => ({ client: this.client, subscriber: this.subscriber }));
+    // Whoever awaits ready still gets the rejection; a connection closed before it is ready must not crash the process
+    this.ready.catch(() => {});
   }
 
   private _isCluster(): boolean {
@@ -177,19 +183,28 @@ class RedisConnection {
 
   __addLimiter__(instance: any): Promise<void[]> {
     return this.Promise.all([instance.channel(), instance.channel_client()].map(async channel => {
-      await this.subscriber.subscribe(channel, (message: string) => {
-        this.limiters[channel]?._store.onMessage(channel, message);
-      });
+      const isSubscribed = this.limiters[channel] != null;
+      // The latest limiter on a channel receives its messages, like upstream
       this.limiters[channel] = instance;
+      // node-redis calls every listener of a channel, so a second subscribe would deliver each message twice
+      if (!isSubscribed) {
+        await this.subscriber.subscribe(channel, (message: string) => {
+          this.limiters[channel]?._store.onMessage(channel, message);
+        });
+      }
     }));
   }
 
   async __removeLimiter__(instance: any): Promise<void[]> {
     return this.Promise.all([instance.channel(), instance.channel_client()].map(async channel => {
+      // A newer limiter with the same id took over the channel and still needs it
+      if (this.limiters[channel] !== instance) {
+        return;
+      }
+      delete this.limiters[channel];
       if (!this.terminated) {
         await this.subscriber.unsubscribe(channel);
       }
-      delete this.limiters[channel];
     }));
   }
 
@@ -203,7 +218,7 @@ class RedisConnection {
   }
 
   async disconnect(flush: boolean = true): Promise<void> {
-    const limiters = Object.values(this.limiters);
+    const limiters = Object.keys(this.limiters).map((channel) => this.limiters[channel]);
     this.limiters = {};
     await this.Promise.all(limiters.map((limiter) => limiter._store.__leaveCluster__()));
     this.terminated = true;

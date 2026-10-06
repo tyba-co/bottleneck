@@ -1,5 +1,5 @@
 /**
-  * This file contains the Bottleneck library (MIT), compiled to ES2017, and without Clustering support.
+  * This file contains the Bottleneck library (MIT), compiled for Node.js 22+, and without Clustering support.
   * https://github.com/SGrondin/bottleneck
   */
 (function (global, factory) {
@@ -614,6 +614,15 @@
 		            }
 		        };
 		    }
+		    /**
+		     * Lets another object register listeners on this emitter, like a connection created by a limiter or Group.
+		     * @param {any} target
+		     */
+		    shareListenersWith(target) {
+		        target.on = this.instance.on;
+		        target.once = this.instance.once;
+		        target.removeAllListeners = this.instance.removeAllListeners;
+		    }
 		    _addListener(name, status, cb) {
 		        if (!this._events[name]) {
 		            this._events[name] = [];
@@ -1069,7 +1078,7 @@
 		return LocalDatastore_1;
 	}
 
-	var RedisDatastore = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+	class RedisDatastore { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }
 
 	var RedisDatastore$1 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
@@ -1196,7 +1205,7 @@
 		return Sync_1;
 	}
 
-	var RedisConnection = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+	class RedisConnection { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }
 
 	var RedisConnection$1 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
@@ -1205,7 +1214,7 @@
 
 	var require$$11 = /*@__PURE__*/getAugmentedNamespace(RedisConnection$1);
 
-	var GlideConnection = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+	class GlideConnection { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }
 
 	var GlideConnection$1 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
@@ -1214,7 +1223,7 @@
 
 	var require$$12 = /*@__PURE__*/getAugmentedNamespace(GlideConnection$1);
 
-	var Scripts = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+	class Scripts { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }
 
 	var Scripts$1 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
@@ -1237,6 +1246,7 @@
 		const Scripts = tslib_1.__importStar(require$$5);
 		class Group {
 		    constructor(limiterOptions = {}) {
+		        var _a, _b, _c;
 		        this.limiterOptions = limiterOptions;
 		        this.defaults = {
 		            timeout: 1000 * 60 * 5,
@@ -1268,6 +1278,7 @@
 		        else if (this.connection == null && this.limiterOptions.datastore === "valkey-glide") {
 		            this.connection = new GlideConnection_1.default({ ...this.limiterOptions, Events: this.Events });
 		        }
+		        this.datastore = (_c = (_b = (_a = this.connection) === null || _a === void 0 ? void 0 : _a.datastore) !== null && _b !== void 0 ? _b : this.limiterOptions.datastore) !== null && _c !== void 0 ? _c : "local";
 		    }
 		    key(key = "") {
 		        var _a;
@@ -1303,7 +1314,8 @@
 		        }
 		        this.interval = setInterval(async () => {
 		            const time = Date.now();
-		            for (const [k, v] of Object.entries(this.instances)) {
+		            for (const k of Object.keys(this.instances)) {
+		                const v = this.instances[k];
 		                try {
 		                    if (await v._store.__groupCheck__(time)) {
 		                        this.deleteKey(k);
@@ -1327,7 +1339,7 @@
 		    }
 		    async disconnect(flush = true) {
 		        var _a;
-		        await Promise.all(Object.values(this.instances).map((limiter) => limiter.disconnect(flush)));
+		        await Promise.all(Object.keys(this.instances).map((k) => this.instances[k].disconnect(flush)));
 		        if (!this.sharedConnection) {
 		            await ((_a = this.connection) === null || _a === void 0 ? void 0 : _a.disconnect(flush));
 		        }
@@ -1419,8 +1431,6 @@
 		const Sync = requireSync();
 		class Bottleneck {
 		    constructor(options = {}, ...invalid) {
-		        this.strategy = Bottleneck.strategy;
-		        this.BottleneckError = Bottleneck.BottleneckError;
 		        this.jobDefaults = {
 		            priority: DEFAULT_PRIORITY,
 		            weight: 1,
@@ -1564,7 +1574,7 @@
 		        return `b_${this.id}_${this._store.clientId}`;
 		    }
 		    publish(message) {
-		        this._store.__publish__(message);
+		        return this._store.__publish__(message);
 		    }
 		    disconnect(flush = true) {
 		        return this._store.__disconnect__(flush);
@@ -1721,7 +1731,8 @@
 		                this._run = (index, next) => next.doDrop({ message: options.dropErrorMessage });
 		                this._drainOne = () => this.Promise.resolve(null);
 		                return this._registerLock.schedule(() => this._submitLock.schedule(() => {
-		                    for (const [k, v] of Object.entries(this._scheduled)) {
+		                    for (const k of Object.keys(this._scheduled)) {
+		                        const v = this._scheduled[k];
 		                        if (this.jobStatus(v.job.options.id) === "RUNNING") {
 		                            clearTimeout(v.timeout);
 		                            clearTimeout(v.expiration);
@@ -1833,6 +1844,14 @@
 		Bottleneck.GlideConnection = require$$12;
 		Bottleneck.Batcher = requireBatcher();
 		Bottleneck.version = Bottleneck.prototype.version = require$$14.version;
+		Object.assign(Bottleneck.prototype, {
+		    strategy: Bottleneck.strategy,
+		    BottleneckError: Bottleneck.BottleneckError,
+		    Group: Bottleneck.Group,
+		    RedisConnection: Bottleneck.RedisConnection,
+		    GlideConnection: Bottleneck.GlideConnection,
+		    Batcher: Bottleneck.Batcher
+		});
 		Bottleneck_1 = Bottleneck;
 		
 		return Bottleneck_1;

@@ -23,6 +23,16 @@ class Events {
     };
   }
 
+  /**
+   * Lets another object register listeners on this emitter, like a connection created by a limiter or Group.
+   * @param {any} target
+   */
+  shareListenersWith(target: any): void {
+    target.on = this.instance.on;
+    target.once = this.instance.once;
+    target.removeAllListeners = this.instance.removeAllListeners;
+  }
+
   private _addListener(name: string, status: "many" | "once", cb: (...args: any[]) => any): any {
     if (!this._events[name]) {
       this._events[name] = [];

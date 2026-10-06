@@ -3,12 +3,12 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 
 const bannerLines = [
-  'This file contains the Bottleneck library (MIT), compiled to ES2017, and without Clustering support.',
+  'This file contains the Bottleneck library (MIT), compiled for Node.js 22+, and without Clustering support.',
   'https://github.com/SGrondin/bottleneck',
 ].map(x => `  * ${x}`).join('\n');
 const banner = `/**\n${bannerLines}\n  */`;
 
-const missing = `export default () => console.log('You must import the full version of Bottleneck in order to use this feature.');`;
+const missing = `export default class { constructor() { throw new Error('You must import the full version of Bottleneck in order to use this feature.'); } }`;
 const exclude = [
   'RedisDatastore.js',
   'RedisConnection.js',

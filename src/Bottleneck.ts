@@ -95,8 +95,12 @@ class Bottleneck {
 
   // Instance properties
   public version: string;
-  public strategy = Bottleneck.strategy;
-  public BottleneckError = Bottleneck.BottleneckError;
+  declare public strategy: typeof Bottleneck.strategy;
+  declare public BottleneckError: typeof Bottleneck.BottleneckError;
+  declare public Group: typeof Bottleneck.Group;
+  declare public RedisConnection: typeof Bottleneck.RedisConnection;
+  declare public GlideConnection: typeof Bottleneck.GlideConnection;
+  declare public Batcher: typeof Bottleneck.Batcher;
   
   private jobDefaults: JobDefaults = {
     priority: DEFAULT_PRIORITY,
@@ -237,8 +241,8 @@ class Bottleneck {
     return `b_${this.id}_${this._store.clientId}`;
   }
 
-  publish(message: any): void {
-    this._store.__publish__(message);
+  publish(message: any): Promise<void> {
+    return this._store.__publish__(message);
   }
 
   disconnect(flush: boolean = true): Promise<void> {
@@ -414,7 +418,8 @@ class Bottleneck {
           this._run = (index: string, next: Job) => next.doDrop({ message: options.dropErrorMessage });
           this._drainOne = () => this.Promise.resolve(null);
           return this._registerLock.schedule(() => this._submitLock.schedule(() => {
-            for (const [k, v] of Object.entries(this._scheduled)) {
+            for (const k of Object.keys(this._scheduled)) {
+              const v = this._scheduled[k];
               if (this.jobStatus(v.job.options.id) === "RUNNING") {
                 clearTimeout(v.timeout);
                 clearTimeout(v.expiration);
@@ -570,5 +575,13 @@ class Bottleneck {
 }
 
 Bottleneck.version = Bottleneck.prototype.version = require("./version.json").version;
+Object.assign(Bottleneck.prototype, {
+  strategy: Bottleneck.strategy,
+  BottleneckError: Bottleneck.BottleneckError,
+  Group: Bottleneck.Group,
+  RedisConnection: Bottleneck.RedisConnection,
+  GlideConnection: Bottleneck.GlideConnection,
+  Batcher: Bottleneck.Batcher
+});
 
 export = Bottleneck;

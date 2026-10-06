@@ -129,6 +129,49 @@ describe('General', function () {
     })
   })
 
+  it('Should expose the library classes and constants on every limiter', function () {
+    // ARRANGE
+    c = makeTest()
+
+    // ASSERT
+    ;['strategy', 'BottleneckError', 'Group', 'RedisConnection', 'GlideConnection', 'Batcher'].forEach(function (name) {
+      assert.strictEqual(c.limiter[name], Bottleneck[name], 'limiter.' + name)
+      assert.strictEqual(Bottleneck.prototype[name], Bottleneck[name], 'Bottleneck.prototype.' + name)
+    })
+    assert.strictEqual(c.limiter.version, Bottleneck.version)
+  })
+
+  it('Should report the datastore of a local Group', function () {
+    // ARRANGE
+    c = makeTest()
+
+    // ASSERT
+    c.mustEqual(new Bottleneck.Group().datastore, 'local')
+  })
+
+  if (process.env.BUILD === 'es5') {
+    it('Should only contain ES5 syntax in the ES5 bundle', function () {
+      // ARRANGE
+      c = makeTest()
+      var source = require('fs').readFileSync(require('path').join(__dirname, '..', 'es5.js'), 'utf8')
+
+      // ASSERT
+      require('acorn').parse(source, { ecmaVersion: 5 })
+    })
+  }
+
+  if (process.env.BUILD === 'light') {
+    it('Should throw when the light build is asked for Clustering', function () {
+      // ARRANGE
+      c = makeTest()
+
+      // ASSERT
+      assert.throws(function () { new Bottleneck({ datastore: 'redis' }) }, /full version of Bottleneck/)
+      assert.throws(function () { new Bottleneck.RedisConnection() }, /full version of Bottleneck/)
+      assert.throws(function () { new Bottleneck.GlideConnection() }, /full version of Bottleneck/)
+    })
+  }
+
   it('Should expose the Events library', function (cb) {
     c = makeTest()
 
@@ -740,6 +783,19 @@ describe('General', function () {
   })
 
   describe('Pubsub', function () {
+    it('Should resolve publish() once the message is sent', async function () {
+      // ARRANGE
+      c = makeTest()
+      await c.limiter.ready()
+
+      // ACT
+      var published = c.limiter.publish('hello')
+
+      // ASSERT
+      assert(published instanceof Promise)
+      c.mustEqual(await published, undefined)
+    })
+
     it('Should pass strings', function (done) {
       c = makeTest({ maxConcurrent: 2 })
 

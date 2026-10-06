@@ -76,6 +76,22 @@ if (process.env.DATASTORE === 'valkey-glide') {
       assert(requestError instanceof Glide.ClosingError)
     })
 
+    it('Should let the commands in flight finish when disconnecting with flush', async function () {
+      // ARRANGE
+      c = makeTest()
+      var connection = new Bottleneck.GlideConnection({ clientOptions: { addresses, requestTimeout: 2000 } })
+      await connection.ready
+      var busyScript = 'local x = 0 for i = 1, 50000000 do x = x + i end return 1'
+      var inFlight = connection.__runCommand__(['eval', busyScript, '0'])
+      await c.wait(20)
+
+      // ACT
+      await connection.disconnect(true)
+
+      // ASSERT
+      c.mustEqual(await inFlight, 1)
+    })
+
     it('Should accept existing connections', async function () {
       // ARRANGE
       var connection = new Bottleneck.GlideConnection({ clientOptions: { addresses } })

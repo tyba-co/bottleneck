@@ -978,6 +978,101 @@ if (process.env.DATASTORE === 'redis' || process.env.DATASTORE === 'valkey-glide
       }
     })
 
+    it('Should reject publish() and updateSettings() when Redis fails', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'redis-fails' })
+      await c.limiter.ready()
+      await c.limiter._store.connection.disconnect(false)
+
+      // ACT
+      var publishError = await c.limiter.publish('hello').then(function () { return null }, function (err) { return err })
+      var updateSettingsError = await c.limiter.updateSettings({ maxConcurrent: 1 }).then(function () { return null }, function (err) { return err })
+
+      // ASSERT
+      assert(publishError != null)
+      assert(updateSettingsError != null)
+    })
+
+    it('Should deliver each message once to limiters sharing a connection and an id', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'shared-connection-same-id' })
+      var limiter2 = new Bottleneck({ id: 'shared-connection-same-id', connection: c.limiter.connection })
+      await Promise.all([c.limiter.ready(), limiter2.ready()])
+      var messages = []
+      limiter2.on('message', function (message) { messages.push(message) })
+
+      // ACT
+      await limiter2.publish('hello')
+      await c.wait(100)
+
+      // ASSERT
+      c.mustEqual(messages, ['hello'])
+    })
+
+    it('Should keep delivering messages to the newer limiter when an older one with the same id disconnects', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'shared-connection-owner-2' })
+      var olderLimiter = new Bottleneck({ id: 'shared-connection-channel', connection: c.limiter.connection })
+      await olderLimiter.ready()
+      var newerLimiter = new Bottleneck({ id: 'shared-connection-channel', connection: c.limiter.connection })
+      await newerLimiter.ready()
+      var messages = []
+      newerLimiter.on('message', function (message) { messages.push(message) })
+
+      // ACT
+      await olderLimiter.disconnect(false)
+      await newerLimiter.publish('hello')
+      await c.wait(100)
+
+      // ASSERT
+      c.mustEqual(messages, ['hello'])
+    })
+
+    it('Should not leave an unhandled rejection when disconnected before it is ready', async function () {
+      // ARRANGE
+      c = makeTest()
+      var unhandledRejections = []
+      var recordUnhandledRejection = function (reason) { unhandledRejections.push(String(reason)) }
+      process.on('unhandledRejection', recordUnhandledRejection)
+      var Connection = process.env.DATASTORE === 'valkey-glide' ? Bottleneck.GlideConnection : Bottleneck.RedisConnection
+
+      try {
+        // ACT
+        var limiter = new Bottleneck({ id: uniqueId('early-disconnect'), datastore: process.env.DATASTORE })
+        var group = new Bottleneck.Group({ id: uniqueId('early-disconnect-group'), datastore: process.env.DATASTORE })
+        var connection = new Connection()
+        ;[limiter, group, connection].forEach(function (emitter) { emitter.on('error', function () {}) })
+        await Promise.all([limiter.disconnect(false), group.disconnect(false), connection.disconnect(false)])
+        await c.wait(300)
+
+        // ASSERT
+        c.mustEqual(unhandledRejections, [])
+      } finally {
+        process.removeListener('unhandledRejection', recordUnhandledRejection)
+      }
+    })
+
+    it('Should let listeners register on a connection created by a limiter or a Group', async function () {
+      // ARRANGE
+      c = makeTest({ id: 'connection-listeners', errorEventsExpected: true })
+      var group = new Bottleneck.Group({ id: uniqueId('connection-listeners-group'), datastore: process.env.DATASTORE })
+      var errors = []
+      c.limiter.connection.on('error', function (err) { errors.push('limiter ' + err.message) })
+      group.connection.once('error', function (err) { errors.push('group ' + err.message) })
+
+      try {
+        // ACT
+        await c.limiter.connection.Events.trigger('error', new Error('boom'))
+        await group.connection.Events.trigger('error', new Error('boom'))
+
+        // ASSERT
+        c.mustEqual(errors, ['limiter boom', 'group boom'])
+        c.mustEqual(group.datastore, process.env.DATASTORE)
+      } finally {
+        await group.disconnect(false)
+      }
+    })
+
     describe('clearDatastore with running jobs', function () {
       var waitForRunning = async function (limiter, running) {
         while (await limiter.running() !== running) await c.wait(10)

@@ -1,5 +1,4 @@
-declare module "bottleneck" {
-    namespace Bottleneck {
+declare namespace Bottleneck {
     type ConstructorOptions = {
         /**
           * How many jobs can be running at the same time.
@@ -96,6 +95,14 @@ declare module "bottleneck" {
           */
         readonly defaultExpiration?: number | null;
         /**
+          * Clustering: how often, in milliseconds, the limiter refreshes its registration and processes expired jobs. Default `5000`.
+          */
+        readonly heartbeatInterval?: number | null;
+        /**
+          * Clustering: a client not seen for this many milliseconds is considered unresponsive. Default `10000`.
+          */
+        readonly clientTimeout?: number | null;
+        /**
           * The Redis TTL in milliseconds for the keys created by the limiter. When `timeout` is set, the limiter's state will be automatically removed from Redis after timeout milliseconds of inactivity. Note: timeout is 300000 (5 minutes) by default when using a Group.
           */
           readonly timeout?: number | null;
@@ -145,7 +152,7 @@ declare module "bottleneck" {
             readonly id: string;
             readonly priority: number;
             readonly weight: number;
-            readonly expiration?: number;
+            readonly expiration?: number | null;
         };
     };
     type EventInfoDropped = EventInfo & {
@@ -158,13 +165,7 @@ declare module "bottleneck" {
     };
     type EventInfoRetryable = EventInfo & { readonly retryCount: number; };
 
-    enum Status {
-        RECEIVED = "RECEIVED",
-        QUEUED = "QUEUED",
-        RUNNING = "RUNNING",
-        EXECUTING = "EXECUTING",
-        DONE = "DONE"
-    }
+    type Status = "RECEIVED" | "QUEUED" | "RUNNING" | "EXECUTING" | "DONE";
     type Counts = {
         RECEIVED: number,
         QUEUED: number,
@@ -190,6 +191,10 @@ declare module "bottleneck" {
           * Optional node-redis v4 library from `require('redis')`. If not, Bottleneck will attempt to require it at runtime.
           */
         readonly Redis?: any;
+        /**
+          * Promise library to use. Default: the global `Promise`.
+          */
+        readonly Promise?: any;
     };
 
     type GlideConnectionOptions = {
@@ -210,6 +215,10 @@ declare module "bottleneck" {
           * Optional valkey-glide library from `require('@valkey/valkey-glide')`. If not, Bottleneck will attempt to require it at runtime.
           */
         readonly Glide?: any;
+        /**
+          * Promise library to use. Default: the global `Promise`.
+          */
+        readonly Promise?: any;
     };
 
     type BatcherOptions = {
@@ -221,6 +230,10 @@ declare module "bottleneck" {
           * Maximum number of requests in a batch.
           */
         readonly maxSize?: number | null;
+        /**
+          * Promise library to use. Default: the global `Promise`.
+          */
+        readonly Promise?: any;
     };
 
     class BottleneckError extends Error {
@@ -244,9 +257,15 @@ declare module "bottleneck" {
         once(name: "error", fn: (error: any) => void): void;
 
         /**
-          * Waits until the connection is ready and returns the raw Node_Redis clients.
+          * Removes all registered event listeners.
+          * @param name - The optional event name to remove listeners from.
           */
-        ready(): Promise<ClientsList>;
+        removeAllListeners(name?: string): void;
+
+        /**
+          * Resolves with the raw node-redis clients once the connection is ready.
+          */
+        readonly ready: Promise<ClientsList>;
 
         /**
           * Close the redis clients.
@@ -264,6 +283,7 @@ declare module "bottleneck" {
           * @param fn - The callback function.
           */
         on(name: "error", fn: (error: any) => void): void;
+        on(name: "debug", fn: (message: string, info: any) => void): void;
 
         /**
           * Register an event listener for one event only.
@@ -271,15 +291,22 @@ declare module "bottleneck" {
           * @param fn - The callback function.
           */
         once(name: "error", fn: (error: any) => void): void;
+        once(name: "debug", fn: (message: string, info: any) => void): void;
 
         /**
-          * Waits until the connection is ready and returns the raw GLIDE clients.
+          * Removes all registered event listeners.
+          * @param name - The optional event name to remove listeners from.
           */
-        ready(): Promise<ClientsList>;
+        removeAllListeners(name?: string): void;
+
+        /**
+          * Resolves with the raw GLIDE clients once the connection is ready.
+          */
+        readonly ready: Promise<ClientsList>;
 
         /**
           * Close the GLIDE clients.
-          * @param flush - Ignored: GLIDE closes immediately.
+          * @param flush - Let the commands in flight finish before closing.
           */
         disconnect(flush?: boolean): Promise<void>;
     }
@@ -306,6 +333,12 @@ declare module "bottleneck" {
         once(name: "batch", fn: (batch: any[]) => void): void;
 
         /**
+          * Removes all registered event listeners.
+          * @param name - The optional event name to remove listeners from.
+          */
+        removeAllListeners(name?: string): void;
+
+        /**
           * Add a request to the Batcher. Batches are flushed to the "batch" event.
           */
         add(data: any): Promise<void>;
@@ -322,7 +355,7 @@ declare module "bottleneck" {
           * Returns the limiter for the specified key.
           * @param str - The limiter key.
           */
-        key(str: string): Bottleneck;
+        key(str?: string): Bottleneck;
 
         /**
           * Register an event listener.
@@ -401,7 +434,11 @@ declare module "bottleneck" {
     }
 }
 
-class Bottleneck {
+declare class Bottleneck {
+    /**
+      * The installed version of Bottleneck.
+      */
+    public static readonly version: string;
     public static readonly strategy: {
         /**
           * When adding a new job to a limiter, if the queue length reaches `highWater`, drop the oldest job with the lowest priority. This is useful when jobs that have been waiting for too long are not important anymore. If all the queued jobs are more important (based on their `priority` value) than the one being added, it will not be added.
@@ -423,6 +460,10 @@ class Bottleneck {
 
     constructor(options?: Bottleneck.ConstructorOptions);
 
+    /**
+      * The installed version of Bottleneck.
+      */
+    readonly version: string;
     id: string;
     datastore: string;
     connection?: Bottleneck.RedisConnection | Bottleneck.GlideConnection;
@@ -462,7 +503,7 @@ class Bottleneck {
     /**
       * Returns the status of the job with the provided job id.
       */
-    jobStatus(id: string): Bottleneck.Status;
+    jobStatus(id: string): Bottleneck.Status | null;
 
     /**
       * Returns the status of the job with the provided job id.
@@ -548,10 +589,10 @@ class Bottleneck {
     removeAllListeners(name?: string): void;
 
     /**
-      * Changes the settings for future requests.
+      * Changes the settings for future requests. When Clustering, it resolves once the shared settings are stored and rejects if Redis fails.
       * @param options - The new settings.
       */
-    updateSettings(options?: Bottleneck.ConstructorOptions): Bottleneck;
+    updateSettings(options?: Bottleneck.ConstructorOptions): Promise<Bottleneck>;
 
     /**
       * Adds to the reservoir count and returns the new value.
@@ -637,5 +678,4 @@ class Bottleneck {
 
 export default Bottleneck;
 
-}
 
