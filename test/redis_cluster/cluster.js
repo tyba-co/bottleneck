@@ -12,16 +12,19 @@ var clusterNodes = (process.env.REDIS_CLUSTER_NODES || '127.0.0.1:30001,127.0.0.
     return isGlide ? { host: host, port: Number(port) } : { url: `redis://${node}` }
   })
 
+// GLIDE's defaults (250 ms per request, 2 s to connect) are too short for a cluster that just started on a CI runner
+var glideTimeouts = { requestTimeout: 2000, advancedConfiguration: { connectionTimeout: 5000 } }
+
 var createClusterClient = function () {
   return isGlide
-    ? Client.GlideClusterClient.createClient({ addresses: clusterNodes, protocol: Client.ProtocolVersion.RESP2 })
+    ? Client.GlideClusterClient.createClient(Object.assign({ addresses: clusterNodes, protocol: Client.ProtocolVersion.RESP2 }, glideTimeouts))
     : Client.createCluster({ rootNodes: clusterNodes })
 }
 
 var clusterOptions = function (options) {
   return Object.assign({
     datastore: process.env.DATASTORE,
-    clientOptions: {},
+    clientOptions: isGlide ? glideTimeouts : {},
     clusterNodes: clusterNodes
   }, options)
 }
@@ -231,17 +234,20 @@ describe('Redis Cluster', function () {
     // ARRANGE
     var client = await createClusterClient()
     var connection = isGlide
-      ? new Bottleneck.GlideConnection({ client: client, clusterNodes: clusterNodes })
+      ? new Bottleneck.GlideConnection({ client: client, clusterNodes: clusterNodes, clientOptions: glideTimeouts })
       : new Bottleneck.RedisConnection({ client: client })
     var limiter = makeLimiter({ id: uniqueId('injected'), connection: connection, clearDatastore: true })
 
-    // ACT
-    var result = await limiter.schedule(function () { return Promise.resolve('ran') })
+    try {
+      // ACT
+      var result = await limiter.schedule(function () { return Promise.resolve('ran') })
 
-    // ASSERT
-    assert.strictEqual(result, 'ran')
-    await limiter.disconnect()
-    await connection.disconnect()
+      // ASSERT
+      assert.strictEqual(result, 'ran')
+    } finally {
+      await limiter.disconnect()
+      await connection.disconnect()
+    }
   })
 
   it('Should fail to start a limiter whose id has no hash tag', async function () {

@@ -48,6 +48,7 @@ class GlideConnection {
   private clientOptions: any;
   private clusterNodes: any;
   private scripts: { [name: string]: any } = {};
+  private openedClients: any[] = [];
   private terminated: boolean = false;
 
   constructor(options: GlideConnectionOptions = {}) {
@@ -88,6 +89,9 @@ class GlideConnection {
         return { client, subscriber };
       })
       .catch((e: any) => {
+        // GLIDE never reconnects a client that failed to connect, so close the one that did connect instead of leaking it
+        this.terminated = true;
+        this.openedClients.forEach((client) => client.close());
         this.Events.trigger("error", e);
         throw e;
       });
@@ -99,9 +103,11 @@ class GlideConnection {
 
   private async _createClient(ClientClass: any, configuration: any): Promise<any> {
     const client = await ClientClass.createClient(configuration);
-    // A disconnect() that ran while the client was being created could not close it
+    // A disconnect() or failed connection that happened while the client was being created could not close it
     if (this.terminated) {
       client.close();
+    } else {
+      this.openedClients.push(client);
     }
     return client;
   }

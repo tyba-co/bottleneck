@@ -27,6 +27,32 @@ if (process.env.DATASTORE === 'valkey-glide') {
       c.mustEqual(c.limiter.datastore, 'valkey-glide')
     })
 
+    it('Should close the client it opened when the other one fails to connect', async function () {
+      // ARRANGE
+      var openedClients = []
+      var GlideWithFailingSubscriber = Object.assign({}, Glide, {
+        GlideClient: {
+          createClient: async function (configuration) {
+            if (configuration.pubsubSubscriptions != null) throw new Error('subscriber connection failed')
+            var client = await Glide.GlideClient.createClient(configuration)
+            openedClients.push(client)
+            return client
+          }
+        }
+      })
+      c = makeTest({ Glide: GlideWithFailingSubscriber, errorEventsExpected: true })
+
+      // ACT
+      var error = await c.limiter.ready().then(function () { return null }, function (err) { return err })
+      await c.wait(100)
+
+      // ASSERT
+      c.mustEqual(error.message, 'subscriber connection failed')
+      c.mustEqual(openedClients.length, 1)
+      var requestError = await openedClients[0].get('key').then(function () { return null }, function (err) { return err })
+      assert(requestError instanceof Glide.ClosingError)
+    })
+
     it('Should accept existing connections', async function () {
       // ARRANGE
       var connection = new Bottleneck.GlideConnection({ clientOptions: { addresses } })

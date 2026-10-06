@@ -20,7 +20,7 @@ services:
     ports:
       - "30001-30006:30001-30006"
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -p 30001 cluster info | grep -q cluster_state:ok"]
+      test: ["CMD", "/scripts/healthcheck.sh"]
       interval: 1s
       timeout: 2s
       retries: 60

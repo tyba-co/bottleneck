@@ -838,13 +838,16 @@ const limiter = new Bottleneck({
   clientOptions: {
     useTLS: true,
     credentials: { password: process.env.REDIS_PASSWORD },
+    requestTimeout: 2000,
     advancedConfiguration: { connectionTimeout: 2000 }
   }
 });
 ```
+- GLIDE fails every request that takes longer than `requestTimeout`, which is **250 ms by default**. Bottleneck's Lua scripts can take longer while Redis forks (snapshots, a replica's initial sync) or fails over, so set `clientOptions.requestTimeout` explicitly. When a request times out, a job being submitted is rejected with the GLIDE error; a failed registration or heartbeat emits an `"error"` event and the job stays queued until the next capacity message or heartbeat.
 - Bottleneck opens two GLIDE clients: one for commands (RESP2 by default, override with `clientOptions.protocol`) and one subscriber that always uses RESP3, because GLIDE only supports Pub/Sub over RESP3.
 - To reuse an existing `GlideClient`/`GlideClusterClient`, pass it as `client` to `new Bottleneck.GlideConnection({ client, clusterNodes, clientOptions })`. GLIDE clients cannot be duplicated, so the same addresses and options are still needed to create the subscriber.
 - `disconnect(flush)` ignores `flush`: GLIDE closes immediately and rejects pending requests.
+- GLIDE does not reconnect a client that failed to connect. If either client fails, `ready()` rejects, Bottleneck closes the one that did connect, and the limiter cannot be used anymore: create a new one to retry.
 - Limiters on `redis` and `valkey-glide` can share the same id and keys, so an application can switch clients gradually.
 
 | Option | Default | Description |
@@ -1004,7 +1007,18 @@ Use the `disconnect(flush)` method to close the Redis clients.
 limiter.disconnect();
 group.disconnect();
 ```
-If you created the Connection object manually, you need to call `connection.disconnect()` instead, for safety reasons.
+Until it is disconnected, a limiter (or Group) that owns its connection keeps two clients open, one for commands and one for Pub/Sub, and runs a heartbeat script on Redis every `heartbeatInterval`. Create limiters once and reuse them: a limiter created for every call and never disconnected leaks both clients and its heartbeat for as long as the process lives, and its open clients keep Node.js from exiting on its own.
+
+If you created the Connection object manually, `limiter.disconnect()` and `group.disconnect()` only detach the limiter from it, so you need to call `connection.disconnect()` yourself, also when an error interrupts your code:
+```js
+const connection = new Bottleneck.RedisConnection({ clientOptions: {/* ... */} });
+const limiter = new Bottleneck({ id: "{my-super-app}:", connection });
+try {
+  await limiter.schedule(work);
+} finally {
+  await connection.disconnect();
+}
+```
 
 ## Debugging your application
 
