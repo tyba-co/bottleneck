@@ -3720,19 +3720,21 @@
 	          var _this8 = this;
 	          var flush = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 	          return /*#__PURE__*/_regenerator().m(function _callee10() {
-	            var _i, _Object$keys, k;
+	            var limiters;
 	            return _regenerator().w(function (_context10) {
 	              while (1) switch (_context10.n) {
 	                case 0:
-	                  for (_i = 0, _Object$keys = Object.keys(_this8.limiters); _i < _Object$keys.length; _i++) {
-	                    k = _Object$keys[_i];
-	                    clearInterval(_this8.limiters[k]._store.heartbeat);
-	                  }
+	                  limiters = Object.values(_this8.limiters);
 	                  _this8.limiters = {};
-	                  _this8.terminated = true;
 	                  _context10.n = 1;
-	                  return _this8.Promise.all([_this8._close(_this8.client, flush), _this8._close(_this8.subscriber, flush)]);
+	                  return _this8.Promise.all(limiters.map(function (limiter) {
+	                    return limiter._store.__leaveCluster__();
+	                  }));
 	                case 1:
+	                  _this8.terminated = true;
+	                  _context10.n = 2;
+	                  return _this8.Promise.all([_this8._close(_this8.client, flush), _this8._close(_this8.subscriber, flush)]);
+	                case 2:
 	                  return _context10.a(2);
 	              }
 	            }, _callee10);
@@ -4304,24 +4306,26 @@
 	        return tslib_1.__awaiter(this, arguments, void 0, function () {
 	          var _this2 = this;
 	          return /*#__PURE__*/_regenerator().m(function _callee8() {
-	            var _a, _b, _i3, _Object$keys, k, _i4, _Object$keys2, name;
+	            var _a, _b, limiters, _i3, _Object$keys, name;
 	            return _regenerator().w(function (_context8) {
 	              while (1) switch (_context8.n) {
 	                case 0:
-	                  for (_i3 = 0, _Object$keys = Object.keys(_this2.limiters); _i3 < _Object$keys.length; _i3++) {
-	                    k = _Object$keys[_i3];
-	                    clearInterval(_this2.limiters[k]._store.heartbeat);
-	                  }
+	                  limiters = Object.values(_this2.limiters);
 	                  _this2.limiters = {};
+	                  _context8.n = 1;
+	                  return _this2.Promise.all(limiters.map(function (limiter) {
+	                    return limiter._store.__leaveCluster__();
+	                  }));
+	                case 1:
 	                  _this2.terminated = true;
 	                  (_a = _this2.client) === null || _a === void 0 ? void 0 : _a.close();
 	                  (_b = _this2.subscriber) === null || _b === void 0 ? void 0 : _b.close();
-	                  for (_i4 = 0, _Object$keys2 = Object.keys(_this2.scripts); _i4 < _Object$keys2.length; _i4++) {
-	                    name = _Object$keys2[_i4];
+	                  for (_i3 = 0, _Object$keys = Object.keys(_this2.scripts); _i3 < _Object$keys.length; _i3++) {
+	                    name = _Object$keys[_i3];
 	                    _this2.scripts[name].release();
 	                  }
 	                  _this2.scripts = {};
-	                case 1:
+	                case 2:
 	                  return _context8.a(2);
 	              }
 	            }, _callee8);
@@ -4724,14 +4728,8 @@
 	          return _regenerator().w(function (_context4) {
 	            while (1) switch (_context4.n) {
 	              case 0:
-	                if (!this.heartbeat) {
-	                  _context4.n = 1;
-	                  break;
-	                }
-	                clearInterval(this.heartbeat);
-	                this.heartbeat = undefined;
 	                _context4.n = 1;
-	                return this.unregisterClient();
+	                return this.__leaveCluster__();
 	              case 1:
 	                if (!this.sharedConnection) {
 	                  _context4.n = 3;
@@ -4752,31 +4750,40 @@
 	        }));
 	      }
 	      /**
-	       * Releases this client's jobs and removes it from the cluster. The heartbeat only runs once the client is registered.
+	       * Stops the heartbeat, releases this client's jobs and removes it from the cluster, since it can no longer free them.
+	       * Does nothing before the client registered (the heartbeat starts then) or once it has left.
 	       * @returns {Promise<void>}
 	       */
 	    }, {
-	      key: "unregisterClient",
-	      value: function unregisterClient() {
+	      key: "__leaveCluster__",
+	      value: function __leaveCluster__() {
 	        return tslib_1.__awaiter(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee5() {
 	          var _t3;
 	          return _regenerator().w(function (_context5) {
 	            while (1) switch (_context5.p = _context5.n) {
 	              case 0:
-	                _context5.p = 0;
-	                _context5.n = 1;
-	                return this.connection.__runScript__("unregister_client", this.originalId, this.prepareArray([Date.now(), this.clientId]));
+	                if (!(this.heartbeat == null)) {
+	                  _context5.n = 1;
+	                  break;
+	                }
+	                return _context5.a(2);
 	              case 1:
-	                _context5.n = 3;
-	                break;
-	              case 2:
+	                clearInterval(this.heartbeat);
+	                this.heartbeat = undefined;
 	                _context5.p = 2;
+	                _context5.n = 3;
+	                return this.connection.__runScript__("unregister_client", this.originalId, this.prepareArray([Date.now(), this.clientId]));
+	              case 3:
+	                _context5.n = 5;
+	                break;
+	              case 4:
+	                _context5.p = 4;
 	                _t3 = _context5.v;
 	                this.instance.Events.trigger("error", _t3);
-	              case 3:
+	              case 5:
 	                return _context5.a(2);
 	            }
-	          }, _callee5, this, [[0, 2]]);
+	          }, _callee5, this, [[2, 4]]);
 	        }));
 	      }
 	    }, {

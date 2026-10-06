@@ -161,11 +161,7 @@ class RedisDatastore {
   }
 
   async __disconnect__(flush: boolean): Promise<void> {
-    if (this.heartbeat) {
-      clearInterval(this.heartbeat);
-      this.heartbeat = undefined;
-      await this.unregisterClient();
-    }
+    await this.__leaveCluster__();
     if (this.sharedConnection) {
       await this.connection.__removeLimiter__(this.instance);
     } else {
@@ -174,10 +170,16 @@ class RedisDatastore {
   }
 
   /**
-   * Releases this client's jobs and removes it from the cluster. The heartbeat only runs once the client is registered.
+   * Stops the heartbeat, releases this client's jobs and removes it from the cluster, since it can no longer free them.
+   * Does nothing before the client registered (the heartbeat starts then) or once it has left.
    * @returns {Promise<void>}
    */
-  private async unregisterClient(): Promise<void> {
+  async __leaveCluster__(): Promise<void> {
+    if (this.heartbeat == null) {
+      return;
+    }
+    clearInterval(this.heartbeat);
+    this.heartbeat = undefined;
     try {
       await this.connection.__runScript__("unregister_client", this.originalId, this.prepareArray([Date.now(), this.clientId]));
     } catch (e) {
