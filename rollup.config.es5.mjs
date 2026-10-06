@@ -1,7 +1,7 @@
-import json from 'rollup-plugin-json';
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-import babel from 'rollup-plugin-babel';
+import json from '@rollup/plugin-json';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import babel from '@rollup/plugin-babel';
 
 const bannerLines = [
   'This file contains the full Bottleneck library (MIT) compiled to ES5.',
@@ -28,6 +28,7 @@ export default {
     resolve(),
     commonjs(),
     babel({
+      babelHelpers: 'bundled',
       exclude: 'node_modules/**'
     })
   ]

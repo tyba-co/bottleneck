@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://npm.pkg.github.com/
+          cache: npm
+
+      - name: Tag matches package.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match package.json version $PACKAGE_VERSION. Bump the version in a PR before releasing."
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Committed bundles and typings match the source
+        run: git diff --exit-code -- es5.js light.js bottleneck.d.ts light.d.ts
+
+      - run: npm run test:local
+
+      - name: Publish
+        run: |
+          if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+            npm publish --tag next
+          else
+            npm publish
+          fi

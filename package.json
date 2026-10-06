@@ -1,9 +1,17 @@
 {
   "name": "@tyba-co/bottleneck",
-  "version": "2.19.6",
+  "version": "2.19.7",
   "description": "Distributed task scheduler and rate limiter",
   "main": "lib/index.js",
   "typings": "bottleneck.d.ts",
+  "files": [
+    "lib/**/*.js",
+    "lib/**/*.json",
+    "es5.js",
+    "light.js",
+    "bottleneck.d.ts",
+    "light.d.ts"
+  ],
   "engines": {
     "node": ">=22"
   },
@@ -24,7 +32,7 @@
     "url": "https://github.com/tyba-co/bottleneck"
   },
   "publishConfig": {
-    "@tyba-co:registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com"
   },
   "keywords": [
     "async rate limiter",
@@ -41,7 +49,7 @@
     "clustering"
   ],
   "author": {
-    "name": "Org"
+    "name": "Tyba"
   },
   "license": "MIT",
   "bugs": {
@@ -51,18 +59,18 @@
     "@babel/cli": "^7.28.3",
     "@babel/core": "^7.5.0",
     "@babel/preset-env": "^7.5.0",
+    "@rollup/plugin-babel": "^6.1.0",
+    "@rollup/plugin-commonjs": "^28.0.9",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^22.20.5",
-    "ejs-cli": "github:SGrondin/ejs-cli#master",
+    "ejs": "^3.1.10",
     "ioredis": "^4.11.1",
     "jest-leak-detector": "^30.1.0",
     "mocha": "^11.8.0",
     "redis": "^2.8.0",
     "regenerator-runtime": "^0.12.1",
-    "rollup": "^0.66.6",
-    "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-commonjs": "^9.3.4",
-    "rollup-plugin-json": "^3.1.0",
-    "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup": "^4.64.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
